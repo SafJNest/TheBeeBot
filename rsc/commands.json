@@ -1,0 +1,443 @@
+{
+    "connect":{
+        "alias" : ["join", "comeherebroda"],
+        "help"  : "Connect the bot to the voice channel.",
+        "category" : "Audio",
+        "arguments" : "[CommandName]"
+    },
+
+    "customizesound":{
+        "alias" : ["custom", "cs", "personalize"],
+        "help"  : "WIP",
+        "category" : "Audio",
+        "arguments" : "[CommandName]"
+    },
+
+    "deletesound":{
+        "alias" : ["delete", "ds", "forget"],
+        "help"  : "Remove a sound from the database.",
+        "category" : "Audio",
+        "arguments" : "[CommandName]"
+    },
+
+    "disconnect":{
+        "alias" : ["bye", "fuckoff"],
+        "help"  : "Disconnect the bot or a user from the voice channel.",
+        "category" : "Audio",
+        "arguments" : "[CommandName]"
+    },
+
+    "list":{
+        "alias" : ["papyrus", "paper", "listoide"],
+        "help"  : "Display a list with all the sound in a server.\nUsing these arguments you can get:\nme = all the sounds you have uploaded.\nuser @user/IDuser = all the sounds a user has upload.\nglobal = all the sounds in the DB.",
+        "category" : "Audio",
+        "arguments" : "[CommandName] | [me] | [user @user/IDuser] | [global]"
+    },
+
+    "playyoutube":{
+        "alias" : ["y", "py", "nuovavita", "yt"],
+        "help"  : "Play a video from youtube.",
+        "category" : "Audio",
+        "arguments" : "[CommandName] [link youtube]"
+    },
+
+    "playsound":{
+        "alias" : ["p", "ps"],
+        "help"  : "Play a custom sound from the database.",
+        "category" : "Audio",
+        "arguments" : "[CommandName] [soundName]"
+    },
+
+    "tts":{
+        "alias" : ["t", "talk"],
+        "help"  : "Read what you write.",
+        "category" : "Audio",
+        "arguments" : "[CommandName] [text]"
+    },
+
+    "stop":{
+        "alias" : ["stp", "donteventhinkaboutit"],
+        "help"  : "Stop a song.",
+        "category" : "Audio",
+        "arguments" : "[CommandName]"
+    },
+
+    "upload":{
+        "alias" : ["up", "add"],
+        "help"  :"Upload a custom sound to the database.",
+        "category" : "Audio",
+        "arguments" : "[CommandName] [soundName]"
+    },
+
+    "downloadsound":{
+        "alias" : ["download"],
+        "help"  : "Download a sound.",
+        "category" : "Audio",
+        "arguments" : "[CommandName] [soundName]"
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    "channelinfo":{
+        "alias" : ["infochannel", "ci","ic","channel"],
+        "help"  : "Show the information about a channel.",
+        "category" : "Server Management",
+        "arguments" : "[channelinfo] [#channel/channel ID]"
+    },
+
+    "clear":{
+        "alias" : [],
+        "help"  : "Delete the message in a channel (max 99).",
+        "category" : "Server Management",
+        "arguments" : "[clear] [numberMessages]"
+    },
+
+    "emojiinfo":{
+        "alias" : ["em", "eminf"],
+        "help"  : "Show the information about an emoji.",
+        "category" : "Server Management",
+        "arguments" : "[emoji] [emojiName, emoji]"
+    },
+    
+    "serverinfo":{
+        "alias" : ["servinfo", "serinf"],
+        "help"  : "Show the information about the server.",
+        "category" : "Server Management",
+        "arguments" : "[CommandName]"
+    },
+
+    "userinfo":{
+        "alias" : ["usinf", "uinfo"],
+        "help"  : "Show the information aboit a user.",
+        "category" : "Server Management",
+        "arguments" : "[userinfo] [@user]"
+    },
+
+    "setwelcome":{
+        "alias" : [],
+        "help"  : "Allow to set a 'welcome quote' to be sent every time a user join the server. Its necessary to set also a channel otherwise will be used the default system channel. Can also be setted roles to given. Ex: psetwelcome #welcome @role | Hello #user!. Using #user the user will be mentioned.",
+        "category" : "Server Management",
+        "arguments" : "[CommandName] (#canale)(@ruoli) | [messaggio]"
+    },
+
+    "setroom":{
+        "alias" : ["room"],
+        "help"  : "Allow to set a nickname for the channel, for an easier use of 'move'.",
+        "category" : "Server Management",
+        "arguments" : "[CommandName] [#canale] || [CommandName] [idCanale] "
+    },
+
+    "setvoice":{
+        "alias" : ["voice"],
+        "help"  : "Allow to set a default voice for command 'tts'.",
+        "category" : "Server Management",
+        "arguments" : "[CommandName] [nomeVoce]"
+    },
+
+    "listroom":{
+        "alias" : ["rooms"],
+        "help"  : "List with all the nickname in a server.",
+        "category" : "Server Management",
+        "arguments" : "[CommandName] [#canale] || [CommandName] [idCanale] "
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    "ban":{
+        "alias" : ["sgozz", "destroy", "annihilate", "radiateDeath", "drinkRadithorForAYear", "ohthemisery"],
+        "help"  : "Ban a user.",
+        "category" : "Member Management",
+        "arguments" : "[ban] [@user] (reason)"
+    },
+
+    "image":{
+        "alias" : ["img"],
+        "help"  : "Show the imagine of a user.",
+        "category" : "Member Management",
+        "arguments" : "[image] [@user]"
+    },
+
+    "kick":{
+        "alias" : ["lightdeath", "espulsione", "takethetrashout"],
+        "help"  : "Kick a member.",
+        "category" : "Member Management",
+        "arguments" : "[kick] [@user]"
+    },
+
+    "mute":{
+        "alias" : ["dontlistentothesound"],
+        "help"  : "Mute a member.",
+        "category" : "Member Management",
+        "arguments" : "[mute] [@user]"
+    },
+
+    "permissions":{
+        "alias" : ["perms", "permission"],
+        "help"  : "Show all the permissions a user has.",
+        "category" : "Member Management",
+        "arguments" : "[permissions] [@user]"
+    },
+
+    "unban":{
+        "alias" : ["unsgozz", "undestroy", "unannihilate", "unradiateDeath", "sban", "pardon"],
+        "help"  : "Unban a member.",
+        "category" : "Member Management",
+        "arguments" : "[unbun] [@user]"
+    },
+
+    "unmute":{
+        "alias" : ["listentothesound"],
+        "help"  : "Unmute a member.",
+        "category" : "Member Management",
+        "arguments" : "[unmute] [@user]"
+    },
+
+    "move":{
+        "alias" : ["mv", "throw"],
+        "help"  : "Move a member from a voice channel to another one.\nIts possible to move multiple users at once.",
+        "category" : "Member Management",
+        "arguments" : "[CommandName] (here = all the member in the voice channel will be moved) (channel id) | (me = you) (channel id) | (member) (channel id) | (member) (here = the user will be move where you are) | (member) (afk)." 
+    },
+
+    "modifynickname":{
+        "alias" : ["modnick", "nick"],
+        "help"  : "Change the nickname for a member.",
+        "category" : "Member Management",
+        "arguments" : "[CommandName] [member] [new nick]"
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+    "calc":{
+        "alias" : ["c", "calculator","calculate"],
+        "help"  : "Does several mathematical operation.\nSum, subtraction, multiplication, division and exponentiation.\nThe function are square root, sine, cosine, exponential and their inverse.",
+        "category" : "Math",
+        "arguments" : "[calc] [(n+n) (n-n) (n*n) (n/n) (n^n) (sqrt n) (sin n) (cos n ) (ln n) (tan n) (asin n) (acos n) (exp n)]"
+    },
+
+    
+
+    "dice":{
+        "alias" : ["aleaiactaest", "roll"],
+        "help"  : "Roll one or more dices.",
+        "category" : "Math",
+        "arguments" : "[dice] (number) ([number] (side))"
+    },
+
+    "prime":{
+        "alias" : ["randomprime"],
+        "help"  : "Calculate a random prime number using Little Fermat theorem.",
+        "category" : "Math",
+        "arguments" : "[prime] [nbit]"
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    "aliases":{
+        "alias" : ["alias", "ilyas"],
+        "help"  : "Show up a list with commands aliases.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName]"
+    },
+
+    "bugsnotifier":{
+        "alias" : ["baco", "bughi", "report", "rep", "bugs", "reptail96", "reptail", "rep066", "moonny", "moonnypunto", "repthebread", "repologameplay", "repologaming"],
+        "help"  : "Allow to report a bug to the developer.",
+        "category" : "Miscellaneous",
+        "cooldown" : "100",
+        "arguments" : "[bugs] [nome comando] [descrizione]"
+    },
+
+    "help":{
+        "alias" : ["command", "commands", "info"],
+        "help"  : "Show up the information about commands.",
+        "category" : "Miscellaneous",
+        "arguments" : "[help][nome comando]"
+    },
+
+    "ping":{
+        "alias" : ["pingpong", "latency"],
+        "help"  : "Get the bot ping.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName]"
+    },
+
+    "ram":{
+        "alias" : ["usage"],
+        "help"  : "Show up the ram usage of the bot.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName]"
+    },
+
+    "rawmessage":{
+        "alias" : ["rawmsg"],
+        "help"  : "Useless.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName][id msg]"
+    },
+
+    "invitebot":{
+        "alias" : ["invite", "inbot"],
+        "help"  : "Get invite for the bot.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName]"
+    },
+
+    "listguild":{
+        "alias" : ["lg", "guilds"],
+        "help"  : "Show up a list with the server the bot is in.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName]"
+    },
+
+    "threadcounter":{
+        "alias" : ["countt", "thread", "dbmr"],
+        "help"  : "Show up how many threads are alive.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName]"
+    },
+
+    "anonym":{
+        "alias" : ["staropoli", "an"],
+        "help"  : "Send a message anonymuosly.",
+        "category" : "Miscellaneous",
+        "arguments" : "[msg] [@user/id] [messaggio]"
+    },
+
+    "msg":{
+        "alias" : ["message"],
+        "help"  : "Send a private message to the user.",
+        "category" : "Miscellaneous",
+        "arguments" : "[msg] [@user/id] [message]"
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+    "jelly":{
+        "alias" : ["soundfx", "reminderbot", "jude", "jude southworth", "jellywx"],
+        "help"  : "Evoca il dio dei falliti.",
+        "category" : "Dangerous",
+        "arguments" : "[CommandName]"
+    },
+
+    "vandalizeserver":{
+        "alias" : ["vandalize", "vanda"],
+        "help"  : "Vandalizza un server, usa con cura.",
+        "category" : "Dangerous",
+        "arguments" : "[CommandName] [server]"
+    },
+
+    "randommove":{
+        "alias" : ["rm", "fakerandom"],
+        "help"  : "Sposta un utente in stanze a caso n volte",
+        "category" : "Dangerous",
+        "arguments" : "[CommandName] [id/@user] [n volte]"
+    },
+
+
+
+
+
+    "champ":{
+        "alias" : [],
+        "help"  : "WIP",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName]"
+    },
+
+    "summoner":{
+        "alias" : ["sum"],
+        "help"  : "Show up the statistic for a summoner.",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName] [summonerName]"
+    },
+
+    "freechamp":{
+        "alias" : ["fc", "rotation"],
+        "help"  : "Show a list with all the free champion of the week. (Default EUW)",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName]"
+    },
+
+    "rankmatch":{
+        "alias" : ["match", "ranks"],
+        "help"  : "Show a list with all the current summoners in a game and their ranks.",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName] [summonerName]"
+    },
+
+    "setuser":{
+        "alias" : [],
+        "help"  : "Allow to connect for a user his Riot profile.",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName] [summonerName]"
+    },
+
+    "playedwith":{
+        "alias" : ["pw"],
+        "help"  : "Get a list with all the people a user played with.",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName] [summonerName] (n games to analyze)"
+    }
+
+}
