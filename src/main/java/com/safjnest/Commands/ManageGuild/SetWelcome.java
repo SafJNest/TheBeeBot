@@ -1,7 +1,7 @@
 package com.safjnest.Commands.ManageGuild;
 
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 
 import java.util.ArrayList;
 
@@ -14,9 +14,9 @@ import com.jagrosh.jdautilities.command.CommandEvent;
  * @since 1.3
  */
 public class SetWelcome extends Command {
-    private PostgreSQL sql;
+    private SQL sql;
 
-    public SetWelcome(PostgreSQL sql) {
+    public SetWelcome(SQL sql) {
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -51,12 +51,12 @@ public class SetWelcome extends Command {
         }
         String discordId = event.getGuild().getId();
         message = message.substring(message.indexOf("|")+1);
-        String query = "INSERT INTO welcome_message(discord_id, channel_id, message_text)"
-                            + "VALUES('" + discordId + "','" + channel +"','" + message + "');";
+        String query = "INSERT INTO welcome_message(discord_id, channel_id, message_text, bot_id)"
+                            + "VALUES('" + discordId + "','" + channel +"','" + message + "','"+event.getJDA().getSelfUser().getId()+"');";
         sql.runQuery(query);
         for(String role : roles){
-            query = "INSERT INTO welcome_roles(role_id, discord_id)"
-                            + "VALUES('" + role + "','" + discordId +"');";
+            query = "INSERT INTO welcome_roles(role_id, discord_id, bot_id)"
+                            + "VALUES('" + role + "','" + discordId + "','"+event.getJDA().getSelfUser().getId()+"');";
             sql.runQuery(query);
         }
         event.reply("All set correctly");

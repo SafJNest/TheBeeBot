@@ -3,7 +3,7 @@ package com.safjnest.Commands.ManageGuild;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.DateHandler;
-import com.safjnest.App;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.CommandsHandler;
 import java.awt.Color;
 
@@ -41,7 +41,9 @@ public class EmojiInfo extends Command {
             }
         }
         EmbedBuilder eb = new EmbedBuilder();
-        eb.setColor(Color.decode(App.color));
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+        ));
         eb.setTitle(":laughing: "+"**EMOJI INFO**"+" :laughing:");
         eb.setThumbnail(em.getImageUrl());
         eb.addField("**Name**", "```" + em.getName() + "```", true);   

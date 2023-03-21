@@ -8,16 +8,16 @@ import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.AwsS3;
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 
 
 
 public class DownloadSound extends Command{
     String path = "rsc" + File.separator + "SoundBoard" + File.separator;
-    PostgreSQL sql;
+    SQL sql;
     AwsS3 s3Client;
 
-    public DownloadSound(AwsS3 s3Client, PostgreSQL sql){
+    public DownloadSound(AwsS3 s3Client, SQL sql){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");

@@ -1,6 +1,5 @@
 package com.safjnest.Commands.Misc;
 
-
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsHandler;
@@ -12,7 +11,8 @@ import com.safjnest.Utilities.CommandsHandler;
  * 
  * @since 1.0
  */
-public class Ping extends Command{
+
+public class Ping extends Command {
 
     /**
      * Default constructor for the class.
@@ -24,6 +24,7 @@ public class Ping extends Command{
         this.cooldown = new CommandsHandler().getCooldown(this.name);
         this.category = new Category(new CommandsHandler().getString(this.name, "category"));
         this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.hidden = true;
     }
     /**
      * This method is called every time a member executes the command.
@@ -35,4 +36,5 @@ public class Ping extends Command{
             response.editMessageFormat("Pong: %d ms", System.currentTimeMillis() - time).queue();
         });
     }
+   
 }

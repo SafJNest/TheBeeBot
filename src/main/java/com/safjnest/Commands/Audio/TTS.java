@@ -8,13 +8,13 @@ import java.util.Set;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Utilities.tts.TTSHandler;
 import com.safjnest.Utilities.tts.Voices;
-import com.safjnest.App;
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PlayerManager;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
-import com.safjnest.Utilities.TTSHandler;
+import com.safjnest.Utilities.Audio.PlayerManager;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -30,12 +30,12 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 public class TTS extends Command{
     private String speech;
     private TTSHandler tts;
-    private PostgreSQL sql;
+    private SQL sql;
     private PlayerManager pm;
     
     public static final HashMap<String, Set<String>> voices = new HashMap<String, Set<String>>();
     
-    public TTS(TTSHandler tts, PostgreSQL sql){
+    public TTS(TTSHandler tts, SQL sql){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -70,6 +70,7 @@ public class TTS extends Command{
     protected void execute(CommandEvent event) {
         String language = "it-it";
         String voice = "keria";
+        String defaultVoice = "keria";
         MessageChannel channel = event.getChannel();
         EmbedBuilder eb = null;
 
@@ -100,24 +101,31 @@ public class TTS extends Command{
         File file = new File("rsc" + File.separator + "tts");
         if(!file.exists())
             file.mkdirs();
+        
+        //check if there is a defualt voice setted in user's guild
+        String query = "SELECT name_tts FROM tts_guilds WHERE discord_id = '" + event.getGuild().getId() + "';";
+        if(sql.getString(query, "name_tts") != null)
+            defaultVoice = sql.getString(query, "name_tts");
+        
+        //check if the user asked a tts with another voice pt Mia blablabla 
         for(String key : voices.keySet()){
             if(voices.get(key).contains(event.getArgs().split(" ")[0])){
                 language = key;
                 voice = event.getArgs().split(" ")[0];
             }
         }
-        String query = "SELECT name_tts FROM tts_guilds WHERE discord_id = '" + event.getGuild().getId() + "';";
         if(!voice.equals("keria")){
             speech = event.getArgs().substring(event.getArgs().indexOf(" "));
         }
-        else if(sql.getString(query, "name_tts") != null){
-            voice = sql.getString(query, "name_tts");
+        else if(!defaultVoice.equals("keria")){ //if true means there is a default voice setted so the user wants to use it
+            voice = defaultVoice;
             query = "SELECT language_tts FROM tts_guilds WHERE discord_id = '" + event.getGuild().getId() + "';"; 
             language = sql.getString(query, "language_tts");
             speech = event.getArgs();
         }
-        else{
-            voice = "Mia";  
+        else{ //means the user is unable to use the bot so @NeutronSun setted a default default voice of piece of shit like repolo
+            voice = "Not setted"; 
+            defaultVoice = voice; 
             speech = event.getArgs();
         }
         tts.makeSpeech(speech, event.getAuthor().getName(), voice, language);
@@ -169,9 +177,14 @@ public class TTS extends Command{
 
         eb.setDescription(event.getArgs());
         eb.addField("Language", language, true);
+        eb.addBlankField(true);
         eb.addField("Voice", voice, true);
+        eb.addField("Default voice", defaultVoice, true);
+        eb.addBlankField(true);
         String img = "tts.png";
-        eb.setColor(Color.decode(App.color));
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+        ));
             
 
         File path = new File("rsc" + File.separator + "img" + File.separator + img);

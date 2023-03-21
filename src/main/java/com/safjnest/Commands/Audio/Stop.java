@@ -2,8 +2,8 @@ package com.safjnest.Commands.Audio;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.AudioHandler;
 import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.Audio.AudioHandler;
 
 
 public class Stop extends Command {

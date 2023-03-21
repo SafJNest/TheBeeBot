@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 import com.jagrosh.jdautilities.command.CommandEvent;
 
 import net.dv8tion.jda.api.entities.Member;
@@ -18,8 +18,8 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
  */
 public class Move extends Command{
 
-    private PostgreSQL sql;
-    public Move(PostgreSQL sql){
+    private SQL sql;
+    public Move(SQL sql){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -75,28 +75,25 @@ public class Move extends Command{
             channel = event.getGuild().getVoiceChannelById(event.getMessage().getMentions().getMembers().get(1).getVoiceState().getChannel().getId());
         
         else{
-            String query = "SELECT room_id FROM rooms_nickname WHERE discord_id = '" + event.getGuild().getId() + "' AND room_name = '" + args[1] +"';";
-            String idRoom = (sql.getString(query, "room_id") == null) 
-                            ? "" 
-                            : sql.getString(query, "room_id");
-            if(idRoom.equals("")){
-                try {channel = event.getGuild().getVoiceChannelById(args[1]);} 
-                catch (Exception e) {
+            try {channel = event.getGuild().getVoiceChannelById(args[1]);} 
+            catch (Exception e) {
+                String query = "SELECT room_id FROM rooms_nickname WHERE discord_id = '" + event.getGuild().getId() + "' AND room_name = '" + args[1] +"';";
+                String idRoom = (sql.getString(query, "room_id") == null) 
+                                ? "" 
+                                : sql.getString(query, "room_id");
+                channel = (event.getGuild().getVoiceChannelById(idRoom) != null) 
+                            ? event.getGuild().getVoiceChannelById(idRoom)
+                            : null;
+                if(channel == null){
                     event.reply("Missing channel or not found.");
                     return;
-                }
-            }
-            channel = (event.getGuild().getVoiceChannelById(idRoom) != null) 
-                        ? event.getGuild().getVoiceChannelById(idRoom)
-                        : null;
-            if(channel == null){
-                event.reply("Missing channel or not found.");
-                return;
-            }else if(channel.getId().equals(event.getMember().getVoiceState().getChannel().getId())){
-                event.reply("You are already there.");
-                return;
+                }else if(channel.getId().equals(event.getMember().getVoiceState().getChannel().getId())){
+                    event.reply("You are already there.");
+                        return;
+                    }
             }
         }
+        
         if(theGuy == null){
             for(Member member : theGuys){
                 event.getGuild().moveVoiceMember(member, channel).queue();

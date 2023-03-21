@@ -7,8 +7,10 @@ import java.util.HashMap;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.App;
 import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.PermissionHandler;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Guild.GuildSettings;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 
@@ -23,13 +25,16 @@ public class Help extends Command {
     /**
      * Default constructor for the class.
      */
-    public Help() {
+
+    GuildSettings gs;
+    public Help(GuildSettings gs) {
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
         this.cooldown = new CommandsHandler().getCooldown(this.name);
         this.category = new Category(new CommandsHandler().getString(this.name, "category"));
         this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.gs = gs;
     }
     /**
      * This method is called every time a member executes the command.
@@ -41,7 +46,7 @@ public class Help extends Command {
         EmbedBuilder eb = new EmbedBuilder();
         HashMap<String, ArrayList<Command>> commands = new HashMap<>();
         for (Command e : event.getClient().getCommands()) {
-            if(!e.getCategory().getName().equals("Dangerous")){
+            if(!e.isHidden() || PermissionHandler.isUntouchable(event.getMember().getId())){
                 if(!commands.containsKey(e.getCategory().getName()))
                     commands.put(e.getCategory().getName(), new ArrayList<Command>());
                 commands.get(e.getCategory().getName()).add(e);
@@ -49,12 +54,14 @@ public class Help extends Command {
             }
         }
         eb.setTitle("📒INFO AND COMMAND📒", null);
-        eb.setDescription("Current prefix is: **"+event.getClient().getPrefix()+"**"
-        + ", you can get more information using: **"+event.getClient().getPrefix()+"help <nameCommand>.**");
-        eb.setColor(Color.decode(App.color));
+        eb.setDescription("Current prefix is: **" + gs.getServer(event.getGuild().getId()).getPrefix() + "**\n"
+        + "You can get more information using: **"+ gs.getServer(event.getGuild().getId()).getPrefix() +"help <nameCommand>.**");
+        eb.setColor(Color.decode(
+            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+        ));
         if(command.equals("")){
             String ss = "```\n";
-            for(String k : commands.keySet()){
+            for(String k : commands.keySet()){ 
                 for(Command c : commands.get(k)){
                     ss+= c.getName() + "\n";
                 }

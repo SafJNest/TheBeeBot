@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <script src="script.js"></script>
+    <title>SafJ</title>
+</head>
+<body>
+
+<div class="w3-sidebar w3-bar-block w3-card w3-animate-left" style="display:none" id="sidebar">
+  <button class="w3-bar-item w3-button w3-large" onclick="closeSidebar()">Close &times;</button>
+  <a href="index.html" class="w3-bar-item w3-button">HOME</a>
+  <a href="#" class="w3-bar-item w3-button">COMMANDS</a>
+  <a href="documents.html" class="w3-bar-item w3-button" onclick="backToDocuments()">DOCUMENTS</a>
+</div>
+<div id="main">
+
+  <div id="navBar" class="w3-teal">
+    <div style="display:flex">
+      <button id="openNav" class="w3-button w3-teal w3-xlarge" onclick="openSidebar()">&#9776;</button>
+      <div class="w3-container">
+        <h1 style="font-size:22pt;font-family: 'Indie Flower', cursive; padding-top: 5pt;">TheBeeBox</h1>
+      </div>
+    </div> 
+  </div>
+  
+  <div class="w3-container">
+    <div class="outside-command-container">
+      <div class="category-container">
+        <div class="commands-container">
+          <div class="command-container">
+            <div class="command-text">
+              
+            </div>
+            <div class="command-description">
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    <script>
+      loadAll();
+    </script>
+  </div>     
+</div>
+</body>
+</html>

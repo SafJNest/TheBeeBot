@@ -29,7 +29,7 @@
 
     "list":{
         "alias" : ["papyrus", "paper", "listoide"],
-        "help"  : "Display a list with all the sound in a server.\nUsing these arguments you can get:\nme = all the sounds you have uploaded.\nuser @user/IDuser = all the sounds a user has upload.\nglobal = all the sounds in the DB.",
+        "help"  : "Display a list with all the sound in a server.",
         "category" : "Audio",
         "arguments" : "[CommandName] | [me] | [user @user/IDuser] | [global]"
     },
@@ -152,6 +152,20 @@
         "arguments" : "[CommandName] [#canale] || [CommandName] [idCanale] "
     },
 
+    "setprefix":{
+        "alias" : ["prefix"],
+        "help"  : "Changes the prefix of the guild",
+        "category" : "Server Management",
+        "arguments" : "[CommandName] [new Prefix]"
+    },
+
+    "customembed":{
+        "alias" : ["embed"],
+        "help"  : "Writes a custom embed",
+        "category" : "Server Management",
+        "arguments" : "[CommandName] [a]"
+    },
+
 
 
 
@@ -225,6 +239,13 @@
         "arguments" : "[CommandName] (here = all the member in the voice channel will be moved) (channel id) | (me = you) (channel id) | (member) (channel id) | (member) (here = the user will be move where you are) | (member) (afk)." 
     },
 
+    "movechannel":{
+        "alias" : [],
+        "help"  : "Move all the members in a room to another on.\nIts possibile to move the members to a specific users",
+        "category" : "Member Management",
+        "arguments" : "only for slash command." 
+    },
+
     "modifynickname":{
         "alias" : ["modnick", "nick"],
         "help"  : "Change the nickname for a member.",
@@ -251,6 +272,13 @@
         "help"  : "Does several mathematical operation.\nSum, subtraction, multiplication, division and exponentiation.\nThe function are square root, sine, cosine, exponential and their inverse.",
         "category" : "Math",
         "arguments" : "[calc] [(n+n) (n-n) (n*n) (n/n) (n^n) (sqrt n) (sin n) (cos n ) (ln n) (tan n) (asin n) (acos n) (exp n)]"
+    },
+
+    "function":{
+        "alias" : ["c", "calculator","calculate"],
+        "help"  : "Does several mathematical operation.",
+        "category" : "Math",
+        "arguments" : "[calc] [(sqrt n) (sin n) (cos n ) (ln n) (tan n) (asin n) (acos n) (exp n)]"
     },
 
     
@@ -405,6 +433,13 @@
         "arguments" : "[CommandName]"
     },
 
+    "rune":{
+        "alias" : ["runes"],
+        "help"  : "Suggest the most played runes for a specific champion",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName] [champName] [lane]"
+    },
+
     "summoner":{
         "alias" : ["sum"],
         "help"  : "Show up the statistic for a summoner.",
@@ -420,21 +455,21 @@
     },
 
     "rankmatch":{
-        "alias" : ["match", "ranks"],
+        "alias" : ["ranks"],
         "help"  : "Show a list with all the current summoners in a game and their ranks.",
         "category" : "League Of Legends",
         "arguments" : "[CommandName] [summonerName]"
     },
 
-    "setuser":{
-        "alias" : [],
-        "help"  : "Allow to connect for a user his Riot profile.",
+    "setsummoner":{
+        "alias" : ["setsum", "setuser", "ss"],
+        "help"  : "Allow to connect a riot account to your discord profile.",
         "category" : "League Of Legends",
         "arguments" : "[CommandName] [summonerName]"
     },
 
-    "playedwith":{
-        "alias" : ["pw"],
+    "lastmatches":{
+        "alias" : ["pw", "match"],
         "help"  : "Get a list with all the people a user played with.",
         "category" : "League Of Legends",
         "arguments" : "[CommandName] [summonerName] (n games to analyze)"

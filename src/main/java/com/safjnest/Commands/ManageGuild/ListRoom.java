@@ -1,7 +1,7 @@
 package com.safjnest.Commands.ManageGuild;
 
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 
 import java.util.ArrayList;
 
@@ -14,9 +14,9 @@ import com.jagrosh.jdautilities.command.CommandEvent;
  * @since 1.3
  */
 public class ListRoom extends Command {
-    private PostgreSQL sql;
+    private SQL sql;
 
-    public ListRoom(PostgreSQL sql) {
+    public ListRoom(SQL sql) {
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -34,7 +34,11 @@ public class ListRoom extends Command {
         ArrayList<String> roomName= sql.getListString(query, "room_name");
         String rooms = "";
         for(int i = 0; i < roomName.size(); i++){
-            rooms+=event.getGuild().getVoiceChannelById(roomId.get(i)).getName() + " = " + roomName.get(i) + "\n";
+            try {
+                rooms+=event.getGuild().getVoiceChannelById(roomId.get(i)).getName() + " = " + roomName.get(i) + "\n";
+            } catch (Exception e) {
+                rooms+= "error with " + roomName.get(i) + " (The channel might have been deleted)\n";
+            }
         }
         
         event.reply(rooms);

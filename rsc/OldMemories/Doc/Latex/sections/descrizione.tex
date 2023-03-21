@@ -1,0 +1,104 @@
+\newpage
+
+%\titleformat{<command>}[<shape>]{<format>}{<label>}{<sep>}{<before-code>}[<after-code>]
+
+%\thispagestyle{empty}
+\newpage
+\section{Descrizione Progetto\label{section:index}}
+Il progetto è finalizzato alla creazione di un bot di discord per la gestione dei vari server e altre funzioni di svago.
+Sarà in oltre presente una pagina web che spiega il funzionamento del bot, descrive i comandi e, in oltre, lo status del bot stesso (online, offline, manutenzione.
+Il bot sarà in grado di bannare, espellere, inviare inviti, mutare gli utenti solo se in possesso dei ruoli necessari. Sarà in oltre possibile riprodurre della musica da Youtube tramite dei link, che sarà riprodotta dal bot stesso, o di caricare dei file mp3 personalizzati in un database per poi essere riprodotti dal bot.
+
+\subsection{Ambito}
+\subsubsection{Obiettivi \label{subsection:goals}}
+\begin{itemize}
+    \item Moderare i server.
+    \item Riprodurre musica, sia da Youtube che file MP3.
+    \item Possibilità di caricare dei suoni tramite la chat.
+    \item Progettare una pagine web per descrivere il bot.
+\end{itemize}
+
+
+\subsection{Necessità e benefici}
+Il progetto mira ad offrire un semplice bot per la gestione e riproduzione di musica in quanto attualmente gran parte dei bot sono stati disabilitati e, quelli attivi, non offrono entrambi i servizi
+Inoltre, i vari bot per la gestione e moderazione dei server richiedono un supporto tramite patreon o altri servizi mentre il BeeBot sarà gratuito e sono altamente complessi da utilizzare e poco pratici.
+Lo stesso vale per i bot musicali che, per esempio, dopo 7 suoni caricati richiedono un ulteriore pagamento.
+
+\newpage
+\subsection{Requisiti\label{subsection:req}}
+
+\subsubsection{Requisiti funzionali}
+I requisiti funzionali sono quei requisiti che specificano il comportamento che il prodotto dovrà avere, le sue funzioni.
+    \begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| } 
+     \hline 
+     \textbf{ID} & \textbf{Descrizione}  \\ [0.5ex] 
+     \hline\hline
+     A1 & Sviluppare tutti i comandi che consentono la moderazione\\
+      \hline
+     A2 & Sviluppare i comandi che consentono la riproduzione di suoni\\
+     \hline
+     A3 & Implementare un database per memorizzare i suoni\\
+     \hline
+     A4 & La descrizione dei comandi sia sul sito che sul bot\\
+     & dovrà essere coerente, usare un file json\\
+     \hline
+    \end{tabular}
+    \end{center}
+    \caption{Requisiti funzionli}
+    \label{req}
+    \end{table}
+    
+\subsubsection{Requisiti non funzionali}
+I requisiti non funzionali che spiegano e specificano il dominio in cui il prodotto dovrà funzionare.
+    \begin{table}[h!]
+    \begin{center}
+    \begin{tabular}{ |c|c| } 
+     \hline 
+     \textbf{ID} & \textbf{Descrizione}  \\ [0.5ex] 
+     \hline\hline
+     B1 & Il sito di hosting del bot dovrà essere funzionante 24h/24h\\
+      \hline
+     B2 & Il sito di hosting dovrà essere in grado di\\
+     & supportare tutte le richieste del bot\\
+     \hline
+     B3 & La latenza del bot dovrà essere minima\\
+     \hline
+     B4 & La riproduzione dei suoni dovrà essere istantanea\\
+     \hline
+     B5 & Il bot dovrà funzionare correttamente anche se\\
+     & presente in server diversi\\
+     \hline
+    \end{tabular}
+    \end{center}
+    \caption{Requisiti non funzionali}
+    \label{req}
+    \end{table}
+    
+%\subsubsection{Fuori Ambito}
+\newpage 
+\subsection{Output del progetto}
+\begin{table}[!h]
+    \begin{center}
+    \begin{tabular}{ |c|c| } 
+     \hline
+     \textbf{Prodotto} & \textbf{Deliverable}  \\ [0.5ex] 
+     \hline\hline
+     BeeBot & Repository github con il codice del bot.\\
+            & Link di Discord per invitare il bot\\
+    \hline
+     Pagina Web & Pagina Web con descrizione del bot.\\
+      \hline
+    \end{tabular}
+    \end{center}
+    \caption{Project output}
+    \label{req}
+\end{table}
+
+
+\subsection{Vincoli}
+\subsubsection{Tempo}
+la scadenza è il 08.06.2022
+\subsubsection{Costo}
+2\$

@@ -1,7 +1,7 @@
 package com.safjnest.Commands.ManageGuild;
 
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
@@ -12,9 +12,9 @@ import com.jagrosh.jdautilities.command.CommandEvent;
  * @since 1.3
  */
 public class SetRoom extends Command {
-    private PostgreSQL sql;
+    private SQL sql;
 
-    public SetRoom(PostgreSQL sql) {
+    public SetRoom(SQL sql) {
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");

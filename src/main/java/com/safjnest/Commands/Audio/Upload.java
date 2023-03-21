@@ -11,7 +11,7 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.AwsS3;
 import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -28,9 +28,9 @@ import net.dv8tion.jda.api.utils.FileProxy;
 public class Upload extends Command{
     private AwsS3 s3Client;
     private String fileName;
-    private PostgreSQL sql;
+    private SQL sql;
     
-    public Upload(AwsS3 s3Client, PostgreSQL sql){
+    public Upload(AwsS3 s3Client, SQL sql){
         this.name = this.getClass().getSimpleName();;
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -64,9 +64,9 @@ class FileListener extends ListenerAdapter {
     private CommandEvent event;
     private MessageChannel channel;
     private float maxFileSize = 1049000; //in bytes
-    private PostgreSQL sql;
+    private SQL sql;
 
-    public FileListener(CommandEvent event, String name, MessageChannel channel, AmazonS3 s3Client, PostgreSQL sql){
+    public FileListener(CommandEvent event, String name, MessageChannel channel, AmazonS3 s3Client, SQL sql){
         this.name = name;
         this.s3Client = s3Client;
         this.event = event;
@@ -93,17 +93,13 @@ class FileListener extends ListenerAdapter {
             return;
         }
 
-        String query = "SELECT id FROM sound WHERE name = '" + name + "' AND user_id = '" + event.getAuthor().getId() + "'";
-        
-        
-        query = "INSERT INTO sound(name, guild_id, user_id, extension) VALUES('" 
-                     + name + "','" + event.getGuild().getId() + "','" + event.getAuthor().getId() + "','" + attachment.getFileExtension() + "')"
-                     + " RETURNING id;";
-
+        String query = "INSERT INTO sound(name, guild_id, user_id, extension) VALUES('" 
+                     + name + "','" + event.getGuild().getId() + "','" + event.getAuthor().getId() + "','" + attachment.getFileExtension() + "');";
+        sql.runQuery(query);
+        query = "SELECT id FROM sound WHERE name = '" + name + "' AND guild_id = '" + event.getGuild().getId() + "' AND user_id = '" + event.getAuthor().getId() + "';";
         String id = sql.getString(query, "id");
-
-        if(id.equals(null)){
-            event.reply("An error with the PostgreSQL database occured");
+        if(id == null){
+            event.reply("An error with the SQL database occured");
             e.getJDA().removeEventListener(this);
             return;
         }

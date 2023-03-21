@@ -1,11 +1,12 @@
 package com.safjnest.Commands.ManageGuild;
 
 import java.awt.Color;
+import java.time.ZoneId;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.DateHandler;
-import com.safjnest.App;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.CommandsHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -41,7 +42,9 @@ public class ChannelInfo extends Command {
         
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("**CHANNEL INFO**");
-        eb.setColor(Color.decode(App.color));
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+        ));
         if(gc.getType().isAudio()){
             v = event.getGuild().getVoiceChannelById(event.getArgs());
             eb.addField("Channel name", "```" + v.getName() + "```", true);   
@@ -59,7 +62,8 @@ public class ChannelInfo extends Command {
             eb.addField("Type", "```" + v.getType()+ "```", true);   
             eb.addField("Category", "```" + v.getParentCategory().getName() + "```", true);   
 
-            eb.addField("Created", "```" + DateHandler.formatDate(v.getTimeCreated())+ "```", false);
+            event.reply(ZoneId.getAvailableZoneIds().toString());
+            eb.addField("Created", "```" + v.getTimeCreated().atZoneSimilarLocal(ZoneId.of("Europe/Rome")) + " | " + DateHandler.formatDate(v.getTimeCreated())+ "```", false);
         }else{
             c = event.getGuild().getTextChannelById(gc.getId());
             eb.addField("Channel name", "```" + c.getName() + "```", true);   
@@ -71,8 +75,8 @@ public class ChannelInfo extends Command {
                             :c.getTopic()) 
                        + "```", false); 
 
-            eb.addField("Type", "```" + c.getType()+ "```", true);   
-            eb.addField("Category", "```" + c.getParentCategory().getName() + "```", true);   
+            eb.addField("Type", "```" + c.getType() + "```", true);
+            eb.addField("Category", "```" + c.getParentCategory().getName() + "```", true);
 
             eb.addField("Channel created on", "```" + DateHandler.formatDate(c.getTimeCreated()) + "```", false);
         } 

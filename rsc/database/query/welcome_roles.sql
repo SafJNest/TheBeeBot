@@ -1,10 +1,8 @@
-CREATE TABLE IF NOT EXISTS welcome_message (
-   discord_id char(18) PRIMARY KEY,
-   channel_id char(18),
-   message_text varchar(1024)
+CREATE TABLE welcome_roles(
+   role_id    VARCHAR(18) NOT NULL PRIMARY KEY,
+   discord_id   VARCHAR(18) NOT NULL,
+   bot_id       VARCHAR(19) NOT NULL
 );
-
-
 
 
 

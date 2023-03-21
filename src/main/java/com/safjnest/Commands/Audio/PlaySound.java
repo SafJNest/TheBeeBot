@@ -8,13 +8,13 @@ import java.util.ArrayList;
 import com.amazonaws.services.s3.model.S3Object;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.App;
 import com.safjnest.Utilities.AwsS3;
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PlayerManager;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
-import com.safjnest.Utilities.SoundBoard;
+import com.safjnest.Utilities.Audio.PlayerManager;
+import com.safjnest.Utilities.Audio.SoundBoard;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -28,14 +28,14 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 
 public class PlaySound extends Command{
-    PostgreSQL sql;
+    SQL sql;
     AwsS3 s3Client;
     String path = "rsc" + File.separator + "SoundBoard"+ File.separator;
     String fileName;
     PlayerManager pm;
 
 
-    public PlaySound(AwsS3 s3Client, PostgreSQL sql){
+    public PlaySound(AwsS3 s3Client, SQL sql){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -154,15 +154,14 @@ public class PlaySound extends Command{
         else{
             query = "UPDATE play SET times = times + 1 WHERE id_sound = (" + id + ") AND user_id = '" + event.getAuthor().getId() + "';";
         }
-        
         sql.runQuery(query);
-        query = "SELECT SUM(times) FROM PLAY where id_sound='" + id + "';";
+        
+        query = "SELECT SUM(times) as sum FROM play where id_sound='" + id + "';";
         String timesPlayed = sql.getString(query, "sum");
-        query = "SELECT times FROM PLAY where id_sound='" + id + "' AND user_id='"+event.getAuthor().getId()+"';";
+        query = "SELECT times FROM play where id_sound='" + id + "' AND user_id='"+event.getAuthor().getId()+"';";
         String timesPlayedByUser = sql.getString(query, "times");
         
         EmbedBuilder eb = new EmbedBuilder();
-
         eb.setAuthor(event.getAuthor().getName(), "https://github.com/SafJNest", event.getAuthor().getAvatarUrl());
 
         eb.setTitle("Playing now:");
@@ -183,14 +182,16 @@ public class PlaySound extends Command{
 
         eb.addField("Played", "```" + timesPlayed + (timesPlayed.equals("1") ? " time" : " times") + " (yours: "+timesPlayedByUser+")```", true);
 
-        String img = "idk";
+        String img = event.getJDA().getSelfUser().getId() + "-";
         if(extension.equals("opus"))
-            img = "opus.png";
+            img += "opus.png";
         
         else
-            img = "mp3.png"; 
+            img += "mp3.png"; 
            
-        eb.setColor(Color.decode(App.color));
+        eb.setColor(Color.decode(
+            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+        ));
         eb.setFooter("*This is not SoundFx, this is much worse. cit. steve jobs (probably)", null); //Questo non e' SoundFx, questa e' perfezione cit. steve jobs (probabilmente)
             
         File imgFile = new File("rsc" + File.separator + "img" + File.separator + img);

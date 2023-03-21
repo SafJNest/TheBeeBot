@@ -8,10 +8,11 @@ import net.dv8tion.jda.api.entities.Guild;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.DateHandler;
-import com.safjnest.App;
 import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.PermissionHandler;
 import com.safjnest.Utilities.SafJNest;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 
@@ -50,7 +51,9 @@ public class ServerInfo extends Command{
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle(":desktop: **SERVER INFORMATION** :desktop:");
         eb.setThumbnail(guild.getIconUrl());
-        eb.setColor(Color.decode(App.color));
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+        ));
 
         eb.addField("Server name", "```" 
                     + guild.getName() 
@@ -91,6 +94,13 @@ public class ServerInfo extends Command{
                         ? "NONE"
                         : guild.getBoostRole().getName())
                     + "```", true);
+        String query = "SELECT message_text FROM welcome_message WHERE discord_id = '" + event.getGuild().getId() + "';"; 
+        
+                    eb.addField("Welcome Message", "```" 
+                    + ((DatabaseHandler.getSql().getString(query, "message_text") == null)
+                        ? "There isn't a welcome message setted for this guild, use /help setwelcome for more information"
+                        : DatabaseHandler.getSql().getString(query, "message_text"))
+                    +  "```", true);
 
         eb.addField("Categories and channel [" + guild.getChannels().size() + "]", "```" 
                     +    "Categories: " + guild.getCategories().size() 

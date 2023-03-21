@@ -3,9 +3,9 @@ package com.safjnest.Commands.ManageMembers;
 import java.awt.Color;
 
 import com.jagrosh.jdautilities.command.Command;
-import com.safjnest.App;
 import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.PermissionHandler;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.jagrosh.jdautilities.command.CommandEvent;
 
 import net.dv8tion.jda.api.Permission;
@@ -39,7 +39,9 @@ public class Unban extends Command{
                 eb.setTitle("List of banned users");
                 for (net.dv8tion.jda.api.entities.Guild.Ban ban : event.getGuild().retrieveBanList().complete())
                     eb.appendDescription(ban.getUser().getAsMention() + " - ");
-                eb.setColor(Color.decode(App.color));
+                    eb.setColor(Color.decode(
+                        BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+                ));
                 eb.setAuthor(event.getSelfUser().getName(), "https://github.com/SafJNest",event.getSelfUser().getAvatarUrl());
                 eb.setFooter("*This is not SoundFx, this is much worse cit. steve jobs (probably)", null);
                 event.reply(eb.build());

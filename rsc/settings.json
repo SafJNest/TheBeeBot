@@ -1,0 +1,88 @@
+{
+    "settings": {
+
+        "AmazonAWS":{
+            "AWSAccesKey": "secret",
+            "AWSSecretKey": "secret",
+            "AWSbucketName": "secret"
+        },
+
+        "PostgreSQL": {
+            "HostName": "secret",
+            "database": "secret",
+            "user": "secret",
+            "password": "secret"
+        },
+
+        "MySQL": {
+            "HostName": "secret",
+            "database": "secret",
+            "user": "secret",
+            "password": "secret@"
+        },
+
+        "youtubeApiKey": "secret",
+        "ttsApiKey": "secret",
+        "riotKey": "secret"
+    },
+
+    "beebot": {
+
+        "discordToken": "secret",
+        "embedColor": "#ffc400",
+        "prefix": "!",
+        "activity": "Precisely, outplaying other bots with slash command. Fired up and ready to serve! | /help or {0}help |",
+        "ownerID": "secret",
+        "helpWord": "helpme",
+        "maxPrime":"2048",
+        "info":"[MAIN] INFO The beast is turning on! As long as it takes."
+    },
+
+    "canary": {
+
+        "discordToken": "secret",
+        "embedColor": "#f98b30",
+        "prefix": "$",
+        "activity": "Testing the most incredible features that jelly could have never thought about bc is a piece of shit :D. | /help or {0}help |",
+        "ownerID": "secret",
+        "helpWord": "helpme",
+        "maxPrime": "2048",
+        "info":"[MAIN] INFO Canary is turning on to implements extreme features!"
+    },
+
+    "beebot 2": {
+
+        "discordToken": "secret",
+        "embedColor": "#0f0ff5",
+        "prefix": "%",
+        "activity": "Beebot's little brother | p help",
+        "ownerID": "secret",
+        "helpWord": "helpme",
+        "maxPrime": "11700",
+        "info":"[MAIN] INFO Beebot 2 is turning on to help the elder brother in case he dies!"
+    },
+
+    "beebot 3": {
+        
+        "discordToken": "secret",
+        "embedColor": "#11ff00",
+        "prefix": "#",
+        "activity": "The Beebot but with slash command, and green | p help",
+        "ownerID": "secret",
+        "helpWord": "helpme",
+        "maxPrime": "2048",
+        "info":"[MAIN] INFO Beebot 2 is turning on to help the elder brother in case he dies!"
+    },
+
+    "beebot music": {
+
+        "discordToken": "secret",
+        "embedColor": "#ff0000",
+        "prefix": "!",
+        "activity": "The Beebot but only for youtube fucking piece of shit give us the old beeby | p help",
+        "ownerID": "secret",
+        "helpWord": "helpme",
+        "maxPrime": "2048",
+        "info":"[MAIN] INFO Beebot music is turning on to let leon listen to dravon 1v9"
+    }
+}

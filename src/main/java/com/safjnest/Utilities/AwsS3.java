@@ -20,21 +20,47 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 
 import org.apache.commons.io.FileUtils;
 
-public class AwsS3 {
-    private AWSCredentials credentials;
-    private String bucket;
-    private AmazonS3 s3Client;
-    private PostgreSQL sql;
 
-    public AwsS3(AWSCredentials credentials, String bucket, PostgreSQL sql) {
+/**
+ * Class that provides the connection between Beebot and Amazon database.
+ * <p>There are just stored all the custom sound.</p>
+ * @see com.safjnest.Commands.Audio.PlaySound PlaySound
+ * @since 1.3
+ * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
+ * @author <a href="https://github.com/Leon412">Leon412</a>
+ */
+public class AwsS3 {
+    /**Credentials to connect into the database. Such as {@code Secret key} and {@code Access Key} */
+    private AWSCredentials credentials;
+    /**Name of the bucket */
+    private String bucket;
+    /**The effective client that provides the connection */
+    private AmazonS3 s3Client;
+    /**Object that provides the connection with the {@code PostgreSQL} database. 
+     * @see com.safjnest.Utilities.SQL PostgreSQL  
+     */
+    private SQL sql;
+
+    /**
+     * Default constructor
+     * @param credentials
+     * @param bucket
+     * @param sql
+     */
+    public AwsS3(AWSCredentials credentials, String bucket, SQL sql) {
         this.credentials = credentials;
         this.bucket = bucket;
         this.sql = sql;
     }
     
+    /**
+     * Initialize the {@link AwsS3#s3Client s3Client} and try to connect to the database.
+     * <p>If something goes wrong will be thrown an exception and the bot won't start up.
+     */
     public void initialize() {
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setSignerOverride("AWSS3V4SignerType");
@@ -195,6 +221,20 @@ public class AwsS3 {
     }
 
     public S3Object downloadFile(String path, String fileName, CommandEvent event) {
+        try {
+            S3Object fullObject = s3Client.getObject(
+                new GetObjectRequest(bucket, fileName));
+            S3ObjectInputStream s3is = fullObject.getObjectContent();
+            FileUtils.copyInputStreamToFile(s3is, new File(path + fileName + "." + fullObject.getObjectMetadata().getUserMetaDataOf("format")));
+            s3is.close();
+            return fullObject;
+        } catch (AmazonClientException | IOException exception) {
+            exception.printStackTrace();
+            return null;
+        }
+    }
+
+    public S3Object downloadFile(String path, String fileName, SlashCommandEvent event) {
         try {
             S3Object fullObject = s3Client.getObject(
                 new GetObjectRequest(bucket, fileName));

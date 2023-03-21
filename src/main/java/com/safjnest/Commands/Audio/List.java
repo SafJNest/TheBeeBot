@@ -8,7 +8,7 @@ import java.util.TreeMap;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsHandler;
-import com.safjnest.Utilities.PostgreSQL;
+import com.safjnest.Utilities.SQL;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -20,9 +20,9 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
  * @since 1.1
  */
 public class List extends Command{
-    private PostgreSQL sql;
+    private SQL sql;
 
-    public List(PostgreSQL sql){
+    public List(SQL sql){
         this.name = this.getClass().getSimpleName();;
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -38,35 +38,35 @@ public class List extends Command{
         Button keria2 = Button.primary("idOrder", "ID Order");
         Button keria3 = Button.primary("mostPlayed", "Most played");
         Button keria4 = Button.primary("byUser", "Yours");
-        Button keria5 = Button.primary("global", "Global");
         MessageCreateBuilder message = new MessageCreateBuilder();
         message.setContent(getListLexo(event.getJDA(), sql, event.getGuild().getId()));
-        message.addActionRow(keria1, keria2, keria3, keria4, keria5);
+        message.addActionRow(keria1, keria2, keria3, keria4);
         event.reply(message.build());
     }
-
-    public static String getListLexo(JDA jda, PostgreSQL sql, String serverId){
-        String query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE guild_id = '" + serverId + "';";
+    /*
+     * 0 id
+     * 1 name
+     * 2 guild
+     * 3 user id
+     * 4 extension
+     */
+    public static String getListLexo(JDA jda, SQL sql, String serverId){
+        String query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE guild_id = '" + serverId + "' ORDER BY name ASC;";
         return getSoundsName(jda, getMap(sql.getTuple(query, 5)));
     }
 
-    public static String getListUser(JDA jda, PostgreSQL sql, String userId){
-        String query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE user_id = '" + userId + "';";
+    public static String getListUser(JDA jda, SQL sql, String userId){
+        String query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE user_id = '" + userId + "' ORDER BY name ASC;";
         return getSoundsName(jda, getMap(sql.getTuple(query, 5)));
     }
     
-    public static String getListGlobal(JDA jda, PostgreSQL sql){
-        String query = "SELECT id, name, guild_id, user_id, extension FROM sound;";
-        return getSoundsName(jda, getMap(sql.getTuple(query, 5)));
-    }
-
-    public static String getListMostPlayed(JDA jda, PostgreSQL sql){
-        String query = "SELECT sound.id, sound.name, sound.guild_id, sound.user_id, SUM(times) FROM sound join play on sound.id=play.id_sound GROUP BY sound.id ORDER BY SUM(times)DESC;";
+    public static String getListMostPlayed(JDA jda, SQL sql, String serverId){
+        String query = "SELECT sound.id, sound.name, sound.guild_id, sound.user_id, SUM(times) FROM sound join play on sound.id=play.id_sound WHERE sound.guild_id = '" + serverId + "'GROUP BY sound.id ORDER BY SUM(times)DESC;";
         return getSoundsName(jda, getMapTimes(sql.getTuple(query, 5)));
     }  
     
-    public static String getListId(JDA jda, PostgreSQL sql){
-        String query = "SELECT id, name, guild_id, user_id, extension FROM sound ORDER BY id;";
+    public static String getListId(JDA jda, SQL sql, String serverId){
+        String query = "SELECT id, name, guild_id, user_id, extension FROM sound where guild_id = '" + serverId + "'ORDER BY id;";
         return getSoundsName(jda, getMapId(sql.getTuple(query, 5)));
     } 
 
