@@ -2,69 +2,54 @@
 
 ![ffewfe](/rsc/img/logo.png)
 
-## ***Panoramica (≧ڡ≦*)***
-Semplice bot di Discord che si occupa di fare tutto ciò che gli admin vogliono fargli fare.
-Consente di riprodurre canzone, amministara i vari membri e tanto altro ancora ;D.
-- Server Discord del BeeBox: https://discord.gg/S2rpYbJ
-- Prefix: ***%***
-- Versione 1.3
-## ***Comandi***
+## ***Overview (≧ڡ≦*)***
+This Discord bot is designed to enhance your server experience by providing a range of features, including music playback, custom sound uploading, server management commands, server stats tracking, and commands for the popular game League of Legends. ;D.
+##
+In addition, the developers have also created two additional bots, Beebot 2 and Beebot Music, to provide even more versatility. Beebot 2 is identical to Beebot, allowing users to utilize multiple bots on the same server, while Beebot Music is a lightweight version that only includes the music commands. These additional bots provide users with more options to customize their Discord server and tailor the bot's functionality to their specific needs.
 
-#### ***Non richiedono alcun permesso***
-- PING --> Restituisce il ping del bot.
-- CONNECT -- > Il bot si collega al canale.
-- DISCONNECT --> Il bot si disconnette dal canale.
-- PLAY --> [play][link/nome file]| Il bot si connette al canale e riproduce la canzone o il suono richiesto.
-- LIST --> Il bot restituisce l'elenco di tutti i suoni presenti nel bot.
-- BUGS --> [bugs][nomeCommando][Descrizione bugs]| Il bot invierà ai due dei il messaggio contentente la segnalazione dell'errore.
-- MSG --> [msg][idUser][message]| Il bot invierà all'utente desiderato il messaggio richiesto.
-- RAM --> Il bot restituisce le sue statistiche della ram in uso, libera e totale.
-- HELP --> Restituisce la descrizione di tutti i comandi.
-- ALIASES --> Restituisce gli aliases di tutti i comandi.
-- SERVERINFO --> Restituisce le informazioni del server.
+## *Invite and Information*
 
-#### ***Richiedono permessi speciali***
-- CLEAR--> [clear][nMessaggi]| Il bot cancellerà nMessaggi(max 100) nel canale in cui il comando è stato chiamato
-- KICK --> [kick][@user/userId]| Il bot espellerrà dal server l'utente desiderato.
-- BAN --> [ban][@user/userId]| Il bot bannerrà dal server l'utente desiderato.
-- MUTE --> [mute][@user/userId]| Il bot muterà(vocalmente) l'utente desiderato.
-- UNMUTE --> [unmute][@user/userId]| Il bot smuterà(vocalmente) l'utente desiderato.
-- UNBAN --> [unban][@user/userId]| Il bot sbannerà l'utente desiderato.
+**Beebot**
 
-#### ***Comandi troll***
-- BIGHI --> [bighi][nBits]| Il bot ti restituisce un numero casuale a n bit, se maggiore di 2000 caratteri sarà inviato un file.
-- PRIME--> [prime][nBits]| Il bot ti restituisce un numero casuale *primo* a n bit, se maggiore di 2000 caratteri sarà inviato un file.
-- DAC--> [dac][numero]| Il bot ti restituisce quante cifre ha il numero richiesto.
-- FASTESTROOT--> [fastestroot][numero]| Il bot ti restituisce il risultato della radice inversa del numero richiesto utilizzando la famosa formula della [radice inversa veloce](https://it.wikipedia.org/wiki/Radice_quadrata_inversa_veloce)
+- Prefix:  https://discord.com/oauth2/authorize?client_id=938487470339801169&scope=bot
 
+- Prefix: *!*
 
-## ***Aliases***
-- PING --> PONG - PINGPONG
-- CONNECT -- > JOIN
-- DISCONNECT --> BYE
-- PLAY --> P
-- LIST --> LISTA
-- BUGS --> REPORT - REP
-- MSG --> MESSAGGIO - MESSAGE
-- CLEAR--> CANCELLA
-- KICK --> ESPULSIONE
-- BAN --> DESTROY
-- UNBAN --> PARDON - SBAN
-- MUTE --> //
-- UNMUTE --> //
-- BIGHI --> RANDOM
-- PRIME--> RANDOMPRIME
-- DAC--> DIVIDEANDCONQUER
-- FASTESTROOT--> RADICEINVERSA - FISQRT
-- RAM --> USAGE
-- HELP --> COMMAND - COMMANDS - INFO
-- ALIASES --> ALIAS
+**Beebot 2**
 
-# ***Ulteriori informazioni***
+- Prefix:  https://discord.com/oauth2/authorize?client_id=983315338886279229&scope=bot
+
+- Prefix: *%*
+
+**Beebot Music**
+
+- Prefix:  https://discord.com/oauth2/authorize?client_id=1074276395640954942&scope=bot
+
+- Prefix: *!*
+
+## ***Functionality***
+
+### **Music Playback**
+The bot comes with a built-in music player that allows you to play songs directly in your voice channel. You can use commands to search for songs on YouTube or SoundCloud, add them to a playlist, skip tracks, adjust volume, and more. You can even queue up multiple playlists for uninterrupted listening sessions.
+
+### **Custom Sound Uploading**
+In addition to the built-in music player, the bot also lets you upload your own custom sounds to use in your server. You can use this feature to add unique sound effects, music clips, or voice lines that are specific to your server or community.
+
+### **Server Management Commands**
+The bot includes several server management commands that allow you to manage your server more easily. You can use commands to create custom roles, ban or kick users, clear channels, set up auto-moderation, and more.
+
+### **Server Stats Tracking**
+The bot also provides several server stats tracking features, such as user activity tracking, channel usage stats, and more. You can use these stats to gain insights into how your server is being used and make informed decisions about how to improve it.
+
+### **League of Legends Commands**
+Finally, the bot includes several commands related to the popular game League of Legends. You can use these commands to get information about summoner stats, match history, item builds, and more. This feature is particularly useful if you have a gaming community that plays League of Legends and wants to stay up-to-date with the latest information.
+
+# ***Other Information***
 ## ***Build with***
 - Java version 17
-- JDA 5.0.0-Alpha.5
-- JDA Chewtils 2.0-SnapShot
+
+## ***Hosted by***
+- PebbleHost
 
 ## ***Maven***
 ### ***JDA***
@@ -77,7 +62,7 @@ Consente di riprodurre canzone, amministara i vari membri e tanto altro ancora ;
 <dependency>
       <groupId>net.dv8tion</groupId>
       <artifactId>JDA</artifactId>
-      <version>5.0.0-alpha.5</version>
+      <version>5.0.0-beta.6</version>
 </dependency>
 ```
 ### ***JDA CHEWTILS***
@@ -97,49 +82,57 @@ Consente di riprodurre canzone, amministara i vari membri e tanto altro ancora ;
 ```
 ### ***LAVAPLAYER***
 ```xml
+ <dependency>
+      <groupId>com.sedmelluq</groupId>
+      <artifactId>lavaplayer</artifactId>
+      <version>1.3.78</version>
+    </dependency>
+```
+### ***SQL***
+```xml
 <dependency>
-      <groupId>pw.chew</groupId>
-      <artifactId>jda-chewtils</artifactId>
-      <version>2.0-SNAPSHOT</version>
-      <scope>compile</scope>
-      <type>pom</type>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <version>42.5.4</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+  <groupId>mysql</groupId>
+  <artifactId>mysql-connector-java</artifactId>
+  <version>8.0.32</version>
 </dependency>
 ```
-## **Bugs da correggere e Features**
-***(DD/MM/YY)***
-### ***Bugs***
-- [x] Connect e Disconnect bugs in caso l'utente non sia in una stanza vocale. -- > 09/02/22
-- [x] Play bugs in caso non gli sia dato nessun link o nome del file da cercare. -- > 09/02/22
-- [x] Clear bugs in caso di mancato numero di messaggi da eliminare o non ce ne siano -- > 09/02/22
-- [ ] Ban,kick e mute bugs nel caso in cui il bot abbia un ruolo inferiore all'utente che sarà bannato,kickato o mutato.
-- [ ] Il comando play ha così tanti bugs che non saprei da dove iniziare ad elencarli.
-### ***Features***
-- [x] Aggiungere la possibilità di riprodurre suoni in locale(.mp3/ .opus) -> 08/02/22
-- [x] Aggiungere la possibilità di stampare gli utenti bannati. -> 08/02/22
-- [ ] Il comando list fa schifo.
-- [ ] Mancano i suoni quindi il comando list fa schifo.
-- [ ] Aggiungere i log di sistema.
-- [ ] Possibiltà di caricare i suoni tramite comando (Upload).
-- [ ] Aggiungere la coda al comando Play.
-- [ ] Aggiungre comando Stop and Resume.
-## **Licenza**
+
+### ***League Of Legends API***
+```xml
+<dependency>
+  <groupId>com.github.stelar7</groupId>
+  <artifactId>R4J</artifactId>
+  <version>2.2.9</version>
+</dependency>
+```
+
+### ***Youtube API***
+```xml
+<dependency>
+  <groupId>com.google.apis</groupId>
+  <artifactId>google-api-services-youtube</artifactId>
+  <version>v3-rev222-1.25.0</version>
+</dependency>
+```
+## **License**
 Copyright (c) 22 Giugno anno 0, 2022, SafJNest and/or its affiliates. All rights reserved. SAFJNEST PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
 
-## ***Contatti***
+## ***Contacts***
 ### Lorenzo Sanseverino 
-- Founder
-- Developer
+- Founder and CEO of SafJNest
+- Developer and designer
 - lorenzosanseverino2003@gmail.com
 - Git: <a href="https://github.com/NeutronSun">NeutronSun</a> 
 - Discord: Sun#7606.
 ### Leonardo Panichi
-- Founder
-- Developer
+- Co-Founder, COO, CFO, CMO, CTO, CIO, CSO and CCO of SafJNest
+- Developer and analyst
 - leonardopanichi4@gmail.com
 - Git: <a href="https://github.com/Leon412">Leon412</a> 
 - Discord: Leon_#7949
-
-## ***Storico Versioni***
-- 1.0 Released 05/02/22
-- 1.1 Released 09/02/22
-- 1.2 Released 18/02/22
