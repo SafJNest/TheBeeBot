@@ -5,13 +5,16 @@ import java.util.Arrays;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Commands.LOL.Summoner;
-import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.safjnest.Utilities.LOL.LOLHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageEditAction;
 
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
@@ -37,40 +40,41 @@ public class SummonerSlash extends SlashCommand {
      */
 	@Override
 	protected void execute(SlashCommandEvent event) {
-        Button left = Button.primary("left", "<-");
-        Button right = Button.primary("right", "->");
-        Button center = Button.primary("center", "f");
+        Button left = Button.primary("lol-left", "<-");
+        Button right = Button.primary("lol-right", "->");
+        Button center = Button.primary("lol-center", "f");
 
         boolean searchByUser = false;
         
         no.stelar7.api.r4j.pojo.lol.summoner.Summoner s = null;
-        event.deferReply(true).queue();
+        event.deferReply(false).queue();
         if(event.getOption("user") == null){
             s = LOLHandler.getSummonerFromDB(event.getUser().getId());
             if(s == null){
-                event.reply("You dont have connected a Riot account, for more information /help setUser");
+                event.getHook().editOriginal("You dont have connected a Riot account, for more information /help setUser").queue();
                 return;
             }
             searchByUser = true;
-            center = Button.primary("center", s.getName());
-            center.asDisabled();
+            center = Button.primary("lol-center", s.getName());
+            center = center.asDisabled();
         }else{
             s = LOLHandler.getSummonerByName(event.getOption("user").getAsString());
             if(s == null){
-                event.reply("Didn't find this user. ");
+                event.getHook().editOriginal("Didn't find this user. ").queue();
                 return;
             }
             
         }
         
-        EmbedBuilder builder = Summoner.createEmbed(event.getJDA().getSelfUser().getId(), s);
+        EmbedBuilder builder = Summoner.createEmbed(event.getJDA(),event.getJDA().getSelfUser().getId(), s);
         
         if(searchByUser && LOLHandler.getNumberOfProfile(event.getUser().getId()) > 1){
-            event.getChannel().sendMessageEmbeds(builder.build()).addActionRow(left, center, right).queue();
+            WebhookMessageEditAction<Message> action = event.getHook().editOriginalEmbeds(Summoner.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),s).build());
+            action.setComponents(ActionRow.of(left, center, right)).queue();
             return;
         }
 
-        event.deferReply(false).addEmbeds(builder.build()).queue();
+        event.getHook().editOriginalEmbeds(builder.build()).queue();
         
 
 	}

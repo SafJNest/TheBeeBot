@@ -5,8 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.SafJNest;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 

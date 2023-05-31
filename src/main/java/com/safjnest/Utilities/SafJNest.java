@@ -84,6 +84,15 @@ public class SafJNest extends Thread {
             return false;
         }
     }
+
+    public static boolean longIsParsable(String input) {
+        try {
+            Long.parseLong(input);
+            return true;
+        } catch (final NumberFormatException e) {
+            return false;
+        }
+    }
     
     public static int divideandconquer(int n) {
         n = abs(n);

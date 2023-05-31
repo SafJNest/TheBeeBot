@@ -3,14 +3,18 @@ package com.safjnest.SlashCommands.Misc;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.PermissionHandler;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.safjnest.Utilities.Guild.GuildSettings;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -29,7 +33,8 @@ public class HelpSlash extends SlashCommand {
      * Default constructor for the class.
      */
     GuildSettings gs;
-    public HelpSlash(GuildSettings gs) {
+    private Map<String, SlashCommand> commands2;
+    public HelpSlash(GuildSettings gs, Map<String, SlashCommand> commands2) {
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -39,6 +44,8 @@ public class HelpSlash extends SlashCommand {
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "command", "Name of the command you want the information about", false));
         this.gs = gs;
+        this.commands2 = commands2;
+        
     }
     /**
      * This method is called every time a member executes the command.
@@ -49,7 +56,7 @@ public class HelpSlash extends SlashCommand {
         String command = (event.getOption("command") == null)? "" : event.getOption("command").getAsString();
         EmbedBuilder eb = new EmbedBuilder();
         HashMap<String, ArrayList<SlashCommand>> commands = new HashMap<>();
-        for (SlashCommand e : event.getClient().getSlashCommands()) {
+        for (SlashCommand e : commands2.values()) {
             if(!e.isHidden() || PermissionHandler.isUntouchable(event.getMember().getId())){
                 if(!commands.containsKey(e.getCategory().getName()))
                     commands.put(e.getCategory().getName(), new ArrayList<SlashCommand>());
@@ -65,7 +72,8 @@ public class HelpSlash extends SlashCommand {
         ));
         if(command.equals("")){
             String ss = "```\n";
-            for(String k : commands.keySet()){
+            for(String k : getKeysInDescendingOrder(commands)){
+                Collections.sort(commands.get(k), Comparator.comparing(Command::getName));
                 for(Command c : commands.get(k)){
                     ss+= c.getName() + "\n";
                 }
@@ -110,6 +118,17 @@ public class HelpSlash extends SlashCommand {
             event.replyEmbeds(eb.build()).setEphemeral(true).queue();
         else
             event.replyEmbeds(eb.build()).setEphemeral(false).queue();
+    }
+
+    public List<String> getKeysInDescendingOrder(HashMap<String, ArrayList<SlashCommand>> map) {
+        List<String> keys = new ArrayList<>(map.keySet());
+        Collections.sort(keys, new Comparator<String>() {
+            @Override
+            public int compare(String key1, String key2) {
+                return Integer.compare(map.get(key2).size(), map.get(key1).size());
+            }
+        });
+        return keys;
     }
 
 }

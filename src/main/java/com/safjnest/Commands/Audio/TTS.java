@@ -8,20 +8,19 @@ import java.util.Set;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.tts.TTSHandler;
-import com.safjnest.Utilities.tts.Voices;
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
+import com.safjnest.Utilities.tts.TTSHandler;
+import com.safjnest.Utilities.tts.Voices;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.managers.AudioManager;
-import net.dv8tion.jda.api.utils.FileUpload;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -74,6 +73,11 @@ public class TTS extends Command{
         MessageChannel channel = event.getChannel();
         EmbedBuilder eb = null;
 
+        if((event.getMember().getVoiceState().getChannel() != event.getSelfMember().getVoiceState().getChannel()) && event.getSelfMember().getVoiceState().getChannel() != null){
+            event.reply("The bot is used by someone else, dont be annoying and use another beebot instance.");
+            return;
+        }
+
         if((speech = event.getArgs()) == ""){
             event.reply("Write somthing you want the bot to say");
             return;
@@ -103,7 +107,7 @@ public class TTS extends Command{
             file.mkdirs();
         
         //check if there is a defualt voice setted in user's guild
-        String query = "SELECT name_tts FROM tts_guilds WHERE discord_id = '" + event.getGuild().getId() + "';";
+        String query = "SELECT name_tts FROM guild_settings WHERE guild_id = '" + event.getGuild().getId() + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
         if(sql.getString(query, "name_tts") != null)
             defaultVoice = sql.getString(query, "name_tts");
         
@@ -119,7 +123,7 @@ public class TTS extends Command{
         }
         else if(!defaultVoice.equals("keria")){ //if true means there is a default voice setted so the user wants to use it
             voice = defaultVoice;
-            query = "SELECT language_tts FROM tts_guilds WHERE discord_id = '" + event.getGuild().getId() + "';"; 
+            query = "SELECT language_tts FROM guild_settings WHERE guild_id = '" + event.getGuild().getId() + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
             language = sql.getString(query, "language_tts");
             speech = event.getArgs();
         }
@@ -181,17 +185,20 @@ public class TTS extends Command{
         eb.addField("Voice", voice, true);
         eb.addField("Default voice", defaultVoice, true);
         eb.addBlankField(true);
-        String img = "tts.png";
         eb.setColor(Color.decode(
-                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
+            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+            ));
             
-
-        File path = new File("rsc" + File.separator + "img" + File.separator + img);
+            /*
+            String img = "tts.png";
+            File path = new File("rsc" + File.separator + "img" + File.separator + img);
         eb.setThumbnail("attachment://" + img);
         channel.sendMessageEmbeds(eb.build())
             .addFiles(FileUpload.fromData(path))
             .queue();
+        */
+        eb.setThumbnail(event.getSelfUser().getAvatarUrl());
+        event.reply(eb.build());
         
     }
 }

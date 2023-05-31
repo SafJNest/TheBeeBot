@@ -1,7 +1,7 @@
 package com.safjnest.Commands.ManageMembers;
 
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.PermissionHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import java.util.concurrent.TimeUnit;
 

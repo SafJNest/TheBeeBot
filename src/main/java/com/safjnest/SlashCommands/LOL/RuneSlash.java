@@ -6,8 +6,8 @@ import java.awt.Color;
     
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.safjnest.Utilities.LOL.LOLHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -60,6 +60,24 @@ public class RuneSlash extends SlashCommand {
         String champ = "";
         String champName = event.getOption("champ").getAsString();
         String lane = event.getOption("lane").getAsString();
+        String laneFormatName =  "";
+        switch(lane){
+            case "top":
+                laneFormatName = "Top Lane";
+                break;
+            case "jungle":
+                laneFormatName = "Jungle";
+                break;
+            case "middle":
+                laneFormatName = "Mid Lane";
+                break;
+            case "bottom":
+                laneFormatName = "ADC";
+                break;
+            case "sup":
+                laneFormatName = "Support";
+                break;
+        }
         
         if(champName.equalsIgnoreCase("nunu"))
             champName+="willump";
@@ -71,7 +89,7 @@ public class RuneSlash extends SlashCommand {
             "Heimerdinger", "Illaoi", "Irelia", "Ivern", "Janna", "Jarvan IV", "Jax", "Jayce", "Jhin", "Jinx",
             "Kai'Sa", "Kalista", "Karma", "Karthus", "Kassadin", "Katarina", "Kayle", "Kayn", "Kennen", "Kha'Zix",
             "Kindred", "Kled", "Kog'Maw", "LeBlanc", "Lee Sin", "Leona", "Lillia", "Lissandra", "Lucian", "Lulu",
-            "Lux", "Malphite", "Malzahar", "Maokai", "Master Yi", "Miss Fortune", "Mordekaiser", "Morgana", "Nami",
+            "Lux", "Malphite", "Malzahar", "Maokai", "Master Yi", "Milio","Miss Fortune", "Mordekaiser", "Morgana", "Nami",
             "Nasus", "Nautilus", "Neeko", "Nidalee", "Nocturne", "Nunu & Willump", "Olaf", "Orianna", "Ornn", "Pantheon",
             "Poppy", "Pyke", "Qiyana", "Quinn", "Rakan", "Rammus", "Rek'Sai", "Rell", "Renekton", "Rengar", "Riven",
             "Rumble", "Ryze", "Samira", "Sejuani", "Senna", "Seraphine", "Sett", "Shaco", "Shen", "Shyvana", "Singed",
@@ -91,53 +109,47 @@ public class RuneSlash extends SlashCommand {
         String msg = "";
         try {
             url = new URL("https://axe.lolalytics.com/mega/?ep=rune&p=d&v=1&cid="+champ+"&lane="+lane);
+            System.out.println(url);
             String json = IOUtils.toString(url, Charset.forName("UTF-8"));
             EmbedBuilder eb = new EmbedBuilder(); 
             eb = new EmbedBuilder(); 
             eb.setTitle(":sparkles:Beebot Rune Command"); 
-            eb.setDescription("**Highest Win Rate** info for " + champName + " **" + lane + "**");
+            eb.setDescription("**Highest Win Rate** info for " + LOLHandler.getFormattedEmoji(event.getJDA(), champName) + " " + champName + " " + LOLHandler.getFormattedEmoji(event.getJDA(), laneFormatName) + " **" + laneFormatName + "**");
             eb.setAuthor(event.getJDA().getSelfUser().getName(), "https://github.com/SafJNest",event.getJDA().getSelfUser().getAvatarUrl()); 
             
-            msg = "";
+            msg = "​\n"; //!!there is a 0 width character before the /n
             for(String id : getPrin(json, "pri")){
-                msg+= LOLHandler.getRunesHandler().get(getRunePage(json, "pri")).getRune(id).getName() + "\n";
+                msg += LOLHandler.getFormattedEmoji(event.getJDA(), id) + " " + LOLHandler.getRunesHandler().get(getRunePage(json, "pri")).getRune(id).getName() + "\n";
             }
-            eb.addField(LOLHandler.getRunesHandler().get(getRunePage(json, "pri")).getName(), msg, true);
+            String support = LOLHandler.getRunesHandler().get(getRunePage(json, "pri")).getName();
+            eb.addField(LOLHandler.getFormattedEmoji(event.getJDA(), support) + " " + support, msg, true);
 
-            msg = "";
+            msg = "​\n"; //!!there is a 0 width character before the /n
             for(String id : getPrin(json, "sec")){
-                msg+= LOLHandler.getRunesHandler().get(getRunePage(json, "sec")).getRune(id).getName() + "\n";
+                msg += LOLHandler.getFormattedEmoji(event.getJDA(), id) + " " + LOLHandler.getRunesHandler().get(getRunePage(json, "sec")).getRune(id).getName() + "\n";
             }
-            eb.addField(LOLHandler.getRunesHandler().get(getRunePage(json, "sec")).getName(), msg, true);
+            support = LOLHandler.getRunesHandler().get(getRunePage(json, "sec")).getName();
+            eb.addField(LOLHandler.getFormattedEmoji(event.getJDA(), support) + " " + support, msg, true);
             
             eb.setColor(Color.decode(
                 BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
             ));
             
-            champName = champName.replace(".", "");
-            champName = champName.replace("i'S", "is");
-            champName = champName.replace("a'Z", "az");
-            champName = champName.replace("l'K", "lk");
-            champName = champName.replace("o'G", "og");
-            champName = champName.replace("g'M", "gm");
-            champName = champName.replace("'", "");
-            champName = champName.replace(" & Willump", "");
-            champName = champName.replace(" ", "");
-            eb.setThumbnail(LOLHandler.getChampionProfilePic(champName));  
+            champName = LOLHandler.transposeChampionNameForDataDragon(champName);
+            eb.setThumbnail(LOLHandler.getChampionProfilePic(champName));
             eb.setFooter("There could be some issues with champions name, like Dr. Mundo, Aurelion Sol...Be careful when you digit it.", null); 
 
             
             event.getHook().editOriginalEmbeds(eb.build()).queue();
         } catch (Exception e) { 
-            e.printStackTrace(); 
+            event.getHook().editOriginal("Could be some problem with our database or lack of data due to new patch. Try again later.").queue();
         } 
 
 	}
 
     public String[] getPrin(String json, String thing){ 
         JSONParser parser = new JSONParser(); 
-        try { 
-            
+        try {
             JSONObject file = (JSONObject) parser.parse(json); 
             JSONObject summary = (JSONObject) file.get("summary"); 
             JSONObject runes = (JSONObject) summary.get("runes"); 

@@ -1,0 +1,14 @@
+URL url = new URL("https://mee6.xyz/api/plugins/levels/leaderboard/608967318789160970?limit=999&page=0");
+        String json = IOUtils.toString(url, Charset.forName("UTF-8"));
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObject = (JSONObject)parser.parse(json);
+        JSONArray players = (JSONArray) jsonObject.get("players");
+        for (int i = 0; i < players.size(); i++) {
+            JSONObject player = (JSONObject) players.get(i);
+            String level = player.get("level").toString();
+            String id = player.get("id").toString();
+            String xp = player.get("xp").toString();
+            String msg = player.get("message_count").toString();
+
+            System.out.println("Player " + (i+1) + " - Level: " + level + ", ID: " + id + ", XP: " + xp);
+        }

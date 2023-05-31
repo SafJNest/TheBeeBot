@@ -1,0 +1,86 @@
+package com.safjnest.Commands.ManageGuild;
+
+import java.awt.Color;
+import java.util.ArrayList;
+
+import com.jagrosh.jdautilities.command.Command;
+import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.LOL.LOLHandler;
+
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.User;
+
+/**
+ * @author <a href="https://github.com/Leon412">Leon412</a>
+ * 
+ * @since 1.2.5
+ */
+public class UserStats extends Command{
+
+    public UserStats() {
+        this.name = this.getClass().getSimpleName();
+        this.aliases = new CommandsHandler().getArray(this.name, "alias");
+        this.help = new CommandsHandler().getString(this.name, "help");
+        this.cooldown = new CommandsHandler().getCooldown(this.name);
+        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
+        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+    }
+
+    @Override
+    protected void execute(CommandEvent event) {
+        User theGuy;
+        if(event.getMessage().getMentions().getMembers().size() > 0)
+            theGuy = event.getMessage().getMentions().getMembers().get(0).getUser();
+        else{
+            try {
+                theGuy = event.getJDA().retrieveUserById(event.getArgs()).complete();
+            } catch (Exception e) {
+                theGuy = event.getAuthor();
+            }
+        }
+
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle(":busts_in_silhouette: **STATISTICS ABOUT "+theGuy.getName()+"** :busts_in_silhouette:");
+        eb.setThumbnail(theGuy.getAvatarUrl());
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
+        ));
+
+        eb.addField("Name", "```" + theGuy.getAsTag() + "```", true);
+        eb.addField("ID", "```" + theGuy.getId() + "```" , true);
+
+        String query = "SELECT summoner_id FROM lol_user WHERE discord_id = '" + theGuy.getId() + "';";
+        ArrayList<String> accounts = DatabaseHandler.getSql().getAllRowsSpecifiedColumn(query, "summoner_id");
+        String lolAccounts = "";
+        if(accounts.size() == 0){
+            lolAccounts = theGuy.getName() + " has not connected a riot account.";
+        }else{
+            for(String s : accounts)
+                lolAccounts+= LOLHandler.getSummonerById(s).getName() + " - ";
+        }
+        
+        eb.addField("League Of Legends Account ["
+                    + accounts.size() + "]",
+                    "```"+lolAccounts+"```", false);
+        
+        query = "select exp, level, messages from exp_table where user_id ='"+theGuy.getId()+"' and guild_id = '"+event.getGuild().getId()+"';";
+        ArrayList<String> arr = DatabaseHandler.getSql().getSpecifiedRow(query, 0);
+        int lvl = Integer.valueOf(arr.get(1));
+        String lvlString = String.valueOf(((int) (5 * (Math.pow(lvl, 2)) + (50 * lvl) + 100) - (int) ((5.0/6.0) * (lvl+1) * (2 * (lvl+1) * (lvl+1) + 27 * (lvl+1) + 91) - Integer.valueOf(arr.get(0)))) + "/" + (int) (5 * (Math.pow(lvl, 2)) + (50 * lvl) + 100));
+        eb.addField("Level", "```"+arr.get(1) + " (" + lvlString +")```", true);
+        eb.addField("Experience gained", "```"+arr.get(0)+" exp```", true);
+        eb.addField("Total messages sent","```"+ arr.get(2)+"```", true);
+        
+        query = "select count(name) as count from sound where user_id = '"+theGuy.getId()+"';";
+        eb.addField("Total Sound Uploaded", "```"+DatabaseHandler.getSql().getString(query, "count")+"```", true);
+        query = "select count(name) as count from sound where guild_id = '"+event.getGuild().getId()+"' AND user_id = '"+theGuy.getId()+"';";
+        eb.addField("Sound Uploaded in this server", "```"+DatabaseHandler.getSql().getString(query, "count")+"```", true);
+        query = "select sum(times) as sum from play where user_id = '"+theGuy.getId()+"';";
+        eb.addField("Total Sound played (global)","```"+ DatabaseHandler.getSql().getString(query, "sum")+"```", true);
+
+        event.reply(eb.build());
+    }
+}

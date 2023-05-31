@@ -2,9 +2,9 @@ package com.safjnest.SlashCommands.ManageMembers;
 
 import java.util.Arrays;
 
-import com.safjnest.Utilities.CommandsHandler;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;

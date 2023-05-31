@@ -1,0 +1,80 @@
+// INSANE SLASH COMMAND DECLARATION
+        /* 
+        if(!Thread.currentThread().getName().equals("canary")){
+            if(!Thread.currentThread().getName().equals("moderation")){
+                // audio
+                builder.addSlashCommand(new ConnectSlash());
+                builder.addSlashCommand(new DeleteSoundSlash());
+                builder.addSlashCommand(new DisconnectSlash());
+                builder.addSlashCommand(new DownloadSoundSlash(sql));
+                builder.addSlashCommand(new ListSlash());
+                builder.addSlashCommand(new ListUserSlash());
+                builder.addSlashCommand(new PlayYoutubeSlash(youtubeApiKey, tierOneLink));
+                builder.addSlashCommand(new PlaySoundSlash());
+                builder.addSlashCommand(new UploadSlash(sql));
+                builder.addSlashCommand(new TTSSlash(tts, sql));
+                builder.addSlashCommand(new StopSlash());
+                builder.addSlashCommand(new CustomizeSoundSlash());
+                builder.addSlashCommand(new SetVoiceSlash(sql));
+            }
+    
+    
+            if (!Thread.currentThread().getName().equals("beebot music")) {
+                // Manage Guild
+                builder.addSlashCommand(new ChannelInfoSlash());
+                builder.addSlashCommand(new ClearSlash());
+                builder.addSlashCommand(new ServerInfoSlash());
+                builder.addSlashCommand(new MemberInfoSlash());
+                builder.addSlashCommand(new EmojiInfoSlash());
+                builder.addSlashCommand(new SetWelcomeMessageSlash(sql));
+                builder.addSlashCommand(new SetLeaveMessageSlash(sql));
+                builder.addSlashCommand(new SetLevelUpMessageSlash());
+                builder.addSlashCommand(new LeaderboardSlash());
+    
+    
+    
+                // Manage Member
+                builder.addSlashCommand(new BanSlash());
+                builder.addSlashCommand(new UnbanSlash());
+                builder.addSlashCommand(new KickSlash());
+                builder.addSlashCommand(new MoveSlash());
+                builder.addSlashCommand(new MoveChannelSlash());
+                builder.addSlashCommand(new MuteSlash());
+                builder.addSlashCommand(new UnMuteSlash());
+                builder.addSlashCommand(new ImageSlash());
+                builder.addSlashCommand(new PermissionsSlash());
+                builder.addSlashCommand(new ModifyNicknameSlash());
+    
+    
+    
+            }
+    
+            if(!Thread.currentThread().getName().equals("beebot music") && !Thread.currentThread().getName().equals("moderation")){
+                // lol
+                builder.addSlashCommand(new SummonerSlash());
+                builder.addSlashCommand(new FreeChampSlash());
+                builder.addSlashCommand(new GameRankSlash(riotApi, sql));
+                builder.addSlashCommand(new SetSummonerSlash(riotApi, sql));
+                builder.addSlashCommand(new LastMatchesSlash(riotApi, sql));
+                builder.addSlashCommand(new RuneSlash());
+    
+                // Math
+                builder.addSlashCommand(new PrimeSlash(maxPrime));
+                builder.addSlashCommand(new DiceSlash());
+                builder.addSlashCommand(new CalculatorSlash());
+    
+    
+            }
+    
+    
+            builder.addSlashCommand(new SetPrefixSlash(sql, gs));
+    
+            // Misc
+            builder.addSlashCommand(new PingSlash());
+            builder.addSlashCommand(new BugsNotifierSlash());
+            builder.addSlashCommand(new HelpSlash(gs));
+            builder.addSlashCommand(new MsgSlash());
+            builder.addSlashCommand(new InviteBotSlash());
+            builder.addSlashCommand(new AnonymSlash());
+        }
+        */

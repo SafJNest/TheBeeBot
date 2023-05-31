@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import org.json.simple.JSONArray;
@@ -83,7 +83,12 @@ public class PlayYoutubeSlash extends SlashCommand {
 	protected void execute(SlashCommandEvent event) {
         String video = event.getOption("video").getAsString();
         if(event.getMember().getVoiceState().getChannel() == null){
-            event.reply("You need to be in a voice channel to use this command");
+            event.deferReply(false).addContent("You need to be in a voice channel to use this command").queue();
+            return;
+        }
+
+        if(event.getGuild().getSelfMember().getVoiceState().getChannel() != null && (event.getMember().getVoiceState().getChannel() != event.getGuild().getSelfMember().getVoiceState().getChannel())){
+            event.deferReply(false).addContent("The bot is used by someone else, dont be annoying and use another beebot instance.").queue();
             return;
         }
 

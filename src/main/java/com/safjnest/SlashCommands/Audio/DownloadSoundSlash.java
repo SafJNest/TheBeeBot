@@ -4,12 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.amazonaws.services.s3.model.S3Object;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.AwsS3;
-import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -20,17 +19,15 @@ import net.dv8tion.jda.api.utils.FileUpload;
 public class DownloadSoundSlash extends SlashCommand{
     String path = "rsc" + File.separator + "SoundBoard" + File.separator;
     SQL sql;
-    AwsS3 s3Client;
 
-    public DownloadSoundSlash(AwsS3 s3Client, SQL sql){
+    public DownloadSoundSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
         this.cooldown = new CommandsHandler().getCooldown(this.name);
         this.category = new Category(new CommandsHandler().getString(this.name, "category"));
         this.arguments = new CommandsHandler().getString(this.name, "arguments");
-        this.s3Client = s3Client;
-        this.sql = sql;
+        this.sql = DatabaseHandler.getSql();
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "sound", "Sound to download", true));
     }
@@ -49,7 +46,7 @@ public class DownloadSoundSlash extends SlashCommand{
             query = "SELECT id, guild_id, extension FROM sound WHERE name = '" + fileName + "';";
         }
 
-        if((arr = sql.getTuple(query, 3)).isEmpty()){
+        if((arr = sql.getAllRows(query, 3)).isEmpty()){
             event.deferReply(true).addContent("There is no sound with that name/id").queue();
             return;
         }
@@ -72,12 +69,7 @@ public class DownloadSoundSlash extends SlashCommand{
         id = arr.get(indexForKeria).get(0);
         extension = arr.get(indexForKeria).get(2);
 
-        S3Object sound = s3Client.downloadFile(path, id, event);
-
-        if(sound == null){
-            event.deferReply(true).addContent("Error: sound not found in aws s3 (this is probably our fault, contact the developers)").queue();
-            return;
-        }
+       
         
         fileName = id + "." + extension;
 

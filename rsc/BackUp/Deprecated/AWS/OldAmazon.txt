@@ -1,0 +1,5 @@
+"AmazonAWS":{
+    "AWSAccesKey": "AKIASJG3D4LS4UT7VPX4",
+    "AWSSecretKey": "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",
+    "AWSbucketName": "thebeebot"
+}

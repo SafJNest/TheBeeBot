@@ -5,23 +5,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.amazonaws.services.s3.model.S3Object;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.AwsS3;
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Audio.SoundBoard;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.managers.AudioManager;
-import net.dv8tion.jda.api.utils.FileUpload;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -29,26 +26,35 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 
 public class PlaySound extends Command{
     SQL sql;
-    AwsS3 s3Client;
     String path = "rsc" + File.separator + "SoundBoard"+ File.separator;
     String fileName;
     PlayerManager pm;
 
 
-    public PlaySound(AwsS3 s3Client, SQL sql){
+    public PlaySound(SQL sql){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
         this.cooldown = new CommandsHandler().getCooldown(this.name);
         this.category = new Category(new CommandsHandler().getString(this.name, "category"));
         this.arguments = new CommandsHandler().getString(this.name, "arguments");
-        this.s3Client = s3Client;
         this.sql = sql;
     }
 
     @Override
     protected void execute(CommandEvent event) {
         
+        if(event.getMember().getVoiceState().getChannel() == null){
+            event.reply("You need to be in a voice channel to use this command");
+            return;
+        }
+
+        if(event.getSelfMember().getVoiceState().getChannel() != null && (event.getMember().getVoiceState().getChannel() != event.getSelfMember().getVoiceState().getChannel())){
+            event.reply("The bot is used by someone else, dont be annoying and use another beebot instance.");
+            return;
+        }
+
+
         if((fileName = event.getArgs()) == ""){
             event.reply("Missing name");
             return;
@@ -57,11 +63,7 @@ public class PlaySound extends Command{
         File soundBoard = new File("rsc" + File.separator + "SoundBoard");
         if(!soundBoard.exists())
             soundBoard.mkdirs();
-
-        //TODO fix | deletare il file vecchio ogni ps bene
-        for (File file : soundBoard.listFiles())
-            file.delete();
-
+        
         String query = null;
         String id = null, name, guildId, userId, extension;
         ArrayList<ArrayList<String>> arr = null;
@@ -73,7 +75,7 @@ public class PlaySound extends Command{
             query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE name = '" + fileName + "';";
         }
 
-        if((arr = sql.getTuple(query, 5)).isEmpty()){
+        if((arr = sql.getAllRows(query, 5)).isEmpty()){
             event.reply("There is no sound with that name/id");
             return;
         }
@@ -96,12 +98,7 @@ public class PlaySound extends Command{
         userId = arr.get(indexForKeria).get(3);
         extension = arr.get(indexForKeria).get(4);
 
-        S3Object sound = s3Client.downloadFile(path, id, event);
-
-        if(sound == null){
-            event.reply("sound not found in aws s3");
-            return;
-        }
+        
         
         fileName = path + id + "." + extension;
 
@@ -174,7 +171,7 @@ public class PlaySound extends Command{
             : SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length)) + "```", true);
         } catch (IOException e) {e.printStackTrace();}
         
-        eb.addBlankField(true);
+        eb.addField("Format", "```"+extension.toUpperCase()+"```", true);
 
         //Mp3File mp = SoundBoard.getMp3FileByName(player.getPlayingTrack().getInfo().title);
 
@@ -182,23 +179,27 @@ public class PlaySound extends Command{
 
         eb.addField("Played", "```" + timesPlayed + (timesPlayed.equals("1") ? " time" : " times") + " (yours: "+timesPlayedByUser+")```", true);
 
+        /*
         String img = event.getJDA().getSelfUser().getId() + "-";
         if(extension.equals("opus"))
             img += "opus.png";
         
         else
             img += "mp3.png"; 
-           
+           */ 
         eb.setColor(Color.decode(
             BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
         ));
         eb.setFooter("*This is not SoundFx, this is much worse. cit. steve jobs (probably)", null); //Questo non e' SoundFx, questa e' perfezione cit. steve jobs (probabilmente)
-            
+        /*    
         File imgFile = new File("rsc" + File.separator + "img" + File.separator + img);
         eb.setThumbnail("attachment://" + img);
 
         channel.sendMessageEmbeds(eb.build())
             .addFiles(FileUpload.fromData(imgFile))
             .queue();
+         */
+        eb.setThumbnail(event.getSelfUser().getAvatarUrl());
+        event.reply(eb.build());
     }
 }
