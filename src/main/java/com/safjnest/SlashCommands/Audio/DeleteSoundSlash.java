@@ -5,9 +5,9 @@ import java.util.Arrays;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.AwsS3;
-import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -21,10 +21,9 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
  * @since 1.3
  */
 public class DeleteSoundSlash extends SlashCommand{
-    private AwsS3 s3Client;
     private SQL sql;
     
-    public DeleteSoundSlash(AwsS3 s3Client, SQL sql){
+    public DeleteSoundSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -33,8 +32,7 @@ public class DeleteSoundSlash extends SlashCommand{
         this.arguments = new CommandsHandler().getString(this.name, "arguments");
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "sound", "Sound to delete", true));
-        this.s3Client = s3Client;
-        this.sql = sql;
+        this.sql = DatabaseHandler.getSql();
     }
     
 	@Override
@@ -50,7 +48,7 @@ public class DeleteSoundSlash extends SlashCommand{
         else
             query = "SELECT id, name, user_id FROM sound WHERE name = '" + fileName + "' AND (user_id = '" + event.getUser().getId() + "' OR guild_id = '" + event.getGuild().getId() + "');";
 
-        if((arr = sql.getTuple(query, 3)) == null || arr.isEmpty()){
+        if((arr = sql.getAllRows(query, 3)) == null || arr.isEmpty()){
             event.deferReply(true).addContent("There is no sound with that name/id").queue();
             return;
         }
@@ -69,13 +67,7 @@ public class DeleteSoundSlash extends SlashCommand{
             return;
         }
 
-        try{
-            s3Client.getS3Client().deleteObject("thebeebot", id);
-        }catch(Exception e){
-            e.printStackTrace();
-            event.deferReply(true).addContent("An error occured while deleting the sound from aws s3").queue();
-            return;
-        }
+       
 
         query = "DELETE FROM sound WHERE id = " + id + ";";
 

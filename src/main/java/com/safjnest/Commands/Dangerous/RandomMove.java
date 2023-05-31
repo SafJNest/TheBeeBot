@@ -3,8 +3,8 @@ package com.safjnest.Commands.Dangerous;
 import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
-import com.safjnest.Utilities.CommandsHandler;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -73,6 +73,7 @@ public class RandomMove extends Command{
             event.getGuild().moveVoiceMember(event.getGuild().getMember(theGuy), channel).queue();
         }
         event.getGuild().moveVoiceMember(event.getGuild().getMember(theGuy), startChannel).queue();
+        event.getMessage().delete().queue();
         return;
             
 

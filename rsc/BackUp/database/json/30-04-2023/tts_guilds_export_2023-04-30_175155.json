@@ -1,0 +1,26 @@
+[
+  {
+    "discord_id": "474935164451946506",
+    "bot_id": "938487470339801169",
+    "name_tts": "Pietro",
+    "language_tts": "it-it"
+  },
+  {
+    "discord_id": "608967318789160970",
+    "bot_id": "938487470339801169",
+    "name_tts": "Mia",
+    "language_tts": "it-it"
+  },
+  {
+    "discord_id": "608967318789160970",
+    "bot_id": "939876818465488926",
+    "name_tts": "Pietro",
+    "language_tts": "it-it"
+  },
+  {
+    "discord_id": "608967318789160970",
+    "bot_id": "983315338886279229",
+    "name_tts": "Pietro",
+    "language_tts": "it-it"
+  }
+]

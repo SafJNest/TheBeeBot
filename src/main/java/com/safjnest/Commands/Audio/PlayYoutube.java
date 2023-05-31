@@ -12,9 +12,9 @@ import java.util.regex.Pattern;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import org.json.simple.JSONArray;
@@ -79,6 +79,11 @@ public class PlayYoutube extends Command {
 	protected void execute(CommandEvent event) {
         if(event.getMember().getVoiceState().getChannel() == null){
             event.reply("You need to be in a voice channel to use this command");
+            return;
+        }
+
+        if(event.getSelfMember().getVoiceState().getChannel() != null && (event.getMember().getVoiceState().getChannel() != event.getSelfMember().getVoiceState().getChannel())){
+            event.reply("The bot is used by someone else, dont be annoying and use another beebot instance.");
             return;
         }
 

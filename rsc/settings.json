@@ -1,50 +1,66 @@
 {
+    "startup" : [
+        "beebot",
+        "beebot 2",
+        "beebot 3",
+        "beebot 117",
+        "moderation",
+        "beebot music",
+        "canary"
+    ],
+
     "settings": {
 
         "AmazonAWS":{
-            "AWSAccesKey": "secret",
-            "AWSSecretKey": "secret",
-            "AWSbucketName": "secret"
+            "AWSAccesKey": "AKIASJG3D4LS4UT7VPX4",
+            "AWSSecretKey": "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",
+            "AWSbucketName": "thebeebot"
         },
 
         "PostgreSQL": {
-            "HostName": "secret",
-            "database": "secret",
-            "user": "secret",
-            "password": "secret"
+            "HostName": "ec2-54-247-137-184.eu-west-1.compute.amazonaws.com",
+            "database": "df52tpbes6100h",
+            "user": "rtfcxffinekosr",
+            "password": "b6f0333c60fb00cba040e063402257230c800242fc5fbdb68d490682d54434de"
         },
 
         "MySQL": {
-            "HostName": "secret",
-            "database": "secret",
-            "user": "secret",
-            "password": "secret@"
+            "HostName": "na01-sql.pebblehost.com",
+            "database": "customer_444048_beebot",
+            "user": "customer_444048_beebot",
+            "password": "ExtremeSafJDatabase117@"
         },
 
-        "youtubeApiKey": "secret",
-        "ttsApiKey": "secret",
-        "riotKey": "secret"
+        "OpenAI" :{
+            "key" : "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",
+            "maxTokens" : "2048",
+            "model" : "text-davinci-003"
+        },
+
+        "youtubeApiKey": "AIzaSyC1H92_8GzQmiL-GPZB2X8uqYgrP0rPOns",
+        "ttsApiKey": "d6199f5911f4493da571729f8127ce37",
+        "riotKey": "RGAPI-ab87ab75-c005-43ac-9ec6-b783f37cee89"
     },
 
     "beebot": {
 
-        "discordToken": "secret",
+        "discordToken": "OTM4NDg3NDcwMzM5ODAxMTY5.GgeqCi.1fHPBYNb2GplXm5kVrNAt2pZI8JidXeJ70uzb4",
         "embedColor": "#ffc400",
         "prefix": "!",
-        "activity": "Precisely, outplaying other bots with slash command. Fired up and ready to serve! | /help or {0}help |",
-        "ownerID": "secret",
+        "activity": "Beebot - the ultimate machine for your server needs! | /help or {0}help |",
+        "ownerID": "938487470339801169",
         "helpWord": "helpme",
         "maxPrime":"2048",
         "info":"[MAIN] INFO The beast is turning on! As long as it takes."
     },
 
-    "canary": {
+    "beebot canary": {
 
-        "discordToken": "secret",
-        "embedColor": "#f98b30",
+        "discordToken": "OTM5ODc2ODE4NDY1NDg4OTI2.GXocIQ.IBIgxiPcrzQgQTaVtVi18AbVUElUHlwVKkp_1g",
+        "embedColor": "#f25216",
         "prefix": "$",
         "activity": "Testing the most incredible features that jelly could have never thought about bc is a piece of shit :D. | /help or {0}help |",
-        "ownerID": "secret",
+        "ownerID": "939876818465488926",
         "helpWord": "helpme",
         "maxPrime": "2048",
         "info":"[MAIN] INFO Canary is turning on to implements extreme features!"
@@ -52,37 +68,61 @@
 
     "beebot 2": {
 
-        "discordToken": "secret",
-        "embedColor": "#0f0ff5",
+        "discordToken": "OTgzMzE1MzM4ODg2Mjc5MjI5.Gq-wsr.Fdh33wlTAm9xsl73uO8Q4FcPEZbAdP5kbHIYmc",
+        "embedColor": "#1262F7",
         "prefix": "%",
-        "activity": "Beebot's little brother | p help",
-        "ownerID": "secret",
+        "activity": "The dynamic clan of Discord - Beebot and his brother! | /help or {0}help |",
+        "ownerID": "939876818465488926",
         "helpWord": "helpme",
         "maxPrime": "11700",
         "info":"[MAIN] INFO Beebot 2 is turning on to help the elder brother in case he dies!"
     },
 
-    "beebot 3": {
-        
-        "discordToken": "secret",
-        "embedColor": "#11ff00",
-        "prefix": "#",
-        "activity": "The Beebot but with slash command, and green | p help",
-        "ownerID": "secret",
+     "beebot 3": {
+
+        "discordToken": "MTEwMjE5NjY0OTcyOTcyODU0Mg.GRpLQH.UvmDx2874vaNk0ocStZOLiDG4d0pK9WrixXQcg",
+        "embedColor": "#24FF33",
+        "prefix": "+",
+        "activity": "The dynamic clan of Discord - Beebot and his brothers! | /help or {0}help |",
+        "ownerID": "939876818465488926",
         "helpWord": "helpme",
-        "maxPrime": "2048",
-        "info":"[MAIN] INFO Beebot 2 is turning on to help the elder brother in case he dies!"
+        "maxPrime": "11700",
+        "info":"[MAIN] INFO Beebot 3 is turning on to help the elder brother in case he dies!"
+    },
+
+    "beebot 117": {
+
+        "discordToken": "MTEwMjIwODcyMzE5MzE3NjA2NA.G2bmzG.XKp6PEvskbXU1bMQClG0tRmazOwzQlL08WMHu0",
+        "embedColor": "#4A5F36",
+        "prefix": "px",
+        "activity": "Just Master Chief | /help or {0}help |",
+        "ownerID": "939876818465488926",
+        "helpWord": "helpme",
+        "maxPrime": "11700",        
+        "info":"[MAIN] INFO Beebot 117 is turning on to help the elder brother in case he dies!"
     },
 
     "beebot music": {
 
-        "discordToken": "secret",
+        "discordToken": "MTA3NDI3NjM5NTY0MDk1NDk0Mg.G38i8j.F6u_scGNtUIztjB8LzjpX3fnSbxkUa03kOUnuQ",
         "embedColor": "#ff0000",
         "prefix": "!",
-        "activity": "The Beebot but only for youtube fucking piece of shit give us the old beeby | p help",
-        "ownerID": "secret",
+        "activity": "Your personal DJ | No distractions, just music by Beebot | /help or {0}help |",
+        "ownerID": "939876818465488926",
         "helpWord": "helpme",
         "maxPrime": "2048",
         "info":"[MAIN] INFO Beebot music is turning on to let leon listen to dravon 1v9"
+    },
+
+    "beebot moderation": {
+
+        "discordToken": "MTA5ODkwNjc5ODAxNjE4NDQyMg.GDQnBj.kpUJIoq5P9YMBFapan6v0Oo0ZkCBW_1t00UeGM",
+        "embedColor": "#52EDCB",
+        "prefix": "!",
+        "activity": "Your personal assistant | No distractions, just focus on create and manage the best server ever | /help or {0}help |",
+        "ownerID": "939876818465488926",
+        "helpWord": "helpme",
+        "maxPrime": "2048",
+        "info":"[MAIN] INFO Beebot Moderation is turning on to ban panslung"
     }
 }

@@ -2,7 +2,8 @@ package com.safjnest.Commands.Dangerous;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.PermissionHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
@@ -28,6 +29,8 @@ public class Jelly extends Command {
 
     @Override
     protected void execute(CommandEvent event) {
+        if(!PermissionHandler.isUntouchable(event.getAuthor().getId()))
+            return;
         Member theGuy;
         String[] args = event.getArgs().split(" ", 2);
         

@@ -3,8 +3,8 @@ package com.safjnest.SlashCommands.Misc;
 import java.awt.Color;
 import java.util.Arrays;
 
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.PermissionHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 

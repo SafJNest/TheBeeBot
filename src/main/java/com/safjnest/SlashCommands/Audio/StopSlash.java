@@ -2,8 +2,8 @@ package com.safjnest.SlashCommands.Audio;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.Audio.AudioHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 
 public class StopSlash extends SlashCommand {

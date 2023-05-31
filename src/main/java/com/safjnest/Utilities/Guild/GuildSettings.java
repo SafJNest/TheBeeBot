@@ -72,8 +72,8 @@ public class GuildSettings {
      */
     public GuildData retrieveServer(String stringId) {
         String query = "SELECT * FROM guild_settings WHERE guild_id = '" + stringId + "' AND bot_id = '" + botId + "';";
-        ArrayList<String> guildArrayList = DatabaseHandler.getSql().getRealTuple(query, 0);
-        GuildData guild = (guildArrayList == null) 
+        ArrayList<String> guildArrayList = DatabaseHandler.getSql().getSpecifiedRow(query, 0);
+        GuildData guild = (guildArrayList == null || guildArrayList.get(2) == null) 
                     ? new GuildData(Long.parseLong(stringId), prefix) 
                     : new GuildData(Long.parseLong(guildArrayList.get(0)), guildArrayList.get(2));
         saveData(guild);

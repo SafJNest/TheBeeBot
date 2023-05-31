@@ -4,9 +4,8 @@ import java.util.ArrayList;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.AwsS3;
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.Permission;
 
@@ -18,17 +17,15 @@ import net.dv8tion.jda.api.Permission;
  * @since 1.3
  */
 public class DeleteSound extends Command{
-    private AwsS3 s3Client;
     private SQL sql;
     
-    public DeleteSound(AwsS3 s3Client, SQL sql){
+    public DeleteSound(SQL sql){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
         this.cooldown = new CommandsHandler().getCooldown(this.name);
         this.category = new Category(new CommandsHandler().getString(this.name, "category"));
         this.arguments = new CommandsHandler().getString(this.name, "arguments");
-        this.s3Client = s3Client;
         this.sql = sql;
     }
     
@@ -49,7 +46,7 @@ public class DeleteSound extends Command{
         else
             query = "SELECT id, name, user_id FROM sound WHERE name = '" + fileName + "' AND (user_id = '" + event.getAuthor().getId() + "' OR guild_id = '" + event.getGuild().getId() + "');";
 
-        if((arr = sql.getTuple(query, 3)) == null || arr.isEmpty()){
+        if((arr = sql.getAllRows(query, 3)) == null || arr.isEmpty()){
             event.reply("There is no sound with that name/id");
             return;
         }
@@ -65,14 +62,6 @@ public class DeleteSound extends Command{
 
         if(!event.getAuthor().getId().equals(userId) && !event.getMember().hasPermission(Permission.ADMINISTRATOR)){
             event.reply("You don't have permission to delete this sound");
-            return;
-        }
-
-        try{
-            s3Client.getS3Client().deleteObject("thebeebot", id);
-        }catch(Exception e){
-            e.printStackTrace();
-            event.reply("An error occured while deleting the sound from aws s3");
             return;
         }
 

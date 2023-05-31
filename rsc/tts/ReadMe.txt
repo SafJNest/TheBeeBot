@@ -1,0 +1,1 @@
+Here will be temporaly saved all the tts sound to be sent

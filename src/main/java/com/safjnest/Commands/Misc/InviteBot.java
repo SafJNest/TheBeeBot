@@ -2,7 +2,7 @@ package com.safjnest.Commands.Misc;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 public class InviteBot extends Command{
 

@@ -3,16 +3,12 @@ package com.safjnest.SlashCommands.Audio;
 import java.io.File;
 import java.util.Arrays;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.AwsS3;
-import com.safjnest.Utilities.CommandsHandler;
+import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.PermissionHandler;
 import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -29,11 +25,10 @@ import net.dv8tion.jda.api.utils.FileProxy;
  * @since 1.2.5
  */
 public class UploadSlash extends SlashCommand{
-    private AwsS3 s3Client;
     private String fileName;
     private SQL sql;
     
-    public UploadSlash(AwsS3 s3Client, SQL sql){
+    public UploadSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsHandler().getArray(this.name, "alias");
         this.help = new CommandsHandler().getString(this.name, "help");
@@ -42,8 +37,7 @@ public class UploadSlash extends SlashCommand{
         this.arguments = new CommandsHandler().getString(this.name, "arguments");
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "name", "Soundn name", true));
-        this.s3Client = s3Client;
-        this.sql = sql;
+        this.sql = DatabaseHandler.getSql();
     }
     
 	@Override
@@ -55,22 +49,20 @@ public class UploadSlash extends SlashCommand{
         }
 
         event.deferReply(false).addContent("Ok, now upload the sound here in mp3 or **opus** format").queue();
-        FileListener fileListener = new FileListener(event, fileName, event.getChannel(), s3Client.getS3Client(), sql);
+        FileListener fileListener = new FileListener(event, fileName, event.getChannel(),sql);
         event.getJDA().addEventListener(fileListener);
 	}
 }
 
 class FileListener extends ListenerAdapter {
     private String name;
-    private AmazonS3 s3Client;
     private SlashCommandEvent event;
     private MessageChannel channel;
     private float maxFileSize = 1049000; //in bytes
     private SQL sql;
 
-    public FileListener(SlashCommandEvent event, String name, MessageChannel channel, AmazonS3 s3Client, SQL sql){
+    public FileListener(SlashCommandEvent event, String name, MessageChannel channel, SQL sql){
         this.name = name;
-        this.s3Client = s3Client;
         this.event = event;
         this. channel = channel;
         this.sql = sql;
@@ -108,34 +100,10 @@ class FileListener extends ListenerAdapter {
             return;
         }
 
-        File uploadFolder = new File("rsc" + File.separator + "Upload");
-        if(!uploadFolder.exists())
-            uploadFolder.mkdir();
+        File saveFile = new File("rsc" + File.separator + "SoundBoard" + File.separator + (id + "." + attachment.getFileExtension()));
 
-        File saveFile = new File("rsc" + File.separator + "Upload" + File.separator + (name + "." + attachment.getFileExtension()));
-
-        new FileProxy(attachment.getUrl()).downloadToFile(saveFile)
-            .thenAccept(file -> {
-                System.out.println("Uploading the file on aws s3 " + file.getName());
-                try {
-                    PutObjectRequest request = new PutObjectRequest("thebeebot", id, file);
-                    ObjectMetadata metadata = new ObjectMetadata();
-                    metadata.setContentType("audio/mpeg");
-                    metadata.addUserMetadata("format", attachment.getFileExtension());
-                    request.setMetadata(metadata);
-                    s3Client.putObject(request);
-                }catch(AmazonClientException ace){
-                    ace.printStackTrace();
-                }
-                file.delete();
-            })
-            .exceptionally(t -> { // handle failure
-                event.deferReply(true).addContent("An error occured while uploading the file").queue();
-                t.printStackTrace();
-                e.getJDA().removeEventListener(this);
-                return null;
-            });
-            event.deferReply(false).addContent("File uploaded succesfully").queue();
+        new FileProxy(attachment.getUrl()).downloadToFile(saveFile);
+        event.deferReply(false).addContent("File uploaded succesfully").queue();
         
         e.getJDA().removeEventListener(this);
     }

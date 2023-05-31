@@ -3,13 +3,16 @@ package com.safjnest.Commands.Misc;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.safjnest.Utilities.CommandsHandler;
 import com.safjnest.Utilities.PermissionHandler;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.safjnest.Utilities.Guild.GuildSettings;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -61,7 +64,8 @@ public class Help extends Command {
         ));
         if(command.equals("")){
             String ss = "```\n";
-            for(String k : commands.keySet()){ 
+            for(String k : getKeysInDescendingOrder(commands)){
+                Collections.sort(commands.get(k), Comparator.comparing(Command::getName));
                 for(Command c : commands.get(k)){
                     ss+= c.getName() + "\n";
                 }
@@ -107,4 +111,14 @@ public class Help extends Command {
 
     }
 
+    public List<String> getKeysInDescendingOrder(HashMap<String, ArrayList<Command>> map) {
+        List<String> keys = new ArrayList<>(map.keySet());
+        Collections.sort(keys, new Comparator<String>() {
+            @Override
+            public int compare(String key1, String key2) {
+                return Integer.compare(map.get(key2).size(), map.get(key1).size());
+            }
+        });
+        return keys;
+    }
 }
