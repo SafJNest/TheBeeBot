@@ -1,4 +1,3 @@
-//TODO RIFARE QUESTA CLASSE DI MERDA INGUARADFBILE :D | tu sei inguardabile
 package com.safjnest.Commands.Audio;
 
 import java.awt.Color;
@@ -6,15 +5,16 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.voicerss.tts.Voice.Voices;
+
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
+import com.safjnest.Utilities.TTSHandler;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
-import com.safjnest.Utilities.Commands.CommandsHandler;
-import com.safjnest.Utilities.tts.TTSHandler;
-import com.safjnest.Utilities.tts.Voices;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -36,11 +36,11 @@ public class TTS extends Command{
     
     public TTS(TTSHandler tts, SQL sql){
         this.name = this.getClass().getSimpleName();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.tts = tts;
         this.sql = sql;
         voices.put(Voices.Arabic_Egypt.id, Set.of(Voices.Arabic_Egypt.array));

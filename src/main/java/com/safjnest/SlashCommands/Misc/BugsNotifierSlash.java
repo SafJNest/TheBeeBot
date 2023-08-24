@@ -3,8 +3,8 @@ package com.safjnest.SlashCommands.Misc;
 import java.awt.Color;
 import java.util.Arrays;
 
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 
@@ -25,11 +25,11 @@ public class BugsNotifierSlash extends SlashCommand {
      */
     public BugsNotifierSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "command", "Name of the command you found a problem with", true),
             new OptionData(OptionType.STRING, "text", "Describe the bug", true));

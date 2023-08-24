@@ -27,18 +27,49 @@
         "arguments" : "[CommandName]"
     },
 
-    "list":{
+    "list": {
         "alias" : ["papyrus", "paper", "listoide"],
         "help"  : "Display a list with all the sound in a server.",
         "category" : "Audio",
-        "arguments" : "[CommandName]"
+        "arguments" : "[CommandName]",
+        "children": {
+            "user": {
+                "alias" : [],
+                "help"  : "Display a list with all the sound in a server.",
+                "arguments" : "[CommandName]"
+            }, 
+            "guild": {
+                "alias" : [],
+                "help"  : "Display a list with all the sound uploaded by a user.",
+                "arguments" : "[CommandName]"
+            }
+        }
     },
 
     "listuser":{
         "alias" : ["papyrususer", "paperuser", "listoideuser"],
-        "help"  : "Display a list with all the sound uploaded by a user",
+        "help"  : "Display a list with all the sound uploaded by a user.",
         "category" : "Audio",
         "arguments" : "[CommandName]"
+    },
+
+    "play": {
+        "alias" : ["papyrus", "paper", "listoide"],
+        "help"  : "Can play a sound from youtube or a custum ome from the database.",
+        "category" : "Audio",
+        "arguments" : "[CommandName]",
+        "children": {
+            "youtube": {
+                "alias" : [],
+                "help"  : "Play a video from youtube.",
+                "arguments" : "[CommandName]"
+            }, 
+            "sound": {
+                "alias" : [],
+                "help"  : "Play a custom sound from the database.",
+                "arguments" : "[CommandName]"
+            }
+        }
     },
 
     "playyoutube":{
@@ -56,7 +87,7 @@
     },
 
     "tts":{
-        "alias" : ["t", "talk"],
+        "alias" : ["t"],
         "help"  : "Read what you write.",
         "category" : "Audio",
         "arguments" : "[CommandName] [text]"
@@ -145,40 +176,19 @@
         "arguments" : "[CommandName]"
     },
 
+    "rewards":{
+        "alias" : [],
+        "help"  : "Show all the rewards for leveling up",
+        "category" : "Server Management",
+        "arguments" : "[CommandName]"
+    },
+
 
     "customembed":{
         "alias" : ["embed"],
         "help"  : "Writes a custom embed",
         "category" : "Server Management",
         "arguments" : "[CommandName] [a]"
-    },
-
-    "disableslash":{
-        "alias" : [],
-        "help"  : "disable all the slash command in a guild",
-        "category" : "Server Management",
-        "arguments" : "[CommandName]"
-    },
-
-    "enableslash":{
-        "alias" : [],
-        "help"  : "enable all the slash command in a guild",
-        "category" : "Server Management",
-        "arguments" : "[CommandName]"
-    },
-
-
-
-
-
-
-
-
-    "setwelcomemessage":{
-        "alias" : ["setwelcome", "welcome"],
-        "help"  : "Allow to set a 'welcome quote' that would be sent every time a user join the server. Its necessary to set also a channel otherwise will be used the default system channel. Can also be setted only one role (for now) to be given. Ex: psetwelcome #welcome @role | Hello #user!. Using #user the user will be mentioned. - Write disable to cancel the function.",
-        "category" : "Settings",
-        "arguments" : "[CommandName] (#canale)(@ruoli) | [messaggio]"
     },
 
     "setroom":{
@@ -196,7 +206,7 @@
     },
 
 
-    "setprefix":{
+    "prefix":{
         "alias" : ["prefix"],
         "help"  : "Changes the prefix of the guild",
         "category" : "Settings",
@@ -210,18 +220,133 @@
         "arguments" : "[CommandName] [summonerName]"
     },
 
-    "setlevelupmessage":{
-        "alias" : ["setlevelup", "setlvl"],
-        "help"  : "Allow to set a 'level up message' to be sent every time a user level up in the server. Its necessary to set also a channel otherwise will be used the default system channel.Ex: psetlevelupmessage #global_chat | WP #user!. Using #user the user will be mentioned. This work only for Beebot. - Write disable to cancel the function.",
+    "toggleexpsystem":{
+        "alias" : ["delete", "ds", "forget"],
+        "help"  : "Toggle the exp system ON or OFF",
         "category" : "Settings",
-        "arguments" : "[CommandName] (#channel) | [messagge]"
+        "arguments" : "[CommandName]"
     },
 
-    "setleavemessage":{
+    "welcome": {
+        "alias" : ["setwelcome", "welcome"],
+        "help"  : "Allow to set a 'welcome quote' that would be sent every time a user join the server. Its necessary to set also a channel otherwise will be used the default system channel. Can also be setted only one role (for now) to be given. Ex: psetwelcome #welcome @role | Hello #user!. Using #user the user will be mentioned. - Write disable to cancel the function.",
+        "category" : "Settings",
+        "arguments" : "[CommandName] (#channel)(@role) | [message]",
+        "children": {
+            "delete": {
+                "alias" : [],
+                "help"  : "Delete the current welcome message.",
+                "arguments" : "[CommandName]"
+            }, 
+            "move": {
+                "alias" : [],
+                "help"  : "Move the welcome channel to another existing channel.",
+                "arguments" : "[CommandName]"
+            },
+            "preview": {
+                "alias" : [],
+                "help"  : "Show a preview of the current welcome message.",
+                "arguments" : "[CommandName]"
+            },
+            "text": {
+                "alias" : [],
+                "help"  : "Modify or set the welcome message.",
+                "arguments" : "[CommandName]"
+            }
+        }
+    },
+
+    "leave": {
         "alias" : ["setleave", "leave"],
         "help"  : "Allow to set a message to be sent every time a user left a guild. Its necessary to set also a channel otherwise will be used the default system channel.Ex: psetleft #global_chat | WP #user!. Using #user the user will be mentioned. This work only for Beebot. - Write disable to cancel the function.",
         "category" : "Settings",
-        "arguments" : "[CommandName] (#channel) | [message]"
+        "arguments" : "[CommandName] (#channel) | [message]",
+        "children": {
+            "delete": {
+                "alias" : [],
+                "help"  : "Delete the current leave message.",
+                "arguments" : "[CommandName]"
+            }, 
+            "move": {
+                "alias" : [],
+                "help"  : "Move the leave (can be the same for welcome) channel to another existing channel.",
+                "arguments" : "[CommandName]"
+            },
+            "preview": {
+                "alias" : [],
+                "help"  : "Show a preview of the current leave message.",
+                "arguments" : "[CommandName]"
+            },
+            "text": {
+                "alias" : [],
+                "help"  : "Modify or set the leave message.",
+                "arguments" : "[CommandName]"
+            }
+        }
+    },
+
+    "levelup": {
+        "alias" : ["setlevelup", "setlvl"],
+        "help"  : "Allow to set a 'level up message' to be sent every time a user level up in the server. Its necessary to set also a channel otherwise will be used the default system channel.Ex: psetlevelupmessage #global_chat | WP #user!. Using #user the user will be mentioned. This work only for Beebot. - Write disable to cancel the function.",
+        "category" : "Settings",
+        "arguments" : "[CommandName] (#channel) | [messagge]",
+        "children": {
+            "toggle": {
+                "alias" : [],
+                "help"  : "Turn the entire exp system ON or OFF.",
+                "arguments" : "[CommandName]"
+            }, 
+            "preview": {
+                "alias" : [],
+                "help"  : "Show a preview of the current levelup message.",
+                "arguments" : "[CommandName]"
+            },
+            "text": {
+                "alias" : [],
+                "help"  : "Modify or set the levelup message.",
+                "arguments" : "[CommandName]"
+            },
+            "channel": {
+                "alias" : [],
+                "help"  : "Turn the exp system ON or OFF for a specific channel.",
+                "arguments" : "[CommandName]"
+            },
+            "modifier": {
+                "alias" : [],
+                "help"  : "Turn the exp system ON or OFF for a specific channel.",
+                "arguments" : "[CommandName]"
+            } 
+            
+        }
+    },
+
+    "boost": {
+        "alias" : ["nitro", "setboost", "boosts"],
+        "help"  : "Allow to set a 'boost server message' to be sent every time a user boost the server. Its necessary to set also a channel otherwise will be used the default system channel.Ex: !boost #global_chat | Thx #user!. Using #user the user will be mentioned. - Write disable to cancel the function.",
+        "category" : "Settings",
+        "arguments" : "[CommandName] (#channel) | [messagge]",
+        "children": {
+            "delete": {
+                "alias" : [],
+                "help"  : "Delete the current boost message.",
+                "arguments" : "[CommandName]"
+            }, 
+            "preview": {
+                "alias" : [],
+                "help"  : "Show a preview of the current boost message.",
+                "arguments" : "[CommandName]"
+            },
+            "text": {
+                "alias" : [],
+                "help"  : "Modify or set the boost message.",
+                "arguments" : "[CommandName]"
+            },
+            "move": {
+                "alias" : [],
+                "help"  : "Move the boost channel to another existing channel.",
+                "arguments" : "[CommandName]"
+            } 
+        }
     },
 
 
@@ -286,14 +411,19 @@
         "alias" : ["mv", "throw"],
         "help"  : "Move a member from a voice channel to another one.\nIts possible to move multiple users at once.",
         "category" : "Member Management",
-        "arguments" : "[CommandName] (here = all the member in the voice channel will be moved) (channel id) | (me = you) (channel id) | (member) (channel id) | (member) (here = the user will be move where you are) | (member) (afk)." 
-    },
-
-    "movechannel":{
-        "alias" : [],
-        "help"  : "Move all the members in a room to another on.\nIts possibile to move the members to a specific users",
-        "category" : "Member Management",
-        "arguments" : "only for slash command." 
+        "arguments" : "[CommandName] (here = all the member in the voice channel will be moved) (channel id) | (me = you) (channel id) | (member) (channel id) | (member) (here = the user will be move where you are) | (member) (afk).",
+        "children": {
+            "user": {
+                "alias" : [],
+                "help"  : "Move a user to another channel/user",
+                "arguments" : "[CommandName]"
+            }, 
+            "channel": {
+                "alias" : [],
+                "help"  : "Move all the users currently in a channel to another channel/user",
+                "arguments" : "[CommandName]"
+            }
+        }
     },
 
     "modifynickname":{
@@ -413,7 +543,12 @@
 
     
 
-
+    "printcache":{
+        "alias" : ["cache"],
+        "help"  : "",
+        "category" : "Only For Admin",
+        "arguments" : "[prefixlist]"
+    },
 
     "prefixlist":{
         "alias" : ["preflist"],
@@ -521,18 +656,18 @@
 
 
 
-    "champ":{
-        "alias" : [],
-        "help"  : "WIP",
+    "champion":{
+        "alias" : ["rune", "runes", "champ", "champion", "champs"],
+        "help"  : "Suggests the best build and runes for a champion in a given position.",
         "category" : "League Of Legends",
         "arguments" : "[CommandName]"
     },
 
-    "rune":{
-        "alias" : ["runes"],
-        "help"  : "Suggest the most played runes for a specific champion",
+    "infoaugment":{
+        "alias" : ["aug"],
+        "help"  : "Suggests the best build and runes for a champion in a given position.",
         "category" : "League Of Legends",
-        "arguments" : "[CommandName] [champName] [lane]"
+        "arguments" : "[CommandName]"
     },
 
     "summoner":{
@@ -562,6 +697,45 @@
         "help"  : "Get a list with all the people a user played with.",
         "category" : "League Of Legends",
         "arguments" : "[CommandName] [summonerName] (n games to analyze)"
-    }
+    },
 
+    "infomatches":{
+        "alias" : ["im", "opgg"],
+        "help"  : "Get a list with all the people a user played with.",
+        "category" : "League Of Legends",
+        "arguments" : "[CommandName] [summonerName] (n games to analyze)"
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+    "talk":{
+        "alias" : ["stranger", "omegle"],
+        "help"  : "Talk to a stranger on omegle. Use quit to quit. Use partymode to let everyone write.",
+        "category" : "Miscellaneous",
+        "arguments" : "[CommandName] (language) (interests) (party mode)"
+    },
+
+    "set":{
+        "alias" : [],
+        "help"  : "Show all the rewards for leveling up",
+        "category" : "Server Management",
+        "arguments" : "[CommandName]"
+    },
+
+    "helpcommand":{
+        "alias" : [],
+        "help"  : "Show all the rewards for leveling up",
+        "category" : "Server Management",
+        "arguments" : "[CommandName]"
+    }
+    
 }

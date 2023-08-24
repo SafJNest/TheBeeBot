@@ -12,11 +12,11 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.PermissionHandler;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 
@@ -30,11 +30,11 @@ public class ServerInfoSlash extends SlashCommand{
 
     public ServerInfoSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "guild_id", "Guild to get the information about (the bot must be in the guild)", false),
             new OptionData(OptionType.INTEGER, "rolecharnumber", "max number of charachters to print roles (0 to 1024)", false)
@@ -58,7 +58,7 @@ public class ServerInfoSlash extends SlashCommand{
 
         int roleCharNumber = (event.getOption("roleCharNumber") == null) ? defaultRoleCharNumber : event.getOption("roleCharNumber").getAsInt();
 
-        ArrayList<ArrayList<String>> welcomeMessages = DatabaseHandler.getSql().getAllRows("SELECT bot_id, message_text, channel_id FROM welcome_message WHERE discord_id = '" + guild.getId() + "';");
+        ArrayList<ArrayList<String>> welcomeMessages = DatabaseHandler.getSql().getAllRows("SELECT bot_id, message_text, channel_id FROM welcome_message WHERE guild_id = '" + guild.getId() + "';");
         String welcomeMessageString = "";
         for(int i = 1; i < welcomeMessages.size(); i++) {
             welcomeMessageString += event.getJDA().getUserById(welcomeMessages.get(i).get(0)).getName()
@@ -67,7 +67,7 @@ public class ServerInfoSlash extends SlashCommand{
                                     +  "]" + "\n\n";
         }
 
-        ArrayList<ArrayList<String>> leaveMessages = DatabaseHandler.getSql().getAllRows("SELECT bot_id, message_text, channel_id FROM left_message WHERE discord_id = '" + guild.getId() + "';");
+        ArrayList<ArrayList<String>> leaveMessages = DatabaseHandler.getSql().getAllRows("SELECT bot_id, message_text, channel_id FROM left_message WHERE guild_id = '" + guild.getId() + "';");
         String leaveMessageString = "";
         for(int i = 1; i < leaveMessages.size(); i++) {
             leaveMessageString += event.getJDA().getUserById(leaveMessages.get(i).get(0)).getName()
@@ -76,7 +76,7 @@ public class ServerInfoSlash extends SlashCommand{
                                     +  "]" + "\n\n";
         }
 
-        String lvlUpMsg = DatabaseHandler.getSql().getString("SELECT message_text FROM levelup_message WHERE discord_id = '" + guild.getId() + "';", "message_text");
+        String lvlUpMsg = DatabaseHandler.getSql().getString("SELECT message_text FROM levelup_message WHERE guild_id = '" + guild.getId() + "';", "message_text");
 
         List<String> RoleNames = PermissionHandler.getMaxFieldableRoleNames(guild.getRoles(), roleCharNumber);
 

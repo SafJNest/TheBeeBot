@@ -1,6 +1,6 @@
 package com.safjnest.Commands.ManageGuild;
 
-import com.safjnest.Utilities.Commands.CommandsHandler;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.TableHandler;
@@ -20,11 +20,11 @@ public class Leaderboard extends Command {
 
     public Leaderboard() {
         this.name = this.getClass().getSimpleName();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
     }
 
     @Override
@@ -50,7 +50,7 @@ public class Leaderboard extends Command {
             lvl = Integer.parseInt(databaseData[i][2]);
             exp = Integer.parseInt(databaseData[i][3]);
             data[i][2] = String.valueOf(lvl);
-            data[i][3] = Math.round((float)ExpSystem.expToLvlUp(lvl, exp)/(float)ExpSystem.totalExpToLvlUp(lvl + 1)*100) + "% (" + ExpSystem.expToLvlUp(lvl, exp) + "/" + ExpSystem.totalExpToLvlUp(lvl + 1) + ") ";
+            data[i][3] = Math.round((float)ExpSystem.expToLvlUp(lvl, exp)/(float)(ExpSystem.totalExpToLvlUp(lvl + 1) - ExpSystem.totalExpToLvlUp(lvl))*100) + "% (" + ExpSystem.expToLvlUp(lvl, exp) + "/" + (ExpSystem.totalExpToLvlUp(lvl + 1) - ExpSystem.totalExpToLvlUp(lvl)) + ") ";
 
             data[i][4] = databaseData[i][1];
         }

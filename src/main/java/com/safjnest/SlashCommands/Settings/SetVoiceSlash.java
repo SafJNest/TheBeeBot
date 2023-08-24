@@ -1,9 +1,9 @@
 package com.safjnest.SlashCommands.Settings;
 
 import com.safjnest.Commands.Audio.TTS;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.SQL;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -23,11 +23,11 @@ public class SetVoiceSlash extends SlashCommand {
 
     public SetVoiceSlash() {
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "voice", "Speaker name's voice", true));
         this.sql = DatabaseHandler.getSql();

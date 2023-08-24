@@ -1,7 +1,7 @@
 package com.safjnest.Commands.ManageGuild;
 
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.SQL;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import java.util.ArrayList;
 
@@ -18,26 +18,25 @@ public class ListRoom extends Command {
 
     public ListRoom(SQL sql) {
         this.name = this.getClass().getSimpleName();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.sql = sql;
     }
 
     @Override
     protected void execute(CommandEvent event) {
-        String query = "SELECT room_id FROM rooms_nickname WHERE discord_id = '" + event.getGuild().getId() + "';";
+        String query = "SELECT room_id FROM rooms_settings WHERE guild_id = '" + event.getGuild().getId() + "';";
         ArrayList<String> roomId= sql.getAllRowsSpecifiedColumn(query, "room_id");
-        query = "SELECT room_name FROM rooms_nickname WHERE discord_id = '" + event.getGuild().getId() + "';";
+        query = "SELECT room_name FROM rooms_settings WHERE guild_id = '" + event.getGuild().getId() + "';";
         ArrayList<String> roomName= sql.getAllRowsSpecifiedColumn(query, "room_name");
         String rooms = "";
         for(int i = 0; i < roomName.size(); i++){
             try {
                 rooms+=event.getGuild().getVoiceChannelById(roomId.get(i)).getName() + " = " + roomName.get(i) + "\n";
             } catch (Exception e) {
-                rooms+= "error with " + roomName.get(i) + " (The channel might have been deleted)\n";
             }
         }
         

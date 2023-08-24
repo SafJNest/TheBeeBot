@@ -1,0 +1,10 @@
+@Override
+    public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        SlashCommandEvent e = new SlashCommandEvent(event, null);    
+        SlashCommand sc = sch.getCommand(e.getName());
+        try {
+            Method executeMethod = SlashCommand.class.getDeclaredMethod("execute", SlashCommandEvent.class);
+            executeMethod.setAccessible(true);
+            executeMethod.invoke(sc, e);
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException exp) {}
+    }

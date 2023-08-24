@@ -41,11 +41,11 @@ public class GuildSettings {
      * @see {@link com.safjnest.Utilities.Guild.GuildData guildData and default guildData}
      */
     public GuildData getServer(String id) {
-        if(cache.containsKey(id)) {
+        if(cache.containsKey(id)) 
             return cache.get(id);
-        } else {
+         else 
             return retrieveServer(id);
-        }
+        
     }
 
     /**
@@ -71,11 +71,11 @@ public class GuildSettings {
      * Always a {@link com.safjnest.Utilities.Guild.GuildData guildData}, never {@code null}
      */
     public GuildData retrieveServer(String stringId) {
-        String query = "SELECT * FROM guild_settings WHERE guild_id = '" + stringId + "' AND bot_id = '" + botId + "';";
+        String query = "SELECT guild_id, prefix, exp_enabled FROM guild_settings WHERE guild_id = '" + stringId + "' AND bot_id = '" + botId + "';";
         ArrayList<String> guildArrayList = DatabaseHandler.getSql().getSpecifiedRow(query, 0);
-        GuildData guild = (guildArrayList == null || guildArrayList.get(2) == null) 
-                    ? new GuildData(Long.parseLong(stringId), prefix) 
-                    : new GuildData(Long.parseLong(guildArrayList.get(0)), guildArrayList.get(2));
+        GuildData guild = (guildArrayList == null || guildArrayList.get(1) == null) 
+                    ? new GuildData(Long.parseLong(stringId), prefix, false) 
+                    : new GuildData(Long.parseLong(guildArrayList.get(0)), guildArrayList.get(1), (guildArrayList.get(2).equals("1")));
         saveData(guild);
         return guild;
     }
@@ -95,4 +95,8 @@ public class GuildSettings {
     public String getPrefix() {
         return data.getPrefix();
     }
+
+    public void doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed() {
+        return;
+	}
 }

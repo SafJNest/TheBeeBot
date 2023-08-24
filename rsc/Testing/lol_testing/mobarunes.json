@@ -1,0 +1,78 @@
+{
+    "data": {
+      "lol": {
+        "champion": {
+          "build": {
+            "championSlug": "samira",
+            "items": [
+              {
+                "type": "Starter",
+                "items": [1055, 2003, 3340],
+                "__typename": "LolChampionBuildItemsList"
+              },
+              {
+                "type": "Early",
+                "items": [3134, 1001],
+                "__typename": "LolChampionBuildItemsList"
+              },
+              {
+                "type": "Core",
+                "items": [6676, 3047, 6691],
+                "__typename": "LolChampionBuildItemsList"
+              },
+              {
+                "type": "FullBuild",
+                "items": [3072, 3036, 3026],
+                "__typename": "LolChampionBuildItemsList"
+              },
+              {
+                "type": "Situational",
+                "items": [6673, 3156, 3033, 3139, 6333, 6693],
+                "__typename": "LolChampionBuildItemsList"
+              },
+              {
+                "type": "MythicItem",
+                "items": [6691],
+                "__typename": "LolChampionBuildItemsList"
+              }
+            ],
+            "name": null,
+            "patch": "13.11",
+            "perks": {
+              "IDs": [8010, 9111, 9103, 8299, 8139, 8135, 5005, 5008, 5002],
+              "style": 8000, 
+              "subStyle": 8100,
+              "__typename": "LolChampionBuildPerk"
+            },
+            "role": "ADC",
+            "skillOrder": [1, 3, 2, 1, 1, 4, 1, 3, 1, 3, 4, 3, 3, 2, 2, 4, 2, 2],
+            "spells": [3, 4],
+            "stats": {
+              "matchCount": 16033,
+              "__typename": "LolChampionBuildStats"
+            },
+            "type": "MOST_POPULAR",
+            "__typename": "LolChampionBuild"
+          },
+          "stats": {
+            "tier": null,
+            "winRateHistory": [
+              {
+                "x": "13.10",
+                "value": 48.66239836481957,
+                "__typename": "LolChampionStatsHistoryPoint"
+              },
+              {
+                "x": "13.11",
+                "value": 50.01619669263536,
+                "__typename": "LolChampionStatsHistoryPoint"
+              }
+            ],
+            "__typename": "LolChampionStats"
+          },
+          "__typename": "LolChampion"
+        },
+        "__typename": "LoL"
+      }
+    }
+  }

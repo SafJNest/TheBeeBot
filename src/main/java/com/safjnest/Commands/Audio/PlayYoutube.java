@@ -5,14 +5,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -39,18 +38,16 @@ import net.dv8tion.jda.api.managers.AudioManager;
  */
 public class PlayYoutube extends Command {
     private String youtubeApiKey;
-    private HashMap<String,String> tierOneLink;
     private PlayerManager pm;
 
-    public PlayYoutube(String youtubeApiKey, HashMap<String,String> tierOneLink){
+    public PlayYoutube(String youtubeApiKey){
         this.name = this.getClass().getSimpleName();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.youtubeApiKey = youtubeApiKey;
-        this.tierOneLink = tierOneLink;
     }
 
     public static String getVideoIdFromYoutubeUrl(String youtubeUrl) {
@@ -155,9 +152,5 @@ public class PlayYoutube extends Command {
         eb.setDescription("[" + pm.getPlayer().getPlayingTrack().getInfo().title + "](" + pm.getPlayer().getPlayingTrack().getInfo().uri + ")");
         eb.setThumbnail("https://img.youtube.com/vi/" + pm.getPlayer().getPlayingTrack().getIdentifier() + "/hqdefault.jpg");
         event.reply(eb.build());
-        
-        if(tierOneLink.containsKey(pm.getPlayer().getPlayingTrack().getIdentifier()))
-            channel.sendMessage(tierOneLink.get(pm.getPlayer().getPlayingTrack().getIdentifier())).queue();
-	
     }
 }

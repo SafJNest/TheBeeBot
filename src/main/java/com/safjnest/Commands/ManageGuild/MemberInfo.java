@@ -6,13 +6,13 @@ import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.PermissionHandler;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.safjnest.Utilities.EXPSystem.ExpSystem;
-import com.safjnest.Utilities.LOL.LOLHandler;
+import com.safjnest.Utilities.LOL.RiotHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -30,11 +30,11 @@ public class MemberInfo extends Command{
 
     public MemberInfo() {
         this.name = this.getClass().getSimpleName();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
     }
 
     @Override
@@ -67,14 +67,14 @@ public class MemberInfo extends Command{
 
         String permissionNames = PermissionHandler.getFilteredPermissionNames(member).toString();
 
-        String query = "SELECT summoner_id FROM lol_user WHERE discord_id = '" + user.getId() + "';";
+        String query = "SELECT summoner_id FROM lol_user WHERE guild_id = '" + user.getId() + "';";
         ArrayList<String> accounts = DatabaseHandler.getSql().getAllRowsSpecifiedColumn(query, "summoner_id");
         String lolAccounts = "";
         if(accounts.size() == 0){
             lolAccounts = user.getName() + " has not connected a riot account.";
         }else{
             for(String s : accounts)
-                lolAccounts += LOLHandler.getSummonerBySummonerId(s).getName() + " - ";
+                lolAccounts += RiotHandler.getSummonerBySummonerId(s).getName() + " - ";
             lolAccounts = lolAccounts.substring(0, lolAccounts.length() - 3);
         }
 
@@ -86,7 +86,7 @@ public class MemberInfo extends Command{
             lvl = Integer.valueOf(arr.get(1));
             msg = Integer.valueOf(arr.get(2));
         }
-        String lvlString = String.valueOf(ExpSystem.expToLvlUp(lvl, exp) + "/" + ExpSystem.totalExpToLvlUp(lvl + 1));
+        String lvlString = String.valueOf(ExpSystem.expToLvlUp(lvl, exp) + "/" + (ExpSystem.totalExpToLvlUp(lvl + 1) - ExpSystem.totalExpToLvlUp(lvl)));
 
         List<String> activityNames = new ArrayList<String>();
         member.getActivities().forEach(activity -> activityNames.add(activity.getName()));
@@ -99,7 +99,7 @@ public class MemberInfo extends Command{
         eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
 
 
-        eb.addField("Name", "```" + user.getAsTag() + "```", true);
+        eb.addField("Name", "```" + user.getName() + "```", true);
 
         eb.addField("Nickname", "```"
                     + (member.getNickname() == null

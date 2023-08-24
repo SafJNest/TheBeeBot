@@ -4,7 +4,7 @@ import java.util.EventListener;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.safjnest.Utilities.Commands.CommandsHandler;
+import com.safjnest.Utilities.CommandsLoader;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
@@ -18,11 +18,11 @@ public class ConnectSlash extends SlashCommand implements EventListener{
 
     public ConnectSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
     }
 
 	@Override

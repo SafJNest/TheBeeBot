@@ -3,9 +3,9 @@ package com.safjnest.SlashCommands.ManageGuild;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.EXPSystem.ExpSystem;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.TableHandler;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,11 +23,11 @@ public class LeaderboardSlash extends SlashCommand {
 
     public LeaderboardSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
             new OptionData(OptionType.INTEGER, "limit", "row limit", false)
         );
@@ -43,9 +43,9 @@ public class LeaderboardSlash extends SlashCommand {
         for(int i = 1; i < res.size(); i++)
             databaseData[i-1] = res.get(i).toArray(new String[0]);
         int rows = databaseData.length;
-        int columns = databaseData[0].length;
+        int columns = databaseData[0].length + 1;
         String[][] data = new String[rows][columns];
-        String[] headers = {"#", "user", "level", "messages"};
+        String[] headers = {"#", "user", "level", "progress", "messages"};
         int lvl, exp;
 
         for(int i = 0; i < rows; i++) {
@@ -55,9 +55,10 @@ public class LeaderboardSlash extends SlashCommand {
 
             lvl = Integer.parseInt(databaseData[i][2]);
             exp = Integer.parseInt(databaseData[i][3]);
-            data[i][2] = String.valueOf(ExpSystem.expToLvlUp(lvl, exp) + "/" + ExpSystem.totalExpToLvlUp(lvl + 1));
+            data[i][2] = String.valueOf(lvl);
+            data[i][3] = Math.round((float)ExpSystem.expToLvlUp(lvl, exp)/(float)(ExpSystem.totalExpToLvlUp(lvl + 1) - ExpSystem.totalExpToLvlUp(lvl))*100) + "% (" + ExpSystem.expToLvlUp(lvl, exp) + "/" + (ExpSystem.totalExpToLvlUp(lvl + 1) - ExpSystem.totalExpToLvlUp(lvl)) + ") ";
 
-            data[i][3] = databaseData[i][1];
+            data[i][4] = databaseData[i][1];
         }
 
         TableHandler.replaceIdsWithNames(data, event.getJDA());
@@ -65,7 +66,8 @@ public class LeaderboardSlash extends SlashCommand {
         String table = TableHandler.constructTable(data, headers);
 
         String[] splitTable = TableHandler.splitTable(table);
-
-        event.deferReply(false).setContent("```" + splitTable[0] + "```").queue();
+        event.deferReply(false).addContent("Here the full table:").queue();
+         for(int i = 0; i < splitTable.length; i++)
+            event.getChannel().sendMessage("```" + splitTable[i] + "```").queue();
 	}
 }

@@ -1,0 +1,12 @@
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('T4A0HGaXp19tVImNQow0ZnQyDiNqDvbHAXvav9jSnQZaoKA', '234670519272734721', 'PxBHtQVV2XxBEnM1A_qcGbvVATtPImLd7YzuFfjQ8_SVUfs');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('YfNvKQS-iHLY6SGtY-YwhAiihfET-SbZb0r5HOyHGpJf6fo', '291624587278417920', 'Uh2Y3ZzrLSqijsDII8hTQFWRIDT5vsejInAlKUcW9rt-un4');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('P0DQYzv94ju3sCUCAFqPLyTUTTrHF5D121wyydwL1OPA9ggcjptC6Hex', '335796793331810305', '8JMGM3OiuPQGx6AO8veGAcGHElyZx3xJ0gG8dBp1YAv6HJNQ');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('Q3Ban_aDhdA1W4-d_V7bRdxrDIMkccmGcneLscVMdJ2ETk70e86qPN0p', '383358222972616705', 'T4GXKcp1UmglLGh7tuLVGQB5AYc4HuSN8MSA_TrVDXgrbU_IoQ0L7Gq7Ig');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('UmRf1jAsBKfWy3dN0hn_7lqaxtGrXtySZRz8hVohAQzLtpPEB50SFvcc', '383358222972616705', 'wxo_wA0MliArE_YUWHCZViy4hEvWSVDIQEeoNJktOWhYe5X-');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('zKzeTph3Ldn-wW-Reyzjwu8FO5hiUAC6YCOGJHt9aC2ibMqjey5OaIAe', '431324611968368652', 'zKJs7LGgrUW0G5OUgXz-41V2GVcDJHaCkZADv8Uopq1pSB-1');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('c6A67zEH2Om053_NpBD-HXmHMPCD_fDo0KeJyWQ8kWclwJrk7MqRviVx', '440489230968553472', 'sncOrbEQqj9JK2nHpCK42bdnZ8ebijd5tb8RqAtLMY6sCX6_');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('_AS9O2Mq-3S72AWYIJXXyl6cm4rXMyOBAGUNZAU1WrVF0xLNlL6mI02G', '608661176498389011', 'anRRiGRL0pNqkqana1qD5ra3S0tUqqBqqliR5dAIJu0d46Xs');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('tLEoVM0iRaWzqFPtrLNHk0bCc8PsEnAY374PP5BzcBNl5fljIMtqC_yh', '707479292644163604', '8MUplsrk74GD-BqNXXXPNrp_PU00Cah2aW00BkZTDrY3cO08');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('AWRQ0KO0lcl_aT9JiquqwAsmq-uOFvUzFMPdXLr0rtZYzK2DB8xo1J7o', '756251154928631848', '5PdWwafrQwX_CKX_EAcrKjZ57k2bCWnpn_t1arkET8qtZAr7Y028k7noRA');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('Q79oy_Rn4nmSwbRZCYc4aYHQSKgLFwuP4LACudlsG92Hq79DbDhatc_h', '930887271618609173', 'uuYgdobAMZnAFPEn9WFKbxozijTcLIIOwqgdsLGH2f5hv-jOlYSLytxZYg');
+insert into `lol_user` (`account_id`, `guild_id`, `summoner_id`) values ('Fk5iXW5kdEGD5fw8OPOe7ZdarlzzqRe3HFcKrlWLkZxzeqngm6rUaPZP', '938487470339801169', 'jVYLzDFqjP2edMsy6cbZT8vok8dPXsJdztJuCu_3H31b3m2q');

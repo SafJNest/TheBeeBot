@@ -13,21 +13,20 @@ import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.OpenAIHandler;
 import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
+import com.safjnest.Utilities.TTSHandler;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
-import com.safjnest.Utilities.LOL.LOLHandler;
-import com.safjnest.Utilities.tts.TTSHandler;
+import com.safjnest.Utilities.LOL.RiotHandler;
 
 import no.stelar7.api.r4j.basic.APICredentials;
 import no.stelar7.api.r4j.impl.R4J;
 
 public class App {
-
     public static ArrayList<Thread> botsArr = new ArrayList<>(); 
     private static TTSHandler tts;
     private static SQL sql;
     private static R4J riotApi;
     private static OpenAIHandler openAIHandler;
-    private static LOLHandler lolHandler;
+    private static RiotHandler lolHandler;
     private static DatabaseHandler dbh;
     private static BotSettingsHandler bs;
 
@@ -37,7 +36,7 @@ public class App {
         boolean isExtremeTesting = false;
         
         JSONParser parser = new JSONParser();
-        JSONObject settings = null, SQLSettings = null, openAISettins = null;
+        JSONObject settings = null, SQLSettings = null, openAISettins = null, riotSettings = null;
         JSONArray bots = null;
         try (Reader reader = new FileReader("rsc" + File.separator + "settings.json")) {
             settings = (JSONObject) parser.parse(reader);
@@ -45,6 +44,7 @@ public class App {
             settings = (JSONObject) settings.get("settings");
             SQLSettings = (JSONObject) settings.get("MySQL");
             openAISettins = (JSONObject) settings.get("OpenAI");
+            riotSettings = (JSONObject) settings.get("Riot");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -60,7 +60,8 @@ public class App {
         
         riotApi = null;
         try {
-            riotApi = new R4J(new APICredentials(settings.get("riotKey").toString()));
+            riotApi = new R4J(new APICredentials(
+                riotSettings.get("riotKey").toString()));
             System.out.println("[R4J] INFO Connection Successful!");
         } catch (Exception e) {
             System.out.println("[R4J] INFO Annodam Not Successful!");
@@ -73,10 +74,8 @@ public class App {
         );
 
         
-        
-        
         dbh = new DatabaseHandler(sql);
-        lolHandler = new LOLHandler(riotApi);
+        lolHandler = new RiotHandler(riotApi, riotSettings.get("lolVersion").toString());
 
         dbh.doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed();
         lolHandler.doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed();
@@ -93,7 +92,7 @@ public class App {
                 }
                 for(Thread t : botsArr){
                     t.start();
-                    Thread.sleep(4117); //pebble non riesce a gestire più di un bot che si loada contemporaneamente
+                    Thread.sleep(6117); //pebble non riesce a gestire più di un bot che si loada contemporaneamente
                 }
             } catch (Exception e) {e.printStackTrace(); return;}
         }else{

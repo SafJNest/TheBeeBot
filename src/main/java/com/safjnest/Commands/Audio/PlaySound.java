@@ -7,12 +7,12 @@ import java.util.ArrayList;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Audio.SoundBoard;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -33,11 +33,11 @@ public class PlaySound extends Command{
 
     public PlaySound(SQL sql){
         this.name = this.getClass().getSimpleName();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.sql = sql;
     }
 
@@ -144,18 +144,18 @@ public class PlaySound extends Command{
         pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
         
 
-        query = "SELECT times FROM play where play.id_sound = '" + id + "' and play.user_id = '" + event.getAuthor().getId() + "';";
+        query = "SELECT times FROM play where play.sound_id = '" + id + "' and play.user_id = '" + event.getAuthor().getId() + "';";
         if(sql.getString(query, "times") == null){
-            query = "INSERT INTO play(user_id, id_sound, times) VALUES('" + event.getAuthor().getId() + "','" + id + "', 1);";
+            query = "INSERT INTO play(user_id, sound_id, times) VALUES('" + event.getAuthor().getId() + "','" + id + "', 1);";
         }
         else{
-            query = "UPDATE play SET times = times + 1 WHERE id_sound = (" + id + ") AND user_id = '" + event.getAuthor().getId() + "';";
+            query = "UPDATE play SET times = times + 1 WHERE sound_id = (" + id + ") AND user_id = '" + event.getAuthor().getId() + "';";
         }
         sql.runQuery(query);
         
-        query = "SELECT SUM(times) as sum FROM play where id_sound='" + id + "';";
+        query = "SELECT SUM(times) as sum FROM play where sound_id='" + id + "';";
         String timesPlayed = sql.getString(query, "sum");
-        query = "SELECT times FROM play where id_sound='" + id + "' AND user_id='"+event.getAuthor().getId()+"';";
+        query = "SELECT times FROM play where sound_id='" + id + "' AND user_id='"+event.getAuthor().getId()+"';";
         String timesPlayedByUser = sql.getString(query, "times");
         
         EmbedBuilder eb = new EmbedBuilder();

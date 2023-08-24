@@ -1,0 +1,462 @@
+{
+    "Audio" :{
+        "name" : "Audio",
+        
+        "connect":{
+            "alias" : ["join", "comeherebroda"],
+            "help"  : "Connect the bot to the voice channel.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "customizesound":{
+            "alias" : ["custom", "cs", "personalize"],
+            "help"  : "Allow the user to modify a sound's name. Using slash command you can specify the sound by name.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "deletesound":{
+            "alias" : ["delete", "ds", "forget"],
+            "help"  : "Remove a sound from the database.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "disconnect":{
+            "alias" : ["bye", "fuckoff"],
+            "help"  : "Disconnect the bot or a user from the voice channel.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "list":{
+            "alias" : ["papyrus", "paper", "listoide"],
+            "help"  : "Display a list with all the sound in a server.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "listuser":{
+            "alias" : ["papyrususer", "paperuser", "listoideuser"],
+            "help"  : "Display a list with all the sound uploaded by a user",
+            "arguments" : "[CommandName]"
+        },
+    
+        "playyoutube":{
+            "alias" : ["y", "py", "yt"],
+            "help"  : "Play a video from youtube.",
+            "arguments" : "[CommandName] [link/name video]"
+        },
+    
+        "playsound":{
+            "alias" : ["p", "ps"],
+            "help"  : "Play a custom sound from the database.",
+            "arguments" : "[CommandName] [soundName]"
+        },
+    
+        "tts":{
+            "alias" : ["t", "talk"],
+            "help"  : "Read what you write.",
+            "arguments" : "[CommandName] [text]"
+        },
+    
+        "stop":{
+            "alias" : ["stp", "donteventhinkaboutit"],
+            "arguments" : "[CommandName]"
+        },
+    
+        "upload":{
+            "alias" : ["up", "add"],
+            "help"  :"Upload a custom sound to the database.",
+            "arguments" : "[CommandName] [soundName]"
+        },
+    
+        "downloadsound":{
+            "alias" : ["download"],
+            "help"  : "Download a sound.",
+            "arguments" : "[CommandName] [soundName]"
+        }
+    },
+    
+
+    
+    "ManageGuild":{
+        "name" : "Server Management",
+
+        "channelinfo":{
+            "alias" : ["infochannel", "ci","ic","channel"],
+            "help"  : "Show the information about a channel.",
+            "category" : "Server Management",
+            "arguments" : "[channelinfo] [#channel/channel ID]"
+        },
+    
+        "clear":{
+            "alias" : [],
+            "help"  : "Delete the message in a channel (max 99).",
+            "category" : "Server Management",
+            "arguments" : "[clear] [numberMessages]"
+        },
+    
+        "emojiinfo":{
+            "alias" : ["em", "eminf"],
+            "help"  : "Show the information about an emoji.",
+            "category" : "Server Management",
+            "arguments" : "[emoji] [emojiName, emoji]"
+        },
+        
+        "serverinfo":{
+            "alias" : ["servinfo", "serinf"],
+            "help"  : "Show the information about the server.",
+            "category" : "Server Management",
+            "arguments" : "[CommandName]"
+        },
+    
+        "memberinfo":{
+            "alias" : ["usinf", "uinfo", "userinfo", "userstats", "stats"],
+            "help"  : "Show the information about a member",
+            "arguments" : "[userinfo] [@user]"
+        },
+    
+        "listroom":{
+            "alias" : ["rooms"],
+            "help"  : "List with all the nickname in a server.",
+            "arguments" : "[CommandName] [#canale] || [CommandName] [idCanale] "
+        },
+        
+        "leaderboard":{
+            "alias" : [],
+            "help"  : "Show statistic about the user",
+            "arguments" : "[CommandName]"
+        },
+    
+    
+        "customembed":{
+            "alias" : ["embed"],
+            "help"  : "Writes a custom embed",
+            "arguments" : "[CommandName] [a]"
+        },
+    
+        "disableslash":{
+            "alias" : [],
+            "help"  : "disable all the slash command in a guild",
+            "arguments" : "[CommandName]"
+        },
+    
+        "enableslash":{
+            "alias" : [],
+            "help"  : "enable all the slash command in a guild",
+            "arguments" : "[CommandName]"
+        }
+    },
+    
+    
+    "Settings":{
+        "name": "Settings",
+
+        "setwelcomemessage":{
+            "alias" : ["setwelcome", "welcome"],
+            "help"  : "Allow to set a 'welcome quote' that would be sent every time a user join the server. Its necessary to set also a channel otherwise will be used the default system channel. Can also be setted only one role (for now) to be given. Ex: psetwelcome #welcome @role | Hello #user!. Using #user the user will be mentioned. - Write disable to cancel the function.",
+            "arguments" : "[CommandName] (#canale)(@ruoli) | [messaggio]"
+        },
+    
+        "setroom":{
+            "alias" : ["room"],
+            "help"  : "Allow to set a nickname for the channel, for an easier use of 'move'.",
+            "arguments" : "[CommandName] [#canale] || [CommandName] [idCanale] "
+        },
+    
+        "setvoice":{
+            "alias" : ["voice"],
+            "help"  : "Allow to set a default voice for command 'tts'. Every bot will have a different setted voice.",
+            "arguments" : "[CommandName] [nomeVoce]"
+        },
+    
+        "setprefix":{
+            "alias" : ["prefix"],
+            "help"  : "Changes the prefix of the guild",
+            "arguments" : "[CommandName] [new Prefix]"
+        },
+    
+        "setsummoner":{
+            "alias" : ["setsum", "setuser", "ss"],
+            "help"  : "Allow to connect a riot account. You can also remove a summoner using 'setsummoner remove:name'.",
+            "arguments" : "[CommandName] [summonerName]"
+        },
+    
+        "setlevelupmessage":{
+            "alias" : ["setlevelup", "setlvl"],
+            "help"  : "Allow to set a 'level up message' to be sent every time a user level up in the server. Its necessary to set also a channel otherwise will be used the default system channel.Ex: psetlevelupmessage #global_chat | WP #user!. Using #user the user will be mentioned. This work only for Beebot. - Write disable to cancel the function.",
+            "arguments" : "[CommandName] (#channel) | [messagge]"
+        },
+    
+        "setleavemessage":{
+            "alias" : ["setleave", "leave"],
+            "help"  : "Allow to set a message to be sent every time a user left a guild. Its necessary to set also a channel otherwise will be used the default system channel.Ex: psetleft #global_chat | WP #user!. Using #user the user will be mentioned. This work only for Beebot. - Write disable to cancel the function.",
+            "arguments" : "[CommandName] (#channel) | [message]"
+        }
+
+    },
+
+
+    "ManageMembers":{
+        "name":"Members management",
+
+        "ban":{
+            "alias" : ["sgozz", "destroy", "annihilate", "radiateDeath", "drinkRadithorForAYear", "ohthemisery"],
+            "help"  : "Ban a user.",
+            "arguments" : "[ban] [@user] (reason)"
+        },
+    
+        "image":{
+            "alias" : ["img"],
+            "help"  : "Show the imagine of a user.",
+            "arguments" : "[image] [@user]"
+        },
+    
+        "kick":{
+            "alias" : ["lightdeath", "espulsione", "takethetrashout"],
+            "help"  : "Kick a member.",
+            "arguments" : "[kick] [@user]"
+        },
+    
+        "mute":{
+            "alias" : ["dontlistentothesound"],
+            "help"  : "Mute a member.",
+            "arguments" : "[mute] [@user]"
+        },
+    
+        "permissions":{
+            "alias" : ["perms", "permission"],
+            "help"  : "Show all the permissions a user has.",
+            "arguments" : "[permissions] [@user]"
+        },
+    
+        "unban":{
+            "alias" : ["unsgozz", "undestroy", "unannihilate", "unradiateDeath", "sban", "pardon"],
+            "help"  : "Unban a member.",
+            "arguments" : "[unbun] [@user]"
+        },
+    
+        "unmute":{
+            "alias" : ["listentothesound"],
+            "help"  : "Unmute a member.",
+            "arguments" : "[unmute] [@user]"
+        },
+    
+        "move":{
+            "alias" : ["mv", "throw"],
+            "help"  : "Move a member from a voice channel to another one.\nIts possible to move multiple users at once.",
+            "arguments" : "[CommandName] (here = all the member in the voice channel will be moved) (channel id) | (me = you) (channel id) | (member) (channel id) | (member) (here = the user will be move where you are) | (member) (afk)." 
+        },
+    
+        "movechannel":{
+            "alias" : [],
+            "help"  : "Move all the members in a room to another on.\nIts possibile to move the members to a specific users",
+            "arguments" : "only for slash command." 
+        },
+    
+        "modifynickname":{
+            "alias" : ["modnick", "nick"],
+            "help"  : "Change the nickname for a member.",
+            "arguments" : "[CommandName] [member] [new nick]"
+        }
+    },
+
+
+    "Math":{
+        "name":"Math",
+        "calculator":{
+            "alias" : ["c", "calc","calculate"],
+            "help"  : "Does several mathematical operation. Such as [calc 20 +  ln(2) - (3*(cos(pi)+3)]",
+            "arguments" : "[calc] [expression] (+, -, *, /, cos, sin, pi, e, ln)"
+        },
+    
+        "function":{
+            "alias" : ["c", "calculator","calculate"],
+            "help"  : "Does several mathematical operation.",
+            "arguments" : "[calc] [(sqrt n) (sin n) (cos n ) (ln n) (tan n) (asin n) (acos n) (exp n)]"
+        },
+    
+        
+    
+        "dice":{
+            "alias" : ["aleaiactaest", "roll"],
+            "help"  : "Roll one or more dices.",
+            "arguments" : "[dice] (number) ([number] (side))"
+        },
+    
+        "prime":{
+            "alias" : ["randomprime"],
+            "help"  : "Calculate a random prime number using Little Fermat theorem.",
+            "arguments" : "[prime] [nbit]"
+        }
+    },
+
+    "Misc":{
+        "name":"Miscellaneous",
+
+        "aliases":{
+            "alias" : ["alias", "ilyas"],
+            "help"  : "Show up a list with commands aliases.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "bugsnotifier":{
+            "alias" : ["baco", "bughi", "report", "rep", "bugs", "reptail96", "reptail", "rep066", "moonny", "moonnypunto", "repthebread", "repologameplay", "repologaming"],
+            "help"  : "Allow to report a bug to the developer.",
+            "cooldown" : "100",
+            "arguments" : "[bugs] [nome comando] [descrizione]"
+        },
+    
+        "help":{
+            "alias" : ["command", "commands", "info"],
+            "help"  : "Show up the information about commands.",
+            "arguments" : "[help][nome comando]"
+        },
+    
+        "invitebot":{
+            "alias" : ["invite", "inbot"],
+            "help"  : "Get invite for the bot.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "anonym":{
+            "alias" : ["staropoli", "an"],
+            "help"  : "Send a message anonymuosly.",
+            "arguments" : "[msg] [@user/id] [messaggio]"
+        },
+    
+        "msg":{
+            "alias" : ["message"],
+            "help"  : "Send a private message to the user.",
+            "arguments" : "[msg] [@user/id] [message]"
+        },
+    
+        "chatgpt":{
+            "alias" : ["gpt"],
+            "help"  : "Chatgpt.",
+            "arguments" : "[prefixlist]"
+        }
+    },
+
+    "Admin":{
+        "name":"Only For Admin",
+
+        "prefixlist":{
+            "alias" : ["preflist"],
+            "help"  : "Send a list with all the prefix for the current bot.",
+            "arguments" : "[prefixlist]"
+        },
+    
+    
+        "shutdown":{
+            "alias" : ["kill"],
+            "help"  : "Shutdown a bot.",
+            "arguments" : "[prefixlist]"
+        },
+    
+        "restart":{
+            "alias" : ["reboot"],
+            "help"  : "Restart a bot.",
+            "arguments" : "[prefixlist]"
+        },
+    
+        "query":{
+            "alias" : ["sql", "queroide", "dib", "esqel"],
+            "help"  : "Allow the user to run a query",
+            "arguments" : "[prefixlist]"
+        },
+    
+        "listguild":{
+            "alias" : ["lg", "guilds"],
+            "help"  : "Show up a list with the server the bot is in.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "threadcounter":{
+            "alias" : ["countt", "thread", "dbmr"],
+            "help"  : "Show up how many threads are alive.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "ping":{
+            "alias" : ["pingpong", "latency"],
+            "help"  : "Get the bot ping.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "ram":{
+            "alias" : ["usage"],
+            "help"  : "Show up the ram usage of the bot.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "rawmessage":{
+            "alias" : ["rawmsg"],
+            "help"  : "Useless.",
+            "arguments" : "[CommandName][id msg]"
+        }
+    },
+
+    "Dangerous":{
+        "name":"Dangerous",
+
+        "jelly":{
+            "alias" : ["soundfx", "reminderbot", "jude", "jude southworth", "jellywx"],
+            "help"  : "Evoca il dio dei falliti.",
+            "arguments" : "[CommandName]"
+        },
+    
+        "vandalizeserver":{
+            "alias" : ["vandalize", "vanda"],
+            "help"  : "Vandalizza un server, usa con cura.",
+            "arguments" : "[CommandName] [server]"
+        },
+    
+        "randommove":{
+            "alias" : ["rm", "fakerandom"],
+            "help"  : "Sposta un utente in stanze a caso n volte",
+            "arguments" : "[CommandName] [id/@user] [n volte]"
+        }
+    },
+
+    
+
+    "LOL":{
+        "name":"League Of Legends",
+
+        "champ":{
+            "alias" : [],
+            "help"  : "WIP",
+            "arguments" : "[CommandName]"
+        },
+    
+        "rune":{
+            "alias" : ["runes"],
+            "help"  : "Suggest the most played runes for a specific champion",
+            "arguments" : "[CommandName] [champName] [lane]"
+        },
+    
+        "summoner":{
+            "alias" : ["sum"],
+            "help"  : "Show up the statistic for a summoner.",
+            "arguments" : "[CommandName] [summonerName]"
+        },
+    
+        "freechamp":{
+            "alias" : ["fc", "rotation"],
+            "help"  : "Show a list with all the free champion of the week. (Default EUW)",
+            "arguments" : "[CommandName]"
+        },
+    
+        "gamerank":{
+            "alias" : ["ranks"],
+            "help"  : "Show a list with all the current summoners in a game and their ranks.",
+            "arguments" : "[CommandName] [summonerName]"
+        },
+    
+    
+        "lastmatches":{
+            "alias" : ["pw", "match"],
+            "help"  : "Get a list with all the people a user played with.",
+            "arguments" : "[CommandName] [summonerName] (n games to analyze)"
+        }
+    }
+
+}

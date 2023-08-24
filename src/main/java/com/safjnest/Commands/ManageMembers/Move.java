@@ -3,8 +3,8 @@ package com.safjnest.Commands.ManageMembers;
 import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
+import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.SQL;
-import com.safjnest.Utilities.Commands.CommandsHandler;
 import com.jagrosh.jdautilities.command.CommandEvent;
 
 import net.dv8tion.jda.api.entities.Member;
@@ -21,11 +21,11 @@ public class Move extends Command{
     private SQL sql;
     public Move(SQL sql){
         this.name = this.getClass().getSimpleName();
-        this.aliases = new CommandsHandler().getArray(this.name, "alias");
-        this.help = new CommandsHandler().getString(this.name, "help");
-        this.cooldown = new CommandsHandler().getCooldown(this.name);
-        this.category = new Category(new CommandsHandler().getString(this.name, "category"));
-        this.arguments = new CommandsHandler().getString(this.name, "arguments");
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.sql = sql;
     }
 
@@ -77,7 +77,7 @@ public class Move extends Command{
         else{
             try {channel = event.getGuild().getVoiceChannelById(args[1]);} 
             catch (Exception e) {
-                String query = "SELECT room_id FROM rooms_nickname WHERE discord_id = '" + event.getGuild().getId() + "' AND room_name = '" + args[1] +"';";
+                String query = "SELECT room_id FROM rooms_settings WHERE guild_id = '" + event.getGuild().getId() + "' AND room_name = '" + args[1] +"';";
                 String idRoom = (sql.getString(query, "room_id") == null) 
                                 ? "" 
                                 : sql.getString(query, "room_id");

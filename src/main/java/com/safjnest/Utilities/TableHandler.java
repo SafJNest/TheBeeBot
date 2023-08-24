@@ -21,6 +21,20 @@ public class TableHandler {
                         data[i][j] = jda.getGuildById(data[i][j]).getName();
                         data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
                     }
+                    else if(jda.getGuildById(data[i][j]) != null){
+                        data[i][j] = jda.getGuildById(data[i][j]).getName();
+                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
+                    }
+                    else if(jda.getTextChannelById(data[i][j]) != null){
+                        data[i][j] = jda.getTextChannelById(data[i][j]).getName();
+                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
+                    }else if(jda.getVoiceChannelById(data[i][j]) != null){
+                        data[i][j] = jda.getVoiceChannelById(data[i][j]).getName();
+                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
+                    }else if(jda.getRoleById(data[i][j]) != null){
+                        data[i][j] = jda.getRoleById(data[i][j]).getName();
+                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
+                    }
                 }
             }
         }
