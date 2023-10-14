@@ -1,12 +1,8 @@
 package com.safjnest.SlashCommands.Audio;
 
-import java.util.EventListener;
-
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
@@ -14,7 +10,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
  * 
  * @since 1.0
  */
-public class ConnectSlash extends SlashCommand implements EventListener{
+public class ConnectSlash extends SlashCommand {
 
     public ConnectSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
@@ -26,17 +22,12 @@ public class ConnectSlash extends SlashCommand implements EventListener{
     }
 
 	@Override
-	public void execute(SlashCommandEvent event) {
+	protected void execute(SlashCommandEvent event) {
         if(event.getMember().getVoiceState().getChannel() == null){
-            event.deferReply(true).addContent("You need to be in a voice channel to use this command").queue();
+            event.deferReply(true).addContent("You need to be in a voice channel to use this command.").queue();
             return;
         }
-        else
-		    event.getGuild().getAudioManager().openAudioConnection(event.getMember().getVoiceState().getChannel());
-        event.deferReply(false).addContent("Im here!").queue();
-	}
 
-    public void onMessageReceived(MessageReceivedEvent e){
-        System.out.println(e.getMessage().getAttachments().get(0).getFileExtension());
-    }
+		event.getGuild().getAudioManager().openAudioConnection(event.getMember().getVoiceState().getChannel());
+	}
 }

@@ -3,117 +3,97 @@ package com.safjnest.Commands.Audio;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Audio.SoundBoard;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.managers.AudioManager;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 
+/**
+ * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
+ * @author <a href="https://github.com/Leon412">Leon412</a>
+ * 
+ * @since 1.0
+ */
 public class PlaySound extends Command{
-    SQL sql;
     String path = "rsc" + File.separator + "SoundBoard"+ File.separator;
     String fileName;
     PlayerManager pm;
 
-
-    public PlaySound(SQL sql){
+    public PlaySound(){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
-        this.sql = sql;
     }
 
     @Override
     protected void execute(CommandEvent event) {
+        AudioChannel authorChannel = event.getMember().getVoiceState().getChannel();
+        AudioChannel botChannel = event.getGuild().getSelfMember().getVoiceState().getChannel();
         
-        if(event.getMember().getVoiceState().getChannel() == null){
-            event.reply("You need to be in a voice channel to use this command");
+        if((fileName = event.getArgs()).equals("")){
+            event.reply("You need to specify a sound name or id.");
             return;
         }
 
-        if(event.getSelfMember().getVoiceState().getChannel() != null && (event.getMember().getVoiceState().getChannel() != event.getSelfMember().getVoiceState().getChannel())){
-            event.reply("The bot is used by someone else, dont be annoying and use another beebot instance.");
+        if(authorChannel == null){
+            event.reply("You need to be in a voice channel to use this command.");
             return;
         }
 
-
-        if((fileName = event.getArgs()) == ""){
-            event.reply("Missing name");
+        if(botChannel != null && (authorChannel != botChannel)){
+            event.reply("The bot is already being used in another voice channel.");
             return;
         }
         
-        File soundBoard = new File("rsc" + File.separator + "SoundBoard");
-        if(!soundBoard.exists())
-            soundBoard.mkdirs();
-        
-        String query = null;
-        String id = null, name, guildId, userId, extension;
-        ArrayList<ArrayList<String>> arr = null;
+        QueryResult sounds = fileName.matches("[0123456789]*") 
+                           ? DatabaseHandler.getSoundsById(fileName, event.getGuild().getId(), event.getAuthor().getId()) 
+                           : DatabaseHandler.getSoundsByName(fileName, event.getGuild().getId(), event.getAuthor().getId());
 
-        if(fileName.matches("[0123456789]*")){
-            query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE id = '" + fileName + "';";
-        }
-        else{
-            query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE name = '" + fileName + "';";
-        }
-
-        if((arr = sql.getAllRows(query, 5)).isEmpty()){
-            event.reply("There is no sound with that name/id");
+        if(sounds.isEmpty()){
+            event.reply("Couldn't find a sound with that name/id.");
             return;
         }
 
-        int indexForKeria = -1;
-        for(int i = 0; i < arr.size(); i++){
-            if(arr.get(i).get(2).equals(event.getGuild().getId())){
-               indexForKeria = i;
-               break;
+        ResultRow toPlay = null;
+        for(ResultRow sound : sounds) {
+            if(sound.get("guild_id").equals(event.getGuild().getId())) {
+                toPlay = sound;
+                break;
             }
         }
         
-        if(indexForKeria == -1){
-            indexForKeria = (int)(Math.random()*arr.size());
-        }
+        if(toPlay == null)
+            toPlay = sounds.get((int)(Math.random() * sounds.size()));
 
-        id = arr.get(indexForKeria).get(0);
-        name = arr.get(indexForKeria).get(1);
-        guildId = arr.get(indexForKeria).get(2);
-        userId = arr.get(indexForKeria).get(3);
-        extension = arr.get(indexForKeria).get(4);
+        File soundBoard = new File("rsc" + File.separator + "SoundBoard");
+        if(!soundBoard.exists())
+            soundBoard.mkdirs();
+        String fileName = path + toPlay.get("id") + "." + toPlay.get("extension");
 
-        
-        
-        fileName = path + id + "." + extension;
 
         pm = new PlayerManager();
-        
-        MessageChannel channel = event.getChannel();
-        AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
         AudioManager audioManager = event.getGuild().getAudioManager();
         audioManager.setSendingHandler(pm.getAudioHandler());
-        audioManager.openAudioConnection(myChannel);
 
-        if(pm.getPlayer().getPlayingTrack() != null){
-            //pm.stopAudioHandler();
-        }
-        
         pm.getAudioPlayerManager().loadItem(fileName, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
@@ -131,7 +111,7 @@ public class PlaySound extends Command{
             
             @Override
             public void noMatches() {
-                channel.sendMessage("File not found").queue();
+                event.reply("File not found");
                 pm.getTrackScheduler().addQueue(null);
             }
 
@@ -142,64 +122,48 @@ public class PlaySound extends Command{
         });
 
         pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
-        
+        if(pm.getPlayer().getPlayingTrack() == null) {
+            return;
+        }
 
-        query = "SELECT times FROM play where play.sound_id = '" + id + "' and play.user_id = '" + event.getAuthor().getId() + "';";
-        if(sql.getString(query, "times") == null){
-            query = "INSERT INTO play(user_id, sound_id, times) VALUES('" + event.getAuthor().getId() + "','" + id + "', 1);";
-        }
-        else{
-            query = "UPDATE play SET times = times + 1 WHERE sound_id = (" + id + ") AND user_id = '" + event.getAuthor().getId() + "';";
-        }
-        sql.runQuery(query);
-        
-        query = "SELECT SUM(times) as sum FROM play where sound_id='" + id + "';";
-        String timesPlayed = sql.getString(query, "sum");
-        query = "SELECT times FROM play where sound_id='" + id + "' AND user_id='"+event.getAuthor().getId()+"';";
-        String timesPlayedByUser = sql.getString(query, "times");
-        
+        audioManager.openAudioConnection(authorChannel);
+
+        DatabaseHandler.updateUserPlays(toPlay.get("id"), event.getAuthor().getId());
+        ResultRow plays = DatabaseHandler.getPlays(toPlay.get("id"), event.getAuthor().getId());
+
         EmbedBuilder eb = new EmbedBuilder();
         eb.setAuthor(event.getAuthor().getName(), "https://github.com/SafJNest", event.getAuthor().getAvatarUrl());
-
         eb.setTitle("Playing now:");
-        eb.setDescription("```" + name + " (ID: " + id + ")" + "```");
-
-        eb.addField("Author", "```" + event.getJDA().getUserById(userId).getName() + "```", true);
-        try {
-            eb.addField("Lenght","```" + (extension.equals("opus") 
-            ? SafJNest.getFormattedDuration((Math.round(SoundBoard.getOpusDuration(fileName)))*1000)
-            : SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length)) + "```", true);
-        } catch (IOException e) {e.printStackTrace();}
-        
-        eb.addField("Format", "```"+extension.toUpperCase()+"```", true);
-
-        //Mp3File mp = SoundBoard.getMp3FileByName(player.getPlayingTrack().getInfo().title);
-
-        eb.addField("Guild", "```" + event.getJDA().getGuildById(guildId).getName() + "```", true);
-
-        eb.addField("Played", "```" + timesPlayed + (timesPlayed.equals("1") ? " time" : " times") + " (yours: "+timesPlayedByUser+")```", true);
-
-        /*
-        String img = event.getJDA().getSelfUser().getId() + "-";
-        if(extension.equals("opus"))
-            img += "opus.png";
-        
-        else
-            img += "mp3.png"; 
-           */ 
-        eb.setColor(Color.decode(
-            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
-        eb.setFooter("*This is not SoundFx, this is much worse. cit. steve jobs (probably)", null); //Questo non e' SoundFx, questa e' perfezione cit. steve jobs (probabilmente)
-        /*    
-        File imgFile = new File("rsc" + File.separator + "img" + File.separator + img);
-        eb.setThumbnail("attachment://" + img);
-
-        channel.sendMessageEmbeds(eb.build())
-            .addFiles(FileUpload.fromData(imgFile))
-            .queue();
-         */
+        eb.setDescription("```" + toPlay.get("name") + " (ID: " + toPlay.get("id") + ") " + ((toPlay.getAsBoolean("public")) ? ":public:" : ":private:") + "```");
+        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
         eb.setThumbnail(event.getSelfUser().getAvatarUrl());
+
+        eb.addField("Author", "```" 
+            + event.getJDA().getUserById(toPlay.get("user_id")).getName() 
+        + "```", true);
+
+        try {
+            eb.addField("Lenght", "```"
+                + (toPlay.get("extension").equals("opus") 
+                ? SafJNest.getFormattedDuration((Math.round(SoundBoard.getOpusDuration(fileName)))*1000)
+                : SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length))
+            + "```", true);
+        } catch (IOException e) {e.printStackTrace();}
+
+        eb.addField("Format", "```" 
+            + toPlay.get("extension").toUpperCase() 
+        + "```", true);
+
+        eb.addField("Guild", "```" 
+            + event.getJDA().getGuildById(toPlay.get("guild_id")).getName() 
+        + "```", true);
+
+        eb.addField("Played", "```" 
+            + plays.get("totalTimes") 
+            + (plays.get("totalTimes").equals("1") ? " time" : " times") 
+            + " (yours: "+plays.get("timesByUser") + ")"
+        + "```", true);
+
         event.reply(eb.build());
     }
 }

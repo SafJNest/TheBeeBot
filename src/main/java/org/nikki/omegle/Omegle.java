@@ -241,8 +241,7 @@ public class Omegle implements Runnable {
 		}
 	}
 
-	public OmegleSession openSessionSafJ(OmegleMode mode, Object... objs)
-			throws OmegleException {
+	public OmegleSession openSessionSafJ(OmegleMode mode, Object... objs) throws OmegleException {
 		try {
 			URL url = new URL(BASE_URL + "/status");
 			JSONObject resp = new JSONObject(HttpUtil.post(url, ""));

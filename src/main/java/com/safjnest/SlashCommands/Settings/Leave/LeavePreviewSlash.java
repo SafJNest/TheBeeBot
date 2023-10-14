@@ -3,7 +3,8 @@ package com.safjnest.SlashCommands.Settings.Leave;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 public class LeavePreviewSlash extends SlashCommand{
 
@@ -16,21 +17,19 @@ public class LeavePreviewSlash extends SlashCommand{
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        String query = "SELECT message_text FROM left_message WHERE guild_id = '" + event.getGuild().getId()
-                            + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String message = DatabaseHandler.getSql().getString(query, "message_text");
-        if(message == null){
-            event.deferReply(false).addContent("You have not set a leave message yet.").queue();
+        String guildId = event.getGuild().getId();
+        String botId = event.getJDA().getSelfUser().getId();
+
+        ResultRow leave = DatabaseHandler.getLeave(guildId, botId);
+
+        if(leave.get("leave_message") == null) {
+            event.deferReply(true).addContent("This guild doesn't have a leave message.").queue();
             return;
         }
 
-        query = "SELECT channel_id FROM left_message WHERE guild_id = '" + event.getGuild().getId()
-                            + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String channel = DatabaseHandler.getSql().getString(query, "channel_id");
+        String leaveMessage = leave.get("leave_message").replace("#user", event.getUser().getAsMention());
+        leaveMessage = leaveMessage + "\nThis message would be sent to <#" + leave.get("leave_channel") + ">";
 
-        message = message.replace("#user", event.getMember().getAsMention());
-        message += "\n\nThis is a preview of the message that will be sent to the channel <#" + channel + ">.";
-        event.deferReply(false).addContent(message).queue();
+        event.deferReply(false).addContent(leaveMessage).queue();
     }
-    
 }

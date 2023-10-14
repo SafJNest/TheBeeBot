@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.PermissionHandler;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 
@@ -29,24 +28,23 @@ public class ClearSlash extends SlashCommand {
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.botPermissions = new Permission[]{Permission.MESSAGE_MANAGE};
+        this.userPermissions = new Permission[]{Permission.MESSAGE_MANAGE};
         this.options = Arrays.asList(
-            new OptionData(OptionType.INTEGER, "value", "number of messages to delete", false)
-            .setMaxValue(99)
-            .setMinValue(1));
+            new OptionData(OptionType.INTEGER, "value", "Number of messages to delete (max 100)", true)
+                .setMinValue(2)
+                .setMaxValue(100)
+        );    
     }
 
 	@Override
 	protected void execute(SlashCommandEvent event) {
-        int value = event.getOption("value") == null ? 1 : event.getOption("value").getAsInt();
-        
-        if (!PermissionHandler.hasPermission(event.getMember(), Permission.MESSAGE_MANAGE)){
-            event.reply("You can't use this command if you don't have the permission to delete messages");
-            return;
-        }
+        int value = event.getOption("value").getAsInt();
         
         MessageHistory history = new MessageHistory(event.getChannel());
-        List<Message> msgs = history.retrievePast(value + 1).complete();
+        List<Message> msgs = history.retrievePast(value).complete();
         event.getTextChannel().deleteMessages(msgs).queue();
-        event.deferReply(false).addContent(value + " messages deleted").queue();
+
+        event.deferReply(true).addContent(value + " messages deleted.").queue();
 	}
 }

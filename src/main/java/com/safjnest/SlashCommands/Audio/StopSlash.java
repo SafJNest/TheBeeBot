@@ -20,7 +20,7 @@ public class StopSlash extends SlashCommand {
     @Override
     protected void execute(SlashCommandEvent event) {
         AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
-        event.deferReply(false).addContent("Stopped").queue();
+        event.deferReply(false).addContent("Playing stopped").queue();
         handler.stop();
     }
 }

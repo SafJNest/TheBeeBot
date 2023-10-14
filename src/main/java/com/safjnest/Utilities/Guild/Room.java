@@ -32,7 +32,7 @@ public class Room {
     /**
      * Value of the exp system
      */
-    private String expValue;
+    private double expValue;
 
     /**
      * If the room has the command system
@@ -47,7 +47,7 @@ public class Room {
      * @param expValue
      * @param command
      */
-    public Room(Long id, String name, boolean expSystem, String expValue, boolean command) {
+    public Room(Long id, String name, boolean expSystem, double expValue, boolean command) {
         this.id = id;
         this.name = name;
         this.expSystem = expSystem;
@@ -63,7 +63,7 @@ public class Room {
         return name;
     }
 
-    public boolean getExpSystem() {
+    public boolean isExpSystemEnabled() {
         return expSystem;
     }
 
@@ -71,7 +71,7 @@ public class Room {
         return command;
     }
 
-    public String getExpValue() {
+    public double getExpValue() {
         return expValue;
     }
 
@@ -83,7 +83,7 @@ public class Room {
         this.name = name;
     }
 
-    public void setExpValue(String value) {
+    public void setExpValue(double value) {
         this.expValue = value;
     }
 

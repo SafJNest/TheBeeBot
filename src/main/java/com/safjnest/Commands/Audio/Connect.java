@@ -1,12 +1,8 @@
 package com.safjnest.Commands.Audio;
 
-import java.util.EventListener;
-
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
@@ -14,7 +10,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
  * 
  * @since 1.0
  */
-public class Connect extends Command implements EventListener{
+public class Connect extends Command {
 
     public Connect(){
         this.name = this.getClass().getSimpleName();
@@ -27,14 +23,11 @@ public class Connect extends Command implements EventListener{
 
 	@Override
 	protected void execute(CommandEvent event) {
-        if(event.getMember().getVoiceState().getChannel() == null)
-            event.reply("You need to be in a voice channel to use this command");
-        else
-		    event.getGuild().getAudioManager().openAudioConnection(event.getMember().getVoiceState().getChannel());
+        if(event.getMember().getVoiceState().getChannel() == null) {
+            event.reply("You need to be in a voice channel to use this command.");
+            return;
+        }
 
+		event.getGuild().getAudioManager().openAudioConnection(event.getMember().getVoiceState().getChannel());
 	}
-
-    public void onMessageReceived(MessageReceivedEvent e){
-        System.out.println(e.getMessage().getAttachments().get(0).getFileExtension());
-    }
 }

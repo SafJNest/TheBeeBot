@@ -1,11 +1,11 @@
 package com.safjnest.SlashCommands.Settings.LevelUp;
 
-import java.util.ArrayList;
-
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 public class LevelUpPreviewSlash extends SlashCommand{
 
@@ -18,36 +18,43 @@ public class LevelUpPreviewSlash extends SlashCommand{
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        String query = "SELECT message_text FROM levelup_message WHERE guild_id = '" + event.getGuild().getId() + "';";
-        String message = DatabaseHandler.getSql().getString(query, "message_text");
-        if(message == null){
-            event.deferReply(false).addContent("You have not set a LevelUp message yet.").queue();
+        String guildId = event.getGuild().getId();
+        String botId = event.getJDA().getSelfUser().getId();
+
+        if(!DatabaseHandler.isExpEnabled(guildId, botId)) {
+            event.deferReply(true).addContent("This guild doesn't have the exp system enabled.").queue();
             return;
         }
-        message = message.replace("#user", event.getUser().getAsMention());
-        message = message.replace("#level", String.valueOf(117));
-        String msg = "Level Up message:\n" + message;
+
+        String levelupMessage = DatabaseHandler.getLevelUp(guildId, botId).get("levelup_message");
+
+        if(levelupMessage == null){
+            event.deferReply(true).addContent("No level up message found.").queue();
+            return;
+        }
+
+        levelupMessage = levelupMessage.replace("#user", event.getUser().getAsMention());
+        levelupMessage = levelupMessage.replace("#level", "117");
+
+        String message = "Level Up message:\n" + levelupMessage;
         
-        query = "SELECT room_id, has_exp, exp_value from rooms_settings WHERE guild_id = '"+ event.getGuild().getId() +"' AND exp_value > 1;";
-        ArrayList<ArrayList<String>> rooms = DatabaseHandler.getSql().getAllRows(query, 3);
-        if(rooms.size() != 0){
-            msg += "\n\nChannel with exp Modifier:\n";
-            for(ArrayList<String> room : rooms){
-                msg+= event.getGuild().getTextChannelById(room.get(0)).getAsMention() + " exp: " + room.get(2) + "\n";
+        QueryResult rooms = DatabaseHandler.getRoomsSettingsWithExpModifier(guildId);
+
+        if(!rooms.isEmpty()) {
+            message += "\n\nChannel with exp Modifier:\n";
+            for(ResultRow room : rooms) {
+                message += event.getGuild().getTextChannelById(room.get("room_id")).getAsMention() + " exp: " + room.get("exp_value") + "\n";
             }
         }
 
-        query = "SELECT room_id, has_exp, exp_value from rooms_settings WHERE guild_id = '"+ event.getGuild().getId() +"' AND has_exp = 0;";
-        rooms = DatabaseHandler.getSql().getAllRows(query, 3);
-        if(rooms.size() != 0){
-            msg += "\n\nChannel with exp system disabled:\n";
-            for(ArrayList<String> room : rooms){
-                msg+= event.getGuild().getTextChannelById(room.get(0)).getAsMention() + "\n";
+        rooms = DatabaseHandler.getRoomsSettingsWithoutExp(guildId);
+        if(!rooms.isEmpty()){
+            message += "\n\nChannel with exp system disabled:\n";
+            for(ResultRow room : rooms){
+                message += event.getGuild().getTextChannelById(room.get("room_id")).getAsMention() + "\n";
             }
         }
 
-        event.deferReply(false).addContent(msg).queue();
-        
+        event.deferReply(false).addContent(message).queue();
     }
-    
 }

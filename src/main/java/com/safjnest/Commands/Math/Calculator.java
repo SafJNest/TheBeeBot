@@ -11,6 +11,7 @@ import com.safjnest.Utilities.CommandsLoader;
  * This class is used to calculate the result of a mathematical expression.
  * <p>There is one way to use it:</p>
  * By typing <code>%calc</code> followed by the expression you want to calculate.
+ * 
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
  * 
  * @since 1.2.5
@@ -52,7 +53,7 @@ public class Calculator extends Command{
                 if (!operators.isEmpty()) {
                     operators.pop(); // rimuove la parentesi aperta
                 } else {
-                    throw new IllegalArgumentException("Parentesi non corrette: " + expression);
+                    throw new IllegalArgumentException("Incorrect parenthesis: " + expression);
                 }
             } else if (token.equals("+") || token.equals("-") || token.equals("*") || token.equals("/")) {
                 while (!operators.isEmpty() && hasPrecedence(token, operators.peek())) {
@@ -104,7 +105,7 @@ public class Calculator extends Command{
         while (!operators.isEmpty()) {
             String op = operators.pop();
             if (op.equals("(")) {
-                throw new IllegalArgumentException("Parentesi non corrette: " + expression);
+                throw new IllegalArgumentException("Incorrect parenthesis: " + expression);
             }
             double b = numbers.pop();
             double a = numbers.pop();

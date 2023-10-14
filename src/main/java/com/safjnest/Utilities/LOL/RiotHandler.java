@@ -15,10 +15,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-
-import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.LOL.Runes.PageRunes;
 import com.safjnest.Utilities.LOL.Runes.Rune;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -85,15 +84,6 @@ import no.stelar7.api.r4j.pojo.lol.summoner.Summoner;
         loadAguments();
         System.out.println("[R4J-Augments] INFO Augments Successful! Viktor is proud :)");
     }
-
-    /**
-    * Useless method but {@link <a href="https://github.com/NeutronSun">NeutronSun</a>} is one
-    * of the biggest bellsprout ever made
-    */
-	public void doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed() {
-        return;
-	}
-
 
     private void loadChampions(){
         champions = riotApi.getDDragonAPI().getChampions().values().stream().map(champ -> champ.getName()).toArray(String[]::new);
@@ -187,9 +177,8 @@ import no.stelar7.api.r4j.pojo.lol.summoner.Summoner;
 
 
     public static Summoner getSummonerFromDB(String discordId){
-        String query = "SELECT account_id FROM lol_user WHERE guild_id = '" + discordId + "';";
         try { 
-            return riotApi.getLoLAPI().getSummonerAPI().getSummonerByAccount(LeagueShard.EUW1, DatabaseHandler.getSql().getString(query, "account_id")); 
+            return riotApi.getLoLAPI().getSummonerAPI().getSummonerByAccount(LeagueShard.EUW1, DatabaseHandler.getLOLAccountIdByUserId(discordId)); 
         } catch (Exception e) { return null; }
     }
 
@@ -203,9 +192,8 @@ import no.stelar7.api.r4j.pojo.lol.summoner.Summoner;
     }
 
     public static int getNumberOfProfile(String discordId){
-        String query = "SELECT count(guild_id) as count FROM lol_user WHERE guild_id = '" + discordId + "';";
         try { 
-            return Integer.valueOf(DatabaseHandler.getSql().getString(query, "count"));
+            return Integer.valueOf(DatabaseHandler.getLolProfilesCount(discordId));
         } catch (Exception e) { return 0; }
     }
 

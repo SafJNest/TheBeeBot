@@ -24,16 +24,18 @@ public class ImageSlash extends SlashCommand{
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.USER, "user", "User to get the profile pic", true));
+            new OptionData(OptionType.USER, "user", "User from which to take the profile picture", true)
+        );
+            
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
         try {
-            User theGuy = event.getOption("user").getAsUser();
-            event.deferReply(false).addContent(theGuy.getAvatarUrl()).queue();
+            User mentionedUser = event.getOption("user").getAsUser();
+            event.deferReply(false).addContent(mentionedUser.getAvatarUrl() + "?size=4096").queue();
         } catch (Exception e) {
-            event.deferReply(true).addContent("error: " + e.getMessage()).queue();
+            event.deferReply(true).addContent("Error: " + e.getMessage()).queue();
         }
     }
 }

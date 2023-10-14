@@ -16,7 +16,7 @@ import org.json.simple.parser.JSONParser;
  */
 public class MobalyticsHandler {
 
-    /*
+    /**
      * Return a json with all the statistic for a champion
      * 
      * @param champName the name of the champion

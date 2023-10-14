@@ -34,4 +34,8 @@ public class BotSettingsHandler {
         map.put(botId, bs);
     }
 
+    public void doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed() {
+        return;
+	}
+
 }

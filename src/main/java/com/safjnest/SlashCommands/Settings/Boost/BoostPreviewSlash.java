@@ -3,7 +3,8 @@ package com.safjnest.SlashCommands.Settings.Boost;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 public class BoostPreviewSlash extends SlashCommand{
 
@@ -16,22 +17,19 @@ public class BoostPreviewSlash extends SlashCommand{
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        String query = "SELECT message_text FROM boost_message WHERE guild_id = '" + event.getGuild().getId()
-                            + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String message = DatabaseHandler.getSql().getString(query, "message_text");
-        if(message == null){
-            event.deferReply(false).addContent("You have not set a boost message yet.").queue();
+        String guildId = event.getGuild().getId();
+        String botId = event.getJDA().getSelfUser().getId();
+
+        ResultRow boost = DatabaseHandler.getBoost(guildId, botId);
+
+        if(boost.get("boost_message") == null) {
+            event.deferReply(true).addContent("This guild doesn't have a boost message.").queue();
             return;
         }
 
-        query = "SELECT channel_id FROM boost_message WHERE guild_id = '" + event.getGuild().getId()
-                            + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String channel = DatabaseHandler.getSql().getString(query, "channel_id");
+        String boostMessage = boost.get("boost_message").replace("#user", event.getUser().getAsMention());
+        boostMessage = boostMessage + "\nThis message would be sent to <#" + boost.get("boost_channel") + ">";
 
-        message = message.replace("#user", event.getMember().getAsMention());
-        message += "\n\nThis is a preview of the message that will be sent to the channel <#" + channel + ">.";
-        event.deferReply(false).addContent(message).queue();
-        
+        event.deferReply(false).addContent(boostMessage).queue();
     }
-    
 }

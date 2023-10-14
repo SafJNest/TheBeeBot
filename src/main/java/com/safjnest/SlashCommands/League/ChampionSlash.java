@@ -39,11 +39,12 @@ public class ChampionSlash extends SlashCommand {
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "champ", "Champion Name", true).setAutoComplete(true),
             new OptionData(OptionType.STRING, "lane", "Champion Lane", true)
-                .addChoice("Top Lane", "TOP")
+                .addChoice("Top lane", "TOP")
                 .addChoice("Jungle", "JUNGLE")
-                .addChoice("Mid Lane", "MID")
-                .addChoice("ADC", "ADC")
-                .addChoice("Support", "SUPPORT"));
+                .addChoice("Mid lane", "MID")
+                .addChoice("Bot lane", "ADC")
+                .addChoice("Support", "SUPPORT")
+        );
     }
 
 	@Override
@@ -215,16 +216,13 @@ public class ChampionSlash extends SlashCommand {
         
 
 
-        eb.setColor(Color.decode(
-            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
+        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
         
         
         champName = RiotHandler.transposeChampionNameForDataDragon(champName);
         eb.setThumbnail(RiotHandler.getChampionProfilePic(champName));
         eb.setFooter("We analyze thousands of games (Platinum+) everyday to suggest you the best builds!", "https://cdn.discordapp.com/emojis/776346468700389436.png"); 
 
-        
         event.getHook().editOriginalEmbeds(eb.build()).queue();
 	}
 

@@ -27,21 +27,16 @@ public class InfoAugmentSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "augment", "Augment", true).setAutoComplete(true));
+            new OptionData(OptionType.STRING, "augment", "Augment name", true).setAutoComplete(true));
     }
 
-    /**
-     * This method is called every time a member executes the command.
-     */
 	@Override
 	protected void execute(SlashCommandEvent event) {
         String aug = event.getOption("augment").getAsString();
         Augment augment = null;
         
         EmbedBuilder eb = new EmbedBuilder();
-        eb.setColor(Color.decode(
-            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
+        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
         
         for(Augment a : RiotHandler.getAugments()){
             if(a.getId().equalsIgnoreCase(aug)){

@@ -1,20 +1,14 @@
 package com.safjnest.SlashCommands.Settings;
 
-
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-/* 
-import net.rithms.riot.constant.Region;
-import net.rithms.riot.dto.Summoner.Summoner;
-import net.rithms.riot.api.RiotApi;
-import net.rithms.riot.api.RiotApiException;
-*/
-import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.LOL.RiotHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -28,11 +22,10 @@ import no.stelar7.api.r4j.impl.R4J;
 public class SetSummonerSlash extends SlashCommand {
     
     private R4J r;
-    private SQL sql;
     /**
      * Constructor
      */
-    public SetSummonerSlash(R4J r, SQL sql){
+    public SetSummonerSlash(R4J r){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
@@ -40,10 +33,9 @@ public class SetSummonerSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "sum", "Summoner name you want to connect to your profile", true),
-            new OptionData(OptionType.BOOLEAN, "remove", "If you want to remove a summoner", true));
+            new OptionData(OptionType.STRING, "sum", "Name of the summoner you want to connect to the bot", true),
+            new OptionData(OptionType.BOOLEAN, "remove", "If you want to remove a summoner instead of adding it", true));
         this.r = r;
-        this.sql = sql;
     }
 
     /**
@@ -53,16 +45,14 @@ public class SetSummonerSlash extends SlashCommand {
 	protected void execute(SlashCommandEvent event) {
         try {
             if(event.getOption("remove").getAsBoolean()){
-                String query = "SELECT account_id FROM lol_user WHERE guild_id = '" + event.getMember().getId() + "';";
-                ArrayList<String> accountIds = sql.getAllRowsSpecifiedColumn(query, "account_id");
+                QueryResult accountIds = DatabaseHandler.getLOLAccountsByUserId(event.getMember().getId());
                 if(accountIds == null){
-                    event.deferReply(false).addContent("You dont have a Riot account connected, for more information /help setsummoner").queue();
+                    event.deferReply(false).addContent("You dont have a Riot account connected, for more information use /help setsummoner").queue();
                     return;
                 }
-                for(String id : accountIds){
-                    if(RiotHandler.getSummonerByAccountId(id).getName().equalsIgnoreCase(event.getOption("sum").getAsString())){
-                        query = "DELETE FROM lol_user WHERE account_id = '" + id + "' and guild_id = '" + event.getMember().getId() + "';";
-                        sql.runQuery(query);
+                for(ResultRow id : accountIds){
+                    if(RiotHandler.getSummonerByAccountId(id.get("account_id")).getName().equalsIgnoreCase(event.getOption("sum").getAsString())){;
+                        DatabaseHandler.deleteLOLaccount(event.getMember().getId(), id.get("account_id"));
                         event.deferReply(false).addContent("Summoner removed").queue();
                         return;
                     }
@@ -71,9 +61,8 @@ public class SetSummonerSlash extends SlashCommand {
                 return;
             }
             no.stelar7.api.r4j.pojo.lol.summoner.Summoner s = r.getLoLAPI().getSummonerAPI().getSummonerByName(LeagueShard.EUW1, event.getOption("sum").getAsString());
-            String query = "INSERT INTO lol_user(guild_id, summoner_id, account_id)"
-                    + "VALUES('"+event.getMember().getId()+"','"+s.getSummonerId()+"','"+s.getAccountId()+"');";
-            sql.runQuery(query);
+
+            DatabaseHandler.addLOLAccount(event.getMember().getId(), s.getSummonerId(), s.getAccountId());
             event.deferReply(false).addContent("Connected " + s.getName() + " to your profile.").queue();
         } catch (Exception e) {
             e.printStackTrace();

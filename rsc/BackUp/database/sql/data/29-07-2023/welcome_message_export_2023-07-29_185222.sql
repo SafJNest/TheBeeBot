@@ -1,3 +1,0 @@
-insert into `welcome_message` (`bot_id`, `channel_id`, `guild_id`, `message_text`) values ('1098906798016184422', '691005390074150993', '474935164451946506', 'Welcome #user, i know you won\'t read this so i won\'t write anything interesting');
-insert into `welcome_message` (`bot_id`, `channel_id`, `guild_id`, `message_text`) values ('938487470339801169', '1094186395716817107', '608967318789160970', 'ciao keria #user');
-insert into `welcome_message` (`bot_id`, `channel_id`, `guild_id`, `message_text`) values ('939876818465488926', '824537182168547349', '608967318789160970', 'guma and keria #user');

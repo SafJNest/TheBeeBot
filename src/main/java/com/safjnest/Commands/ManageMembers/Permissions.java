@@ -3,6 +3,7 @@ package com.safjnest.Commands.ManageMembers;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
+import com.safjnest.Utilities.PermissionHandler;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
@@ -24,25 +25,33 @@ public class Permissions extends Command{
 
     @Override
     protected void execute(CommandEvent event) {
-        Member theGuy = null;
-        String per = "";
         try {
-            
-            if(event.getMessage().getMentions().getMembers().size() > 0)
-                theGuy = event.getMessage().getMentions().getMembers().get(0);
+            Member mentionedMember;
+            if(event.getArgs().equals(""))
+                mentionedMember = event.getMember();
             else
-                theGuy = event.getGuild().retrieveMemberById(event.getArgs()).complete();
-            if (theGuy.isOwner())
-                event.reply(theGuy.getAsMention() + " is the owner of the server.");
-            else if (theGuy.hasPermission(Permission.ADMINISTRATOR))
-                event.reply(theGuy.getAsMention() + " is an admin.");
-            else{
-                for(Permission p :  theGuy.getPermissions())
-                    per+=p.getName() + "\n";
-                event.reply(theGuy.getAsMention() + " is not an admin\nThese are his permissions: " + per);
+                mentionedMember = PermissionHandler.getMentionedMember(event, event.getArgs());
+
+            if(mentionedMember == null) {
+                event.reply("Couldn't find the specified member, please mention or write the id of a member.");
+                return;
+            }
+
+            if (mentionedMember.isOwner()) {
+                event.reply(mentionedMember.getAsMention() + " is the owner of the guild.");
+            }
+            else if (mentionedMember.hasPermission(Permission.ADMINISTRATOR)) {
+                event.reply(mentionedMember.getAsMention() + " is an admin.");
+            }
+            else {
+                StringBuilder permissionsString = new StringBuilder();
+                for(Permission permission :  mentionedMember.getPermissions())
+                    permissionsString.append(permission.getName() + " - ");
+                permissionsString.delete(permissionsString.length() - 3, permissionsString.length());
+                event.reply(mentionedMember.getAsMention() + " **is not an admin and these are his permissions:** \n" + permissionsString.toString());
             }
         } catch (Exception e) {
-            event.replyError("sorry, " + e.getMessage());
+            event.reply("Error: " + e.getMessage());
         }
     }
 }

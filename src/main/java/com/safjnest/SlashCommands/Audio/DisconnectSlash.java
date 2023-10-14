@@ -6,7 +6,7 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
 
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
@@ -26,14 +26,22 @@ public class DisconnectSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.USER, "user", "User to disconnect", true));
+            new OptionData(OptionType.USER, "member", "Member to disconnect", false));
     }
 
 	@Override
 	protected void execute(SlashCommandEvent event) {
-        User theGuy = event.getOption("user").getAsUser();
-        event.getGuild().kickVoiceMember(event.getGuild().getMember(theGuy)).queue();
-        event.deferReply().addContent(theGuy.getName() + " successfuly disconnected.").queue();
+        if(event.getOption("member") == null) {
+            event.getGuild().getAudioManager().closeAudioConnection();
+            return;
+        }
+
+        Member mentionedMember = event.getOption("member").getAsMember();
+        if(mentionedMember == null) { 
+            event.deferReply(true).addContent("Couldn't find the specified member, please mention or write the id of a member").queue();
+        }// if you mention a user not in the guild or write a wrong id
+
+        event.getGuild().kickVoiceMember(mentionedMember).queue();
     }
         
 }

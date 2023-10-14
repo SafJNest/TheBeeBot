@@ -7,18 +7,17 @@ import java.util.List;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.EXPSystem.ExpSystem;
 import com.safjnest.Utilities.LOL.RiotHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
 
 /**
  * @author <a href="https://github.com/Leon412">Leon412</a>
@@ -26,7 +25,6 @@ import net.dv8tion.jda.api.entities.User;
  * @since 1.2.5
  */
 public class MemberInfo extends Command{
-    private final int defaultRoleCharNumber = 200;
 
     public MemberInfo() {
         this.name = this.getClass().getSimpleName();
@@ -39,145 +37,128 @@ public class MemberInfo extends Command{
 
     @Override
     protected void execute(CommandEvent event) {
-        int roleCharNumber;
-        if(!SafJNest.intIsParsable(event.getArgs()) || !SafJNest.isInteger(event.getArgs()) || (Integer.parseInt(event.getArgs())) > 1024 || (Integer.parseInt(event.getArgs())) < 1)
-            roleCharNumber = defaultRoleCharNumber;
-        else
-            roleCharNumber = Integer.parseInt(event.getArgs());
-
-        User user;
-        if(event.getMessage().getMentions().getMembers().size() > 0)
-            user = event.getMessage().getMentions().getMembers().get(0).getUser();
-        else{
-            try {
-                user = event.getJDA().retrieveUserById(event.getArgs()).complete();
-            } catch (Exception e) {
-                user = event.getAuthor();
-            }
+        Member mentionedMember;
+        if(event.getArgs() == null) {
+            mentionedMember = event.getMember();
         }
-        if(!event.getGuild().isMember(user)){
-            event.reply("The user is not in this server");
+        else {
+            mentionedMember = PermissionHandler.getMentionedMember(event, event.getArgs());
+        }
+
+        if(mentionedMember == null) {
+            event.reply("Couldn't find the specified member. Please mention or write the id of a member.");
             return;
         }
 
-        Guild guild = event.getGuild();
-        Member member = guild.getMember(user);
+        String name = mentionedMember.getUser().getName();
+        String id = mentionedMember.getId();
 
-        List<String> RoleNames = PermissionHandler.getMaxFieldableRoleNames(member.getRoles(), roleCharNumber);
+        List<String> RoleNames = PermissionHandler.getMaxFieldableRoleNames(mentionedMember.getRoles());
 
-        String permissionNames = PermissionHandler.getFilteredPermissionNames(member).toString();
+        String permissionNames = PermissionHandler.getFilteredPermissionNames(mentionedMember).toString();
 
-        String query = "SELECT summoner_id FROM lol_user WHERE guild_id = '" + user.getId() + "';";
-        ArrayList<String> accounts = DatabaseHandler.getSql().getAllRowsSpecifiedColumn(query, "summoner_id");
-        String lolAccounts = "";
-        if(accounts.size() == 0){
-            lolAccounts = user.getName() + " has not connected a riot account.";
-        }else{
-            for(String s : accounts)
-                lolAccounts += RiotHandler.getSummonerBySummonerId(s).getName() + " - ";
-            lolAccounts = lolAccounts.substring(0, lolAccounts.length() - 3);
+        QueryResult lolAccounts = DatabaseHandler.getLolAccounts(id);
+        String lolAccountsString = "";
+        if(lolAccounts.isEmpty()) {
+            lolAccountsString = mentionedMember.getNickname() + " has not connected a riot account.";
+        }
+        else {
+            for(ResultRow lolAccount : lolAccounts) {
+                lolAccountsString += RiotHandler.getSummonerBySummonerId(lolAccount.get("summoner_id")).getName() + " - ";
+            }
+            lolAccountsString = lolAccountsString.substring(0, lolAccountsString.length() - 3);
         }
 
-        query = "select exp, level, messages from exp_table where user_id ='" + user.getId() + "' and guild_id = '" + event.getGuild().getId() + "';";
-        ArrayList<String> arr = DatabaseHandler.getSql().getSpecifiedRow(query, 0);
+        ResultRow userExp = DatabaseHandler.getUserExp(id, event.getGuild().getId());
         int exp = 0, lvl = 0, msg = 0;
-        if(arr != null) {
-            exp = Integer.valueOf(arr.get(0));
-            lvl = Integer.valueOf(arr.get(1));
-            msg = Integer.valueOf(arr.get(2));
+        if(userExp != null) {
+            exp = userExp.getAsInt("exp");
+            lvl = userExp.getAsInt("level");
+            msg = userExp.getAsInt("messages");
         }
-        String lvlString = String.valueOf(ExpSystem.expToLvlUp(lvl, exp) + "/" + (ExpSystem.totalExpToLvlUp(lvl + 1) - ExpSystem.totalExpToLvlUp(lvl)));
+        String lvlString = String.valueOf(ExpSystem.getExpToLvlUp(lvl, exp) + "/" + (ExpSystem.getExpToReachLvlFromZero(lvl + 1) - ExpSystem.getExpToReachLvlFromZero(lvl)));
 
         List<String> activityNames = new ArrayList<String>();
-        member.getActivities().forEach(activity -> activityNames.add(activity.getName()));
+        mentionedMember.getActivities().forEach(activity -> activityNames.add(activity.getName()));
         
-
         EmbedBuilder eb = new EmbedBuilder();
-
-        eb.setTitle(":busts_in_silhouette: **INFORMATION ABOUT " + user.getName() + "** :busts_in_silhouette:");
-        eb.setThumbnail(user.getAvatarUrl());
+        eb.setTitle(":busts_in_silhouette: **INFORMATION ABOUT " + name + "** :busts_in_silhouette:");
+        eb.setThumbnail(mentionedMember.getAvatarUrl());
         eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
 
-
-        eb.addField("Name", "```" + user.getName() + "```", true);
+        eb.addField("Name", "```" + name + "```", true);
 
         eb.addField("Nickname", "```"
-                    + (member.getNickname() == null
-                        ? "NO NICKNAME"
-                        : member.getNickname())
-                    + "```", true);
+            + (mentionedMember.getNickname() == null
+                ? "NO NICKNAME"
+                : mentionedMember.getNickname())
+        + "```", true);
 
-        eb.addField("ID", "```" + user.getId() + "```" , true);
+        eb.addField("ID", "```" + id + "```" , true);
         
-        eb.addField("Roles [" + member.getRoles().size() + "] " + "(Printed " + RoleNames.size() + ")", "```"
-                    + (RoleNames.size() == 0
-                        ? "NO ROLES"
-                        : RoleNames.toString().substring(1, RoleNames.toString().length() - 1))
-                    + "```", false);
+        eb.addField("Roles [" + mentionedMember.getRoles().size() + "] " + "(Printed " + RoleNames.size() + ")", "```"
+            + (RoleNames.size() == 0
+                ? "NO ROLES"
+                : RoleNames.toString().substring(1, RoleNames.toString().length() - 1))
+        + "```", false);
 
         eb.addField("Status", "```"
-                    + member.getOnlineStatus()
-                    + "```", true);
+            + mentionedMember.getOnlineStatus()
+        + "```", true);
 
         eb.addField("Is a bot", "```"
-                    + ((user.isBot() || PermissionHandler.isEpria(user.getId()))
-                        ? "yes"
-                        : "no")
-                    + "```" , true);
+            + ((mentionedMember.getUser().isBot())
+                ? "yes"
+                : "no")
+        + "```" , true);
 
         if(activityNames.size() > 0) {
             eb.addField("Activities", "```"
-                    + activityNames.toString().substring(1, activityNames.toString().length() - 1)
-                    + "```", false);
+                + activityNames.toString().substring(1, activityNames.toString().length() - 1)
+            + "```", false);
         }
 
         eb.addField("Permissions", "```"
-                    + (member.hasPermission(Permission.ADMINISTRATOR)
-                        ? "👑 Admin"
-                        : permissionNames.substring(1, permissionNames.length() - 1))
-                    + "```", false);
+            + (mentionedMember.hasPermission(Permission.ADMINISTRATOR)
+                ? "👑 Admin"
+                : permissionNames.substring(1, permissionNames.length() - 1)) + " "
+        + "```", false);
         
-        eb.addField("League Of Legends Account [" + accounts.size() + "]", "```" 
-                    + lolAccounts 
-                    + "```", false);
+        eb.addField("League Of Legends Account [" + lolAccounts.size() + "]", "```" 
+            + lolAccounts 
+        + "```", false);
         
         eb.addField("Level", "```" 
-                    + lvl + " (" + lvlString + ")"
-                    + "```", true);
+            + lvl + " (" + lvlString + ")"
+        + "```", true);
 
         eb.addField("Experience gained", "```"
-                    + exp + " exp"
-                    + "```", true);
+            + exp + " exp"
+        + "```", true);
         
         eb.addField("Total messages sent","```" 
-                    + msg 
-                    +"```", true);
+            + msg 
+        +"```", true);
         
-        eb.addField("Total Sound Uploaded", "```"
-                    + DatabaseHandler.getSql().getString(
-                        "select count(name) as count from sound where user_id = '" + user.getId() + "';", 
-                        "count")
-                    + "```", true);
+        eb.addField("Total Sounds Uploaded", "```" 
+            + DatabaseHandler.getSoundsUploadedByUserCount(id)
+        + "```", true);
 
-        eb.addField("Sound Uploaded in this server", "```"
-                    + DatabaseHandler.getSql().getString(
-                        "select count(name) as count from sound where guild_id = '" + event.getGuild().getId()+"' AND user_id = '" + user.getId()+"';", 
-                        "count")
-                    + "```", true);
+        eb.addField("Sounds Uploaded in this server", "```" 
+            + DatabaseHandler.getSoundsUploadedByUserCount(id, event.getGuild().getId())
+        + "```", true);
         
         eb.addField("Total Sound played (global)", "```"
-                    + (DatabaseHandler.getSql().getString(
-                        "select sum(times) as sum from play where user_id = '" + user.getId() + "';", 
-                        "sum"))
-                    + "```", true);
+            + DatabaseHandler.getTotalPlays(id)
+        + "```", true);
 
         eb.addField("Member joined", 
-                    "<t:" + member.getTimeJoined().toEpochSecond() + ":f>" + " | <t:" + member.getTimeJoined().toEpochSecond() + ":R>",
-                    false);
+            "<t:" + mentionedMember.getTimeJoined().toEpochSecond() + ":f>" + " | <t:" + mentionedMember.getTimeJoined().toEpochSecond() + ":R>",
+        false);
 
         eb.addField("Account created", 
-                   "<t:" + user.getTimeCreated().toEpochSecond() + ":f>"  + " | <t:" + user.getTimeCreated().toEpochSecond() + ":R>",
-                    false);
+            "<t:" + mentionedMember.getTimeCreated().toEpochSecond() + ":f>"  + " | <t:" + mentionedMember.getTimeCreated().toEpochSecond() + ":R>",
+        false);
         
         event.reply(eb.build());    
     }

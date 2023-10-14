@@ -1,21 +1,34 @@
 package com.safjnest.Utilities.EventHandlers;
 
 import java.awt.Color;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import com.safjnest.Commands.League.GameRank;
-import com.safjnest.Commands.League.InfoMatches;
+import com.safjnest.Commands.League.Livegame;
+import com.safjnest.Commands.League.Opgg;
 import com.safjnest.Commands.League.Summoner;
 import com.safjnest.SlashCommands.ManageGuild.RewardsSlash;
-import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.LOL.RiotHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -25,6 +38,8 @@ import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.managers.AudioManager;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import no.stelar7.api.r4j.pojo.lol.spectator.SpectatorParticipant;
 
@@ -32,28 +47,44 @@ public class EventButtonHandler extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-
-        if(event.getButton().getId().startsWith("rewards-")){
+        String buttonId = event.getButton().getId();
+        
+        if(buttonId.startsWith("rewards-")){
             rewardsButtonEvent(event);
             return;
         }
 
         event.deferEdit().queue();
-        if (event.getButton().getId().startsWith("lol-")) 
+
+        if (buttonId.startsWith("lol-")) 
             lolButtonEvent(event);
         
-        else if (event.getButton().getId().startsWith("match-")) 
+        else if (buttonId.startsWith("match-")) 
             matchButtonEvent(event);
 
-        else if (event.getButton().getId().startsWith("rank-")) 
+        else if (buttonId.startsWith("rank-")) 
             rankButtonEvent(event);
 
-        else if (event.getButton().getId().startsWith("list-")) 
+        else if (buttonId.startsWith("list-")) 
             listButtonEvent(event);
 
-        else if (event.getButton().getId().startsWith("listuser-")) 
+        else if (buttonId.startsWith("listuser-")) 
             listUserButtonEvent(event);
-        
+
+        else if(buttonId.startsWith("ban-"))
+            banUserEvent(event);
+
+        else if(buttonId.startsWith("kick-"))
+            kickUserEvent(event);
+
+        else if(buttonId.startsWith("ignore-"))
+            ignoreUserEvent(event);
+
+        else if(buttonId.startsWith("unban-"))
+            pardonUserEvent(event);
+
+        else if(buttonId.startsWith("soundboard-"))
+            soundboardEvent(event);
     }
 
 
@@ -69,17 +100,15 @@ public class EventButtonHandler extends ListenerAdapter {
             if (!b.getLabel().equals("->") && !b.getLabel().equals("<-"))
                 nameSum = b.getLabel();
         }
-        String query = "SELECT guild_id FROM lol_user WHERE account_id = '" + RiotHandler.getAccountIdByName(nameSum)
-                + "';";
-        query = "SELECT summoner_id FROM lol_user WHERE guild_id = '"
-                + DatabaseHandler.getSql().getString(query, "guild_id") + "';";
-        ArrayList<ArrayList<String>> accounts = DatabaseHandler.getSql().getAllRows(query, 1);
+
+        String user_id = DatabaseHandler.getUserIdByLOLAccountId(RiotHandler.getAccountIdByName(nameSum));
+        QueryResult accounts = DatabaseHandler.getLolAccounts(user_id);
         switch (args) {
 
             case "right":
 
                 for (int i = 0; i < accounts.size(); i++) {
-                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get(0)).getName().equals(nameSum))
+                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get("summoner_id")).getName().equals(nameSum))
                         index = i;
                 }
 
@@ -89,12 +118,12 @@ public class EventButtonHandler extends ListenerAdapter {
                     index += 1;
 
                 center = Button.primary("lol-center",
-                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)).getName());
+                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")).getName());
                 center = center.asDisabled();
                 
                 event.getMessage()
                         .editMessageEmbeds(Summoner.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
-                                RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0))).build())
+                                RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id"))).build())
                         .setActionRow(left, center, right)
                         .queue();
                 break;
@@ -102,7 +131,7 @@ public class EventButtonHandler extends ListenerAdapter {
             case "left":
 
                 for (int i = 0; i < accounts.size(); i++) {
-                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get(0)).getName().equals(nameSum))
+                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get("summoner_id")).getName().equals(nameSum))
                         index = i;
 
                 }
@@ -113,12 +142,12 @@ public class EventButtonHandler extends ListenerAdapter {
                     index -= 1;
 
                 center = Button.primary("lol-center",
-                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)).getName());
+                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")).getName());
                 center = center.asDisabled();
                 
                 event.getMessage()
                         .editMessageEmbeds(Summoner.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
-                                RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0))).build())
+                                RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id"))).build())
                         .setActionRow(left, center, right)
                         .queue();
                 break;
@@ -137,17 +166,14 @@ public class EventButtonHandler extends ListenerAdapter {
             if (!b.getLabel().equals("->") && !b.getLabel().equals("<-"))
                 nameSum = b.getLabel();
         }
-        String query = "SELECT guild_id FROM lol_user WHERE account_id = '" + RiotHandler.getAccountIdByName(nameSum)
-                + "';";
-        query = "SELECT summoner_id FROM lol_user WHERE guild_id = '"
-                + DatabaseHandler.getSql().getString(query, "guild_id") + "';";
-        ArrayList<ArrayList<String>> accounts = DatabaseHandler.getSql().getAllRows(query, 1);
+        String user_id = DatabaseHandler.getUserIdByLOLAccountId(RiotHandler.getAccountIdByName(nameSum));
+        QueryResult accounts = DatabaseHandler.getLolAccounts(user_id);
         switch (args) {
 
             case "right":
 
                 for (int i = 0; i < accounts.size(); i++) {
-                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get(0)).getName().equals(nameSum))
+                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get("summoner_id")).getName().equals(nameSum))
                         index = i;
                 }
 
@@ -157,12 +183,12 @@ public class EventButtonHandler extends ListenerAdapter {
                     index += 1;
 
                 center = Button.primary("match-center",
-                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)).getName());
+                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")).getName());
                 center = center.asDisabled();
                 
                 event.getMessage()
-                        .editMessageEmbeds(InfoMatches.createEmbed(
-                            RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)), event.getJDA()).build())
+                        .editMessageEmbeds(Opgg.createEmbed(
+                            RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")), event.getJDA()).build())
                         .setActionRow(left, center, right)
                         .queue();
                 break;
@@ -170,7 +196,7 @@ public class EventButtonHandler extends ListenerAdapter {
             case "left":
 
                 for (int i = 0; i < accounts.size(); i++) {
-                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get(0)).getName().equals(nameSum))
+                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get("summoner_id")).getName().equals(nameSum))
                         index = i;
 
                 }
@@ -181,12 +207,12 @@ public class EventButtonHandler extends ListenerAdapter {
                     index -= 1;
 
                 center = Button.primary("match-center",
-                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)).getName());
+                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")).getName());
                 center = center.asDisabled();
                 
                event.getMessage()
-                        .editMessageEmbeds(InfoMatches.createEmbed(
-                            RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)), event.getJDA()).build())
+                        .editMessageEmbeds(Opgg.createEmbed(
+                            RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")), event.getJDA()).build())
                         .setActionRow(left, center, right)
                         .queue();
                 break;
@@ -205,11 +231,9 @@ public class EventButtonHandler extends ListenerAdapter {
             if (!b.getLabel().equals("->") && !b.getLabel().equals("<-"))
                 nameSum = b.getLabel();
         }
-        String query = "SELECT guild_id FROM lol_user WHERE account_id = '" + RiotHandler.getAccountIdByName(nameSum)
-                + "';";
-        query = "SELECT summoner_id FROM lol_user WHERE guild_id = '"
-                + DatabaseHandler.getSql().getString(query, "guild_id") + "';";
-        ArrayList<ArrayList<String>> accounts = DatabaseHandler.getSql().getAllRows(query, 1);
+
+        String user_id = DatabaseHandler.getUserIdByLOLAccountId(RiotHandler.getAccountIdByName(nameSum));
+        QueryResult accounts = DatabaseHandler.getLolAccounts(user_id);
         List<SpectatorParticipant> users = null;
 
         no.stelar7.api.r4j.pojo.lol.summoner.Summoner s = null;
@@ -219,7 +243,7 @@ public class EventButtonHandler extends ListenerAdapter {
             case "right":
 
                 for (int i = 0; i < accounts.size(); i++) {
-                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get(0)).getName().equals(nameSum))
+                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get("summoner_id")).getName().equals(nameSum))
                         index = i;
                 }
 
@@ -229,9 +253,9 @@ public class EventButtonHandler extends ListenerAdapter {
 
                     index += 1;
 
-                s = RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0));
+                s = RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id"));
                 center = Button.primary("lol-center",
-                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)).getName());
+                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")).getName());
                 center = center.asDisabled();
 
                 try {
@@ -258,7 +282,7 @@ public class EventButtonHandler extends ListenerAdapter {
                             .build();
 
                     MessageEditAction action = event.getMessage().editMessageEmbeds(
-                            GameRank.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
+                            Livegame.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
                                     s, users).build());
                     action.setComponents(ActionRow.of(menu),
                             ActionRow.of(left, center, right));
@@ -266,7 +290,7 @@ public class EventButtonHandler extends ListenerAdapter {
                 } catch (Exception e) {
                     event.getMessage()
                             .editMessageEmbeds(
-                                    GameRank.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
+                                    Livegame.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
                                             s, users).build())
                             .setActionRow(left, center, right)
                             .queue();
@@ -276,7 +300,7 @@ public class EventButtonHandler extends ListenerAdapter {
             case "left":
 
                 for (int i = 0; i < accounts.size(); i++) {
-                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get(0)).getName().equals(nameSum))
+                    if (RiotHandler.getSummonerBySummonerId(accounts.get(i).get("summoner_id")).getName().equals(nameSum))
                         index = i;
                 }
 
@@ -285,9 +309,9 @@ public class EventButtonHandler extends ListenerAdapter {
                 else
                     index -= 1;
 
-                s = RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0));
+                s = RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id"));
                 center = Button.primary("lol-center",
-                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get(0)).getName());
+                        RiotHandler.getSummonerBySummonerId(accounts.get(index).get("summoner_id")).getName());
                 center = center.asDisabled();
                 
                 try {
@@ -314,7 +338,7 @@ public class EventButtonHandler extends ListenerAdapter {
                             .build();
 
                     MessageEditAction action = event.getMessage().editMessageEmbeds(
-                            GameRank.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
+                            Livegame.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
                                     s, users).build());
                     action.setComponents(ActionRow.of(menu),
                             ActionRow.of(left, center, right));
@@ -322,7 +346,7 @@ public class EventButtonHandler extends ListenerAdapter {
                 } catch (Exception e) {
                     event.getMessage()
                             .editMessageEmbeds(
-                                    GameRank.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
+                                    Livegame.createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(),
                                             s, users).build())
                             .setActionRow(left, center, right)
                             .queue();
@@ -341,9 +365,7 @@ public class EventButtonHandler extends ListenerAdapter {
         Button right = Button.primary("list-right", "->");
         Button center = null;
 
-        String query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE guild_id = '"
-                + event.getGuild().getId() + "' ORDER BY name ASC;";
-        ArrayList<ArrayList<String>> sounds = DatabaseHandler.getSql().getAllRows(query, 2);
+        QueryResult sounds = DatabaseHandler.getlistGuildSounds(event.getGuild().getId());
 
         EmbedBuilder eb = new EmbedBuilder();
         eb.setAuthor(event.getUser().getName(), "https://github.com/SafJNest",
@@ -365,7 +387,8 @@ public class EventButtonHandler extends ListenerAdapter {
 
                 cont = 24 * page;
                 while (cont < (24 * (page + 1)) && cont < sounds.size()) {
-                    eb.addField("**" + sounds.get(cont).get(1) + "**", "ID: " + sounds.get(cont).get(0), true);
+                    String locket = (!sounds.get(cont).getAsBoolean("public")) ? ":lock:" : "";
+                    eb.addField("**"+sounds.get(cont).get("name")+"**" + locket, "ID: " + sounds.get(cont).get("id"), true);
                     cont++;
                 }
 
@@ -390,7 +413,8 @@ public class EventButtonHandler extends ListenerAdapter {
                 cont = (24 * (page - 2) < 0) ? 0 : 24 * (page - 2);
 
                 while (cont < (24 * (page - 1)) && cont < sounds.size()) {
-                    eb.addField("**" + sounds.get(cont).get(1) + "**", "ID: " + sounds.get(cont).get(0), true);
+                    String locket = (!sounds.get(cont).getAsBoolean("public")) ? ":lock:" : "";
+                    eb.addField("**"+sounds.get(cont).get("name")+"**" + locket, "ID: " + sounds.get(cont).get("id"), true);
                     cont++;
                 }
 
@@ -427,9 +451,9 @@ public class EventButtonHandler extends ListenerAdapter {
             }
         }
 
-        String query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE user_id = '"
-                + userId + "' ORDER BY name ASC;";
-        ArrayList<ArrayList<String>> sounds = DatabaseHandler.getSql().getAllRows(query, 2);
+        QueryResult sounds = (userId.equals(event.getMember().getId())) 
+                           ? DatabaseHandler.getlistUserSounds(userId) 
+                           : DatabaseHandler.getlistUserSounds(userId, event.getGuild().getId());
 
         EmbedBuilder eb = new EmbedBuilder();
         eb.setAuthor(event.getUser().getName(), "https://github.com/SafJNest",
@@ -446,7 +470,8 @@ public class EventButtonHandler extends ListenerAdapter {
             case "right":
                 cont = 24 * page;
                 while (cont < (24 * (page + 1)) && cont < sounds.size()) {
-                    eb.addField("**" + sounds.get(cont).get(1) + "**", "ID: " + sounds.get(cont).get(0), true);
+                   String locket = (!sounds.get(cont).getAsBoolean("public")) ? ":lock:" : "";
+                    eb.addField("**"+sounds.get(cont).get("name")+"**" + locket, "ID: " + sounds.get(cont).get("id"), true);
                     cont++;
                 }
 
@@ -466,7 +491,8 @@ public class EventButtonHandler extends ListenerAdapter {
                 cont = (24 * (page - 2) < 0) ? 0 : 24 * (page - 2);
 
                 while (cont < (24 * (page - 1)) && cont < sounds.size()) {
-                    eb.addField("**" + sounds.get(cont).get(1) + "**", "ID: " + sounds.get(cont).get(0), true);
+                    String locket = (!sounds.get(cont).getAsBoolean("public")) ? ":lock:" : "";
+                    eb.addField("**"+sounds.get(cont).get("name")+"**" + locket, "ID: " + sounds.get(cont).get("id"), true);
                     cont++;
                 }
 
@@ -487,13 +513,12 @@ public class EventButtonHandler extends ListenerAdapter {
 
     private void rewardsButtonEvent(ButtonInteractionEvent event) {
         if(!event.getMember().hasPermission(Permission.ADMINISTRATOR)){
-            event.deferReply().addContent("You don't have the permission to do that.").queue();
+            event.deferReply(true).addContent("You don't have the permission to do that.").queue();
             return;
         }
         String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
         
         switch (args){
-            
             case "add":
                 TextInput subject = TextInput.create("rewards-lvl", "Level", TextInputStyle.SHORT)
                     .setPlaceholder("1")
@@ -517,26 +542,165 @@ public class EventButtonHandler extends ListenerAdapter {
                         .addComponents(ActionRow.of(subject), ActionRow.of(body), ActionRow.of(role))
                         .build();
                 event.replyModal(modal).queue();
-                break;
+            break;
 
             default:
                 if(event.getButton().getId().startsWith("rewards-role-")){
                     if(event.getButton().getStyle() == ButtonStyle.DANGER){
                         String roleString = event.getButton().getId().split("-")[2];
-                        String query = "DELETE FROM rewards_table WHERE role_id = '" + roleString + "';";
-                        DatabaseHandler.getSql().runQuery(query);
+                        DatabaseHandler.deleteReward(roleString);
                         event.deferEdit().queue();
-                        RewardsSlash.createEmbed(event.getMessage(), event.getGuild()).queue();
+                        
+                        RewardsSlash.createEmbed(event.getMessage()).queue();
                         return;
                     }
                     //modify button style into danger
                     
                     event.editButton(event.getButton().withStyle(ButtonStyle.DANGER)).queue();
-                    
                 }
-                break;
-
+            break;
         }
+    }
+
+    private void banUserEvent(ButtonInteractionEvent event) {
+        if(!event.getMember().hasPermission(Permission.BAN_MEMBERS)){
+            event.deferReply().addContent("You don't have the permission to do that.").queue();
+            return;
+        }
+
+        if(event.getButton().getStyle() != ButtonStyle.DANGER){
+            event.editButton(event.getButton().withStyle(ButtonStyle.DANGER)).queue();
+            return;
+        }
+
+        String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
+        Member theGuy = event.getGuild().getMemberById(args);
+
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setAuthor(event.getUser().getName());
+        eb.setTitle(theGuy.getUser().getName() + " has been banned");
+        eb.setThumbnail(theGuy.getUser().getAvatarUrl());
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        Button pardon = Button.primary("unban-" + theGuy.getId(), "Pardon");
+        event.getGuild().ban(theGuy, 0, TimeUnit.SECONDS).reason("Entered the blacklist").queue(
+                    (e) -> event.getMessage().editMessageEmbeds(eb.build()).setActionRow(pardon).queue(),
+                    new ErrorHandler().handle(
+                        ErrorResponse.MISSING_PERMISSIONS,
+                        (e) -> event.deferReply(true).addContent("Error. " + e.getMessage()).queue())
+                );
+        
+    }
+
+    private void kickUserEvent(ButtonInteractionEvent event) {
+        if(!event.getMember().hasPermission(Permission.KICK_MEMBERS)){
+            event.deferReply().addContent("You don't have the permission to do that.").queue();
+            return;
+        }
+
+        if(event.getButton().getStyle() != ButtonStyle.DANGER){
+            event.editButton(event.getButton().withStyle(ButtonStyle.DANGER)).queue();
+            return;
+        }
+
+        String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
+        Member theGuy = event.getGuild().getMemberById(args);
+
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setAuthor(event.getUser().getName());
+        eb.setTitle(theGuy.getUser().getName() + " has been kicked");
+        eb.setThumbnail(theGuy.getUser().getAvatarUrl());
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        event.getGuild().kick(theGuy).reason("Entered the blacklist").queue(
+            (e) -> event.getMessage().editMessageEmbeds(eb.build()).setComponents().queue(),
+            new ErrorHandler().handle(
+                ErrorResponse.MISSING_PERMISSIONS,
+                (e) -> event.deferReply(true).addContent("Error. " + e.getMessage()).queue())
+        );
+        
+    }
+
+    private void ignoreUserEvent(ButtonInteractionEvent event) {
+        if(!event.getMember().hasPermission(Permission.KICK_MEMBERS)){
+            event.deferReply().addContent("You don't have the permission to do that.").queue();
+            return;
+        }
+        event.getMessage().editMessageEmbeds(event.getMessage().getEmbeds().get(0)).setComponents().queue();
+        
+    }
+
+
+    private void pardonUserEvent(ButtonInteractionEvent event) {
+
+        String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
+        User theGuy = event.getJDA().getUserById(args);
+
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setAuthor(event.getUser().getName());
+        eb.setTitle(theGuy.getName() + " has been unbanned");
+        eb.setThumbnail(theGuy.getAvatarUrl());
+        eb.setColor(Color.decode(
+                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+
+        event.getGuild().unban(theGuy).queue(
+            (e) -> event.getMessage().editMessageEmbeds(eb.build()).setComponents().queue(), 
+            new ErrorHandler().handle(
+                ErrorResponse.MISSING_PERMISSIONS,
+                (e) -> event.deferReply(true).addContent("Error. " + e.getMessage()).queue())
+        );
+    }
+
+
+    private void soundboardEvent(ButtonInteractionEvent event){
+
+        String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
+        PlayerManager pm = new PlayerManager();
+
+        TextChannel channel = event.getChannel().asTextChannel();
+
+        AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
+        AudioManager audioManager = event.getGuild().getAudioManager();
+        audioManager.setSendingHandler(pm.getAudioHandler());
+        audioManager.openAudioConnection(myChannel);
+
+        if(pm.getPlayer().getPlayingTrack() != null){
+            //pm.stopAudioHandler();
+        }
+        
+        String path = "rsc" + File.separator + "SoundBoard"+ File.separator + args;
+        pm.getAudioPlayerManager().loadItem(path, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                pm.getTrackScheduler().addQueue(track);
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                /*
+                 * for (AudioTrack track : playlist.getTracks()) {
+                 * trackScheduler.queue(track);
+                 * }
+                 */
+            }
+            
+            @Override
+            public void noMatches() {
+                channel.sendMessage("File not found").queue();
+                pm.getTrackScheduler().addQueue(null);
+            }
+
+            @Override
+            public void loadFailed(FriendlyException throwable) {
+                System.out.println("error: " + throwable.getMessage());
+            }
+        });
+
+        pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
+        
+        String id = args.split("\\.")[0];
+        DatabaseHandler.updateUserPlays(id, event.getMember().getId());
+        
     }
 
 }

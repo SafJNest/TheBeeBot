@@ -3,7 +3,7 @@ package com.safjnest.Commands.ManageGuild;
 import java.util.List;
 
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.PermissionHandler;
+import com.safjnest.Utilities.SafJNest;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 
@@ -26,21 +26,25 @@ public class Clear extends Command {
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.botPermissions = new Permission[]{Permission.MESSAGE_MANAGE};
+        this.userPermissions = new Permission[]{Permission.MESSAGE_MANAGE};
     }
 
 	@Override
 	protected void execute(CommandEvent event) {
-        String[] commandArray = event.getMessage().getContentRaw().split(" ");
-        if (!PermissionHandler.hasPermission(event.getMember(), Permission.MESSAGE_MANAGE)){
-            event.reply("You can't use this command if you're not admin");
+        if(!SafJNest.intIsParsable(event.getArgs())) {
+            event.reply("Specify how many messages to delete (max 99).");
             return;
         }
-        if(Integer.parseInt(commandArray[1]) > 99){
-            event.reply("You can't delete more than 99 messages at once");
+        int n = Integer.parseInt(event.getArgs());
+
+        if(n > 99){
+            event.reply("You can't delete more than 99 messages at once.");
             return;
         }
+
         MessageHistory history = new MessageHistory(event.getChannel());
-        List<Message> msgs = history.retrievePast(Integer.parseInt(commandArray[1])+ 1).complete();
+        List<Message> msgs = history.retrievePast(n + 1).complete();
         event.getTextChannel().deleteMessages(msgs).queue();
 	}
 }

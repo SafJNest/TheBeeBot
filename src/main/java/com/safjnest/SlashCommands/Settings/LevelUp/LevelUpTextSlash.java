@@ -5,7 +5,7 @@ import java.util.Arrays;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
 
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -18,29 +18,27 @@ public class LevelUpTextSlash extends SlashCommand{
         this.cooldown = new CommandsLoader().getCooldown(this.name, father.toLowerCase());
         this.category = new Category(new CommandsLoader().getString(father.toLowerCase(), "category"));
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "msg", "Welcome message", true));
+            new OptionData(OptionType.STRING, "message", "Level up message", true)
+        );
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
-       String message = event.getOption("msg").getAsString();
-        message = message.replace("'", "''");
+        String message = event.getOption("message") != null ? event.getOption("message").getAsString().replace("'", "''") : null;
+
+        String guildId = event.getGuild().getId();
+        String botId = event.getJDA().getSelfUser().getId();
+
+        if(!DatabaseHandler.isExpEnabled(guildId, botId)) {
+            event.deferReply(true).addContent("This guild doesn't have the exp system enabled.").queue();
+            return;
+        }
+
+        if(!DatabaseHandler.updateLevelupMessage(guildId, botId, message)) {
+            event.deferReply(true).addContent("Something went wrong.").queue();
+            return;
+        }
         
-        String discordId = event.getGuild().getId();
-        String query = "SELECT exp_enabled FROM guild_settings WHERE guild_id = '" + discordId + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        if(DatabaseHandler.getSql().getString(query, "exp_enabled") != null && DatabaseHandler.getSql().getString(query, "exp_enabled").equals("0")){
-            event.deferReply(false).addContent("You have not enabled the exp system yet.").queue();
-            return;
-        }
-        query = "INSERT INTO levelup_message(guild_id, message_text)"
-                            + "VALUES('" + discordId + "','" + message +"');";
-        if(!DatabaseHandler.getSql().runQuery(query)){
-            query = "UPDATE levelup_message SET message_text = '" + message + "' WHERE guild_id = '" + discordId + "';"; 
-            DatabaseHandler.getSql().runQuery(query);
-            event.deferReply(false).addContent("Set a new LevelUp message.").queue();
-            return;
-        }
-        event.deferReply(false).addContent("All set correctly.").queue();
+        event.deferReply(false).addContent("Changed level up message.").queue();
     }
-    
 }

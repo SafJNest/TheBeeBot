@@ -6,9 +6,11 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Random;
+
 
 /**
- * Classe officiale del <a href="https://github.com/SafJNest">SafJNest Team.</a>
+ * Classe ufficiale della <a href="https://github.com/SafJNest">SafJNest Corporation</a>
  * <p>
  * Nella classe sono presenti alcuni dei metodi piu' importanti e significativi.
  */
@@ -140,8 +142,13 @@ public class SafJNest extends Thread {
         return x>0?x:-x;
     }
 
+
+    /**
+     * @Deprecated
+     * 
+     */
     public static BigInteger randomBighi(int numBits) {
-        if (numBits < 1)
+        if (numBits < 2)
             throw new IllegalArgumentException("SafJNest doesnt like 0 or negative numbers");
         numBits--;
         int numBytes = (int) (((long) numBits + 7) / 8);
@@ -156,6 +163,28 @@ public class SafJNest extends Thread {
             randomBits[0] &= (1 << (8 - excessBits)) - 1;
         }
         return new BigInteger(1, randomBits).add(BigInteger.TWO.pow(numBits));
+    }
+
+    /**
+     * @Deprecated
+     * 
+     */
+    public static boolean isPrime(BigInteger p) {
+        return (BigInteger.TWO.modPow(p, p).compareTo(BigInteger.TWO) == 0);
+    }
+
+    /**
+     * @Deprecated
+     * 
+     */
+    public static BigInteger getFirstPrime(BigInteger n) {
+        if(n.equals(BigInteger.TWO))
+            return n;
+        if(n.mod(BigInteger.TWO).equals(BigInteger.ZERO))
+            n = n.add(BigInteger.ONE);
+        while(!isPrime(n))
+            n = n.add(BigInteger.TWO);
+        return n;
     }
 
     public static float fastInvSquareRoot(float x) {
@@ -186,15 +215,22 @@ public class SafJNest extends Thread {
         return msg;
     }
 
-    public static boolean isPrime(BigInteger p) {
-        return (BigInteger.TWO.modPow(p, p).compareTo(BigInteger.TWO) == 0) ? 1>0 : 1<0;
+    public static BigInteger getRandomBigInteger(int numBits) {
+        return new BigInteger(numBits-1, new Random()).add(BigInteger.TWO.pow(numBits-1));
     }
 
-    public static String getFirstPrime(BigInteger n){
-        n = (n.mod(BigInteger.TWO).equals(BigInteger.ZERO)) ? n.add(BigInteger.ONE) : n.add(BigInteger.ZERO);
-        while(!isPrime(n))
-            n = n.add(BigInteger.TWO);
-        return n.toString();
+    public static BigInteger getRandomPrime(int numBits) {
+        if(numBits < 2)
+            return BigInteger.valueOf(-1);
+
+        BigInteger result = SafJNest.getRandomBigInteger(numBits).nextProbablePrime();
+        if(result.bitLength() > numBits) {
+            result = BigInteger.TWO.pow(numBits - 1).nextProbablePrime();
+            if(result.bitLength() > numBits) {
+                result = BigInteger.valueOf(-1);
+            }
+        }
+        return result;
     }
     
     public static String getJSalt(int byteNum) {
@@ -220,7 +256,7 @@ public class SafJNest extends Thread {
         return formattedTime;
     }
     
-    public static double factorial(double n){
+    public static double factorial(double n) {
         double fact = 1;
         for (int i = 2; i <= n; i++) {
             fact *= i;
@@ -228,20 +264,25 @@ public class SafJNest extends Thread {
         return fact;
     }
 
+    public static double recursiveFactorial(double n) {
+        if(n == 1) return 1;
+        return n * factorial(n - 1);
+    }
+
 
     public static String findSimilarWord(String input, ArrayList<String> arr) {
         double maxSimilarity = 0;
-        String championName = "";
+        String s = "";
         
-        for (String champion : arr) {
-            double similarity = calculateSimilarity(input, champion);
+        for (String ss : arr) {
+            double similarity = calculateSimilarity(input, ss);
             if (similarity > maxSimilarity) {
                 maxSimilarity = similarity;
-                championName = champion;
+                s = ss;
             }
         }
         
-        return championName;
+        return s;
     }
     
     private static double calculateSimilarity(String s1, String s2) {

@@ -3,6 +3,7 @@ package com.safjnest.Commands.ManageMembers;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
+import com.safjnest.Utilities.PermissionHandler;
 
 import net.dv8tion.jda.api.entities.User;
 
@@ -23,15 +24,19 @@ public class Image extends Command{
 
     @Override
     protected void execute(CommandEvent event) {
-        User theGuy = null;
         try {
-            if(event.getMessage().getMentions().getMembers().size() > 0)
-                theGuy = event.getMessage().getMentions().getMembers().get(0).getUser();
+            User mentionedUser;
+            if(event.getArgs().equals(""))
+                mentionedUser = event.getAuthor();
             else
-                theGuy = event.getJDA().retrieveUserById(event.getArgs()).complete();
-            event.reply(theGuy.getAvatarUrl());
+                mentionedUser = PermissionHandler.getMentionedUser(event, event.getArgs());
+
+            if(mentionedUser == null)
+                event.reply("Couldn't find the specified member, please mention or write the id of a member.");
+            else
+                event.reply(mentionedUser.getAvatarUrl() + "?size=4096&quality=lossless");
         } catch (Exception e) {
-            event.reply("error: " + e.getMessage());
+            event.reply("Error: " + e.getMessage());
         }
     }
 }

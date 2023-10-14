@@ -11,8 +11,9 @@ import java.util.Map;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.LOL.RiotHandler;
 
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import no.stelar7.api.r4j.basic.constants.api.regions.LeagueShard;
@@ -26,12 +27,11 @@ import no.stelar7.api.r4j.pojo.lol.match.v5.MatchParticipant;
  */
 public class LastMatchesSlash extends SlashCommand {
     private R4J r;
-    private SQL sql;
     
     /**
      * Constructor
      */
-    public LastMatchesSlash(R4J r, SQL sql){
+    public LastMatchesSlash(R4J r){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
@@ -39,12 +39,12 @@ public class LastMatchesSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.INTEGER, "ngames", "Number of games to analyze", true)
-                .setMaxValue(20)
-                .setMinValue(1),
-            new OptionData(OptionType.STRING, "user", "Summoner name you want to get data", false));
+            new OptionData(OptionType.INTEGER, "games", "Number of games to analyze", true)
+                .setMinValue(1)
+                .setMaxValue(20),
+            new OptionData(OptionType.STRING, "user", "Name of the summoner you want to get information on", false)
+        );
         this.r = r;
-        this.sql = sql;
     }
 
     /**
@@ -54,23 +54,31 @@ public class LastMatchesSlash extends SlashCommand {
 	protected void execute(SlashCommandEvent event) {
         event.deferReply(false).queue();
         HashMap<String, Integer> played = new HashMap<>();
-        int gamesToAnalyze = event.getOption("ngames").getAsInt();
+        int gamesToAnalyze = event.getOption("games").getAsInt();
         no.stelar7.api.r4j.pojo.lol.summoner.Summoner s = null;
-        if(event.getOption("user") == null){
-            String query = "SELECT account_id FROM lol_user WHERE guild_id = '" + event.getMember().getId() + "';";
-            try {
-                s = r.getLoLAPI().getSummonerAPI().getSummonerByAccount(LeagueShard.EUW1, sql.getString(query, "account_id"));
-            } catch (Exception e) {
-               event.getHook().editOriginal("You dont have connected your Riot account.").queue();
-               return;
-            }
-        }else{
-            try {
-                s = r.getLoLAPI().getSummonerAPI().getSummonerByName(LeagueShard.EUW1, event.getOption("user").getAsString());
-            } catch (Exception e) {
-                event.getHook().editOriginal("Didn't found the user you asked for").queue();
+
+        User theGuy = null;
+         if(event.getOption("summoner") == null && event.getOption("user") == null){
+            s = RiotHandler.getSummonerFromDB(event.getUser().getId());
+            theGuy = event.getUser();
+            if(s == null){
+                event.getHook().editOriginal("You dont have a Riot account connected, check /help setUser (or write the name of a summoner).").queue();
                 return;
             }
+        }else if(event.getOption("user") != null){
+            theGuy = event.getOption("user").getAsUser();
+            s = RiotHandler.getSummonerFromDB(theGuy.getId());
+            if(s == null){
+                 event.getHook().editOriginal(theGuy.getEffectiveName() + " doesn't have a Riot account connected.").queue();
+                return;
+            }
+        }else{
+            s = RiotHandler.getSummonerByName(event.getOption("summoner").getAsString());
+            if(s == null){
+                event.getHook().editOriginal("Couldn't find the specified summoner.").queue();
+                return;
+            }
+            
         }
         int gamesNumber = gamesToAnalyze;
         try {
@@ -110,10 +118,9 @@ public class LastMatchesSlash extends SlashCommand {
             }
         }
         if(aloneLikePanslung){
-            message = "You have been playing only with randoms in the last 20 games.";
+            message = "No summoners they played more than one game with.";
         }
-        message+="\nThis command could be bugged, if you see something weird ask to the extreme main sup 1v9 machine to fix";
-        
+
         event.getHook().editOriginal(message).queue();
 	}
 
@@ -128,8 +135,8 @@ public class LastMatchesSlash extends SlashCommand {
         // Sort the list using lambda expression
         Collections.sort(
             list,
-            (i1,
-             i2) -> i1.getValue().compareTo(i2.getValue()));
+            (i1, i2) -> i1.getValue().compareTo(i2.getValue())
+        );
  
         // put data from sorted list to hashmap
         HashMap<String, Integer> temp

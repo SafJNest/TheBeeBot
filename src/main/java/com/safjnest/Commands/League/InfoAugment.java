@@ -18,11 +18,7 @@ import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
  * @since 1.3
  */
 public class InfoAugment extends Command {
-    
 
-    /**
-     * Constructor
-     */
     public InfoAugment(){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
@@ -33,22 +29,20 @@ public class InfoAugment extends Command {
         this.hidden = true;
     }
 
-    /**
-     * This method is called every time a member executes the command.
-     */
 	@Override
 	protected void execute(CommandEvent event) {
         String args = event.getArgs();
+
         ArrayList<Augment> augments = RiotHandler.getAugments();
         ArrayList<String> augmentNames = new ArrayList<>();
+
         for(Augment a : augments){
             augmentNames.add(a.getName());
         }
+
         EmbedBuilder eb = new EmbedBuilder();
         
-        eb.setColor(Color.decode(
-            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
+        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
         
         Augment augment = null;
         for(Augment a : augments){
@@ -58,13 +52,19 @@ public class InfoAugment extends Command {
                     augment = a;
                     break;
                 }
-            }else{
+            }
+            else{
                 args = SafJNest.findSimilarWord(args, augmentNames);
                 if(a.getName().equalsIgnoreCase(args)){
                     augment = a;
                     break;
                 }
             }
+        }
+
+        if(augment == null) {
+            event.reply("Couldn't find an augment with that name/id.");
+            return;
         }
         
         RichCustomEmoji emoji = RiotHandler.getRichEmoji(event.getJDA(), "a"+augment.getId());
@@ -73,5 +73,4 @@ public class InfoAugment extends Command {
         eb.setThumbnail(emoji.getImageUrl());
         event.reply(eb.build());
 	}
-
 }

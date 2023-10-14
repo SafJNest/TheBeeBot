@@ -25,9 +25,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
  * @since 1.1.01
  */
 public class Help extends Command {
-    /**
-     * Default constructor for the class.
-     */
 
     GuildSettings gs;
     public Help(GuildSettings gs) {
@@ -39,9 +36,7 @@ public class Help extends Command {
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.gs = gs;
     }
-    /**
-     * This method is called every time a member executes the command.
-     */
+
     @Override
     protected void execute(CommandEvent event) {
         int nCom = 0;
@@ -74,7 +69,7 @@ public class Help extends Command {
                 ss = "```\n";
             }
             eb.addField("Number of commands avaible:", "```"+nCom+"```", false);
-            eb.setFooter("Beebot is continuously updated by the two KINGS ;D", null);
+            eb.setFooter("Sorry if things don't work, Beebot was made for fun by only 2 people.", null);
         }else{
             Command e = null;
             for(String k : commands.keySet()){
@@ -102,7 +97,7 @@ public class Help extends Command {
             
             eb.setFooter("IN CASE ARGS IS NULL ITS ENOUGH WRITE JUST THE COMMAND, [] MEANS A REQUIRED FIELD WHITE () DONT ", null);
         }
-        eb.addField("**OTHER INFORMATION**", "Beebot has been developed by only two people, so dont break the balls", false);
+        //eb.addField("**OTHER INFORMATION**", "Beebot has been developed by only two people, so dont break the balls", false);
         eb.setAuthor(event.getJDA().getSelfUser().getName(), "https://github.com/SafJNest",
                 event.getJDA().getSelfUser().getAvatarUrl());
 

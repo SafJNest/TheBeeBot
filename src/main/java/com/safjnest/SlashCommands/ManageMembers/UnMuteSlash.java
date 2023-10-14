@@ -1,7 +1,6 @@
 package com.safjnest.SlashCommands.ManageMembers;
 
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.PermissionHandler;
 
 import java.util.Arrays;
 
@@ -30,33 +29,35 @@ public class UnMuteSlash extends SlashCommand{
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.botPermissions = new Permission[]{Permission.VOICE_MUTE_OTHERS};
+        this.userPermissions = new Permission[]{Permission.VOICE_MUTE_OTHERS};
         this.options = Arrays.asList(
-            new OptionData(OptionType.USER, "user", "User to unmute", true));
+            new OptionData(OptionType.USER, "member", "Member to unmute", true));
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        Member theGuy = event.getOption("user").getAsMember();
-        final Member surelyTheGuy = theGuy;
         try {
+            Member mentionedMember = event.getOption("member").getAsMember();
 
-            if (!event.getGuild().getMember(event.getJDA().getSelfUser()).hasPermission(Permission.VOICE_MUTE_OTHERS))
-                event.deferReply().addContent(event.getJDA().getSelfUser().getAsMention() + " you dont have permission to unmute.").queue();
-                
-            else if(PermissionHandler.hasPermission(event.getMember(), Permission.VOICE_MUTE_OTHERS) && !theGuy.getVoiceState().isMuted())
-            event.deferReply().addContent("Cant unmute who is not muted.").queue();
+            if(mentionedMember == null) { 
+                event.deferReply(true).addContent("Couldn't find the specified member, please mention or write the id of a member.").queue();
+            }// if you mention a user not in the guild or write a wrong id
 
-            else if (PermissionHandler.hasPermission(event.getMember(), Permission.VOICE_MUTE_OTHERS)) {
-                event.getGuild().mute(surelyTheGuy, false).queue(
-                                                        (e) -> event.deferReply().addContent("unmuted " + surelyTheGuy.getAsMention()).queue(), 
-                                                        new ErrorHandler().handle(
-                                                            ErrorResponse.MISSING_PERMISSIONS,
-                                                                (e) -> event.deferReply().addContent("sorry, " + e.getMessage()).queue())
+            else if(!mentionedMember.getVoiceState().isMuted()) {
+                event.deferReply(true).addContent("Member is already unmuted.").queue();
+            }// if the member is already unmuted
+
+            else {
+                event.getGuild().mute(mentionedMember, false).queue(
+                    (e) -> event.deferReply(false).addContent(mentionedMember.getAsMention() + " has been unmuted").queue(), 
+                    new ErrorHandler().handle(
+                        ErrorResponse.MISSING_PERMISSIONS,
+                        (e) -> event.deferReply(true).addContent("Error. " + e.getMessage()).queue())
                 );
-            } else
-                event.deferReply(true).addContent("You dont have permission to unmute.").queue();
+            }
         } catch (Exception e) {
-            event.deferReply().addContent("sorry, " + e.getMessage()).queue();
+            event.deferReply(true).addContent("Error: " + e.getMessage()).queue();
         }
     }
 }

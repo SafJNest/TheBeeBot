@@ -25,7 +25,7 @@ public class PlayerManager {
       player.addListener(trackScheduler);
 
       playerManager.registerSourceManager(new LocalAudioSourceManager());
-      playerManager.registerSourceManager(new YoutubeAudioSourceManager(true));
+      playerManager.registerSourceManager(new YoutubeAudioSourceManager());
     }
 
     /**

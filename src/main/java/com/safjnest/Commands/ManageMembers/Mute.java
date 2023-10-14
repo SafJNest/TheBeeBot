@@ -2,6 +2,7 @@ package com.safjnest.Commands.ManageMembers;
 
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.PermissionHandler;
+
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 
@@ -24,38 +25,45 @@ public class Mute extends Command{
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.botPermissions = new Permission[]{Permission.VOICE_MUTE_OTHERS};
+        this.userPermissions = new Permission[]{Permission.VOICE_MUTE_OTHERS};
     }
 
     @Override
     protected void execute(CommandEvent event) {
-        Member theGuy = null;
         try {
-            if(event.getMessage().getMentions().getMembers().size() > 0)
-                theGuy = event.getMessage().getMentions().getMembers().get(0);
-            else
-                theGuy = event.getGuild().retrieveMemberById(event.getArgs()).complete();
-            final Member surelyTheGuy = theGuy;
+            String mentionedName = event.getArgs();
 
-            if (!event.getGuild().getMember(event.getJDA().getSelfUser()).hasPermission(Permission.VOICE_MUTE_OTHERS))
-                event.reply(event.getJDA().getSelfUser().getAsMention() + " you dont have permission to mute");
+            Member selfMember = event.getGuild().getSelfMember();
+            Member author = event.getMember();
+            Member mentionedMember = PermissionHandler.getMentionedMember(event, mentionedName);
+            
+            if(mentionedMember == null) { 
+                event.reply("Couldn't find the specified member, please mention or write the id of a member.");
+            }// if you mention a user not in the guild or write a wrong id
 
-            else if (PermissionHandler.isUntouchable(theGuy.getId()))
-                event.reply("Dont dare touch my creators.");
+            else if(!selfMember.canInteract(mentionedMember)) {
+                event.reply(selfMember.getAsMention() + " can't mute a member with higher or equal highest role than itself.");
+            }// if the bot doesnt have a high enough role to mute the member 
 
-            else if(PermissionHandler.isEpria(theGuy.getId()) && !PermissionHandler.isUntouchable(event.getAuthor().getId()))
-                event.reply("OHHHHHHHHHHHHHHHHHHHHHHHHHHHH NON MUTARE MEEEEEEEEEEEEEEERIO EEEEEEEEEEEEEEEEEPRIA, solo i king possono.");
+            else if(!author.canInteract(mentionedMember) && author != mentionedMember) {
+                event.reply("You can't mute a member with higher or equal highest role than yourself.");
+            }// if the author doesnt have a high enough role to mute the member and if its not yourself!
 
-            else if (PermissionHandler.hasPermission(event.getMember(), Permission.VOICE_MUTE_OTHERS)) {
-                event.getGuild().mute(surelyTheGuy, true).queue(
-                                                        (e) -> event.reply("muted " + surelyTheGuy.getAsMention()), 
-                                                        new ErrorHandler().handle(
-                                                            ErrorResponse.MISSING_PERMISSIONS,
-                                                                (e) -> event.replyError("sorry, " + e.getMessage()))
+            else if(mentionedMember.getVoiceState().isMuted()) {
+                event.reply("Member is already muted.");
+            }// if the member is already muted
+            
+            else {
+                event.getGuild().mute(mentionedMember, true).queue(
+                    (e) -> event.reply(mentionedMember.getAsMention() + " has been muted"), 
+                    new ErrorHandler().handle(
+                        ErrorResponse.MISSING_PERMISSIONS,
+                        (e) -> event.replyError("Error. " + e.getMessage()))
                 );
-            } else
-                event.reply("Dont mute if you are not an admin UwU.");
+            }
         } catch (Exception e) {
-            event.replyError("error: " + e.getMessage());
+            event.replyError("Error: " + e.getMessage());
         }
     }
 }

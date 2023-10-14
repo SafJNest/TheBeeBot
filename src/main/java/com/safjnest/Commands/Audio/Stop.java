@@ -5,7 +5,12 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.Audio.AudioHandler;
 
-
+/**
+ * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
+ * @author <a href="https://github.com/Leon412">Leon412</a>
+ * 
+ * @since 1.0
+ */
 public class Stop extends Command {
 
     public Stop(){
@@ -21,6 +26,6 @@ public class Stop extends Command {
     protected void execute(CommandEvent event) {
         AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
         handler.stop();
-        event.reply("Stopped");
+        event.reply("Playing stopped");
     }
 }

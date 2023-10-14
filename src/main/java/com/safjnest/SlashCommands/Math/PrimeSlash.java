@@ -1,8 +1,6 @@
 package com.safjnest.SlashCommands.Math;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import com.safjnest.Utilities.CommandsLoader;
@@ -29,34 +27,26 @@ public class PrimeSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.INTEGER, "value", "Number of bits", true)
-            .setMaxValue(maxPrime)
-            .setMinValue(1));
+            new OptionData(OptionType.INTEGER, "value", "Number of bits of the prime to generate", true)
+                .setMinValue(2)
+                .setMaxValue(maxPrime)
+        );
     }
 
 	@Override
 	protected void execute(SlashCommandEvent event) {
-        try {
-                String primi = SafJNest.getFirstPrime(SafJNest.randomBighi(event.getOption("value").getAsInt()));
-                if (primi.length() > 2000) {
-                    File supp = new File("primi.txt");
-                    FileWriter app;
-                    try {
-                        app = new FileWriter(supp);
-                        app.write(primi);
-                        app.flush();
-                        app.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    event.deferReply(true).addContent("Your prime number is too insane for discord, we need a file to hold it").addFiles(FileUpload.fromData(supp)).queue();
-                } else {
-                    event.deferReply(false).addContent(primi).queue();
-                }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            
-        }
+        event.deferReply(false).queue();
+        String primi = SafJNest.getRandomPrime(event.getOption("value").getAsInt()).toString();
+        if (primi.length() > 2000) {
+            event.getHook().editOriginal("The prime number is too big for discord, so here's a file:")
+                .setFiles(FileUpload.fromData(
+                    primi.getBytes(StandardCharsets.UTF_8),
+                    "prime.txt"
+                )
+            ).queue();
+        } 
+        else {
+            event.getHook().editOriginal(primi).queue();
+        }    
 	}
 }

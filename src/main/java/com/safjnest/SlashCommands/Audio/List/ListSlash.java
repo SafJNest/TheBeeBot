@@ -31,11 +31,4 @@ public class ListSlash extends SlashCommand{
 	public void execute(SlashCommandEvent event) {
         
     }
-
-    
-
-    
-
-    
-   
 }

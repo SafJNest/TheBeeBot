@@ -39,12 +39,12 @@ public class ChannelInfo extends Command {
         GuildChannel gc = null;
         if(event.getMessage().getMentions().getChannels().size() > 0) 
             gc = event.getMessage().getMentions().getChannels().get(0);
-        else if(event.getArgs() == "")
+        else if(event.getArgs().equals(""))
             gc = event.getGuildChannel();
         else if(SafJNest.longIsParsable(event.getArgs()))
             gc = event.getGuild().getGuildChannelById(event.getArgs());
         if(gc == null) {
-            event.reply("Invalid channel id");
+            event.reply("Couldn't find the specified channel.");
             return;
         }
         

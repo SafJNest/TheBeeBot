@@ -3,8 +3,10 @@ package com.safjnest.Commands.Audio;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
+import com.safjnest.Utilities.PermissionHandler;
 
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
 
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
@@ -14,28 +16,30 @@ import net.dv8tion.jda.api.entities.User;
  */
 public class Disconnect extends Command {
 
-    public Disconnect(){
+    public Disconnect() {
         this.name = this.getClass().getSimpleName();;
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.botPermissions = new Permission[]{Permission.VOICE_MOVE_OTHERS};
+        this.userPermissions = new Permission[]{Permission.VOICE_MOVE_OTHERS};
     }
 
 	@Override
 	protected void execute(CommandEvent event) {
-        User theGuy = null;
-        if(event.getArgs().equalsIgnoreCase("bot") || event.getArgs().equalsIgnoreCase("")){
+        if(event.getArgs().equals("")) {
             event.getGuild().getAudioManager().closeAudioConnection();
-        }
-        else if(event.getMessage().getMentions().getMembers().size() > 0){
-            theGuy = event.getMessage().getMentions().getMembers().get(0).getUser();
-            event.getGuild().kickVoiceMember(event.getGuild().getMember(theGuy)).queue();
-        }
-        else{
-            event.reply("I don't know who to disconnect (mention the member you want to disconnect or write bot or nothing to disconnect the bot)");
             return;
         }
+        
+        Member mentionedMember = PermissionHandler.getMentionedMember(event, event.getArgs());
+        if(mentionedMember == null) {
+            event.reply("Couldn't find the specified member, please mention or write the id of a member.");
+            return;
+        }
+        
+        event.getGuild().kickVoiceMember(mentionedMember).queue();
 	}
 }

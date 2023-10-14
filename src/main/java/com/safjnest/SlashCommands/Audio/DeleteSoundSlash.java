@@ -1,13 +1,13 @@
 package com.safjnest.SlashCommands.Audio;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
-import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -21,7 +21,6 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
  * @since 1.3
  */
 public class DeleteSoundSlash extends SlashCommand{
-    private SQL sql;
     
     public DeleteSoundSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
@@ -31,48 +30,40 @@ public class DeleteSoundSlash extends SlashCommand{
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "sound", "Sound to delete", true));
-        this.sql = DatabaseHandler.getSql();
+            new OptionData(OptionType.STRING, "sound", "Sound to delete", true)
+        );
     }
     
 	@Override
 	protected void execute(SlashCommandEvent event) {
         String fileName = event.getOption("sound").getAsString();
-        String query = null;
-        String id = null, name, userId;
-        ArrayList<ArrayList<String>> arr = null;
 
+        QueryResult sounds = fileName.matches("[0123456789]*") 
+                           ? DatabaseHandler.getSoundsById(fileName, event.getGuild().getId(), event.getMember().getId()) 
+                           : DatabaseHandler.getSoundsByName(fileName, event.getGuild().getId(), event.getMember().getId());
 
-        if(fileName.matches("[0123456789]*"))
-            query = "SELECT id, name, user_id FROM sound WHERE id = '" + fileName + "';";
-        else
-            query = "SELECT id, name, user_id FROM sound WHERE name = '" + fileName + "' AND (user_id = '" + event.getUser().getId() + "' OR guild_id = '" + event.getGuild().getId() + "');";
-
-        if((arr = sql.getAllRows(query, 3)) == null || arr.isEmpty()){
-            event.deferReply(true).addContent("There is no sound with that name/id").queue();
+        if(sounds.isEmpty()) {
+            event.reply("Couldn't find a sound with that name/id.");
             return;
         }
 
-        if(arr.size() > 1){
-            event.deferReply(true).addContent("There is more than one sound with that name in this server, please use IDs to choose the sound you want to delete").queue();
+        if(sounds.size() > 1) {
+            StringBuilder toSend = new StringBuilder("Two or more sounds with that name have been found, please use IDs.\n");
+            for(ResultRow sound : sounds)
+                toSend.append("**Sound:** " + sound.get("name") + " (ID: " + sound.get("id") + ") | **Guild:** " + event.getJDA().getGuildById(sound.get("guild_id")).getName() + " | **Author:** " + event.getGuild().getMemberById(sound.get("user_id")).getAsMention() + " | **Can you delete this:** " + ((!event.getUser().getId().equals(sound.get("user_id")) && !(event.getMember().hasPermission(Permission.ADMINISTRATOR) && event.getGuild().getId().equals(sound.get("guild_id")))) ? "no" : "yes") + "\n");
+            event.deferReply(true).addContent(toSend.toString()).queue();
             return;
         }
 
-        id = arr.get(0).get(0);
-        name = arr.get(0).get(1);
-        userId = arr.get(0).get(2);
+        ResultRow toDelete = sounds.get(0);
 
-        if(!event.getUser().getId().equals(userId) && !event.getMember().hasPermission(Permission.ADMINISTRATOR)){
-            event.deferReply(true).addContent("You don't have permission to delete this sound").queue();
+        if(!event.getUser().getId().equals(toDelete.get("user_id")) && !(event.getMember().hasPermission(Permission.ADMINISTRATOR) && event.getGuild().getId().equals(toDelete.get("guild_id")))) {
+            event.deferReply(true).addContent("You don't have permission to delete this sound.").queue();
             return;
         }
 
-       
+        DatabaseHandler.deleteSound(toDelete.get("id"));
 
-        query = "DELETE FROM sound WHERE id = " + id + ";";
-
-        sql.runQuery(query);
-
-        event.deferReply(false).addContent(name + " (ID: " + id +  ") has been deleted").queue();
+        event.deferReply(false).addContent(name + " (ID: " + toDelete.get("id") +  ") has been deleted.").queue();
 	}
 }

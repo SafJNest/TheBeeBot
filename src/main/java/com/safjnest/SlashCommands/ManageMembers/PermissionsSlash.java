@@ -25,28 +25,28 @@ public class PermissionsSlash extends SlashCommand{
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.USER, "user", "User to get the permission, null to get yours", false));
+            new OptionData(OptionType.USER, "member", "Member to get the permission of", true));
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        Member theGuy = (event.getOption("user") == null) ? event.getMember() : event.getOption("user").getAsMember();
-        String per = "";
-        String msg = "";
+        Member mentionedMember = (event.getOption("member") == null) ? event.getMember() : event.getOption("member").getAsMember();
         try {
-            
-            if (theGuy.isOwner())
-                msg = theGuy.getAsMention() + " is the owner of the server.";
-            else if (theGuy.hasPermission(Permission.ADMINISTRATOR))
-                msg = theGuy.getAsMention() + " is an admin.";
-            else{
-                for(Permission p :  theGuy.getPermissions())
-                    per+=p.getName() + "\n";
-                msg = theGuy.getAsMention() + " is not an admin\nThese are his permissions: " + per;
+            if (mentionedMember.isOwner()) {
+                event.deferReply(false).addContent(mentionedMember.getAsMention() + " is the owner of the guild.").queue();
             }
-            event.deferReply(false).addContent(msg).queue();
+            else if (mentionedMember.hasPermission(Permission.ADMINISTRATOR)) {
+                event.deferReply(false).addContent(mentionedMember.getAsMention() + " is an admin.").queue();
+            }
+            else {
+                StringBuilder permissionsString = new StringBuilder();
+                for(Permission permission :  mentionedMember.getPermissions())
+                    permissionsString.append(permission.getName() + " - ");
+                permissionsString.delete(permissionsString.length() - 3, permissionsString.length());
+                event.deferReply(false).addContent(mentionedMember.getAsMention() + " **is not an admin and these are his permissions:** \n" + permissionsString.toString()).queue();
+            }
         } catch (Exception e) {
-            event.deferReply(true).addContent("sorry, " + e.getMessage()).queue();
+            event.deferReply(true).addContent("Error: " + e.getMessage()).queue();
         }
     }
 }

@@ -1,25 +1,26 @@
 package com.safjnest.Commands.Audio;
 
 import java.awt.Color;
-import java.util.ArrayList;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 
-
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
+ * @author <a href="https://github.com/Leon412">Leon412</a>
  * 
  * @since 1.1
  */
-public class List extends Command{
+public class List extends Command {
 
     public List(){
         this.name = this.getClass().getSimpleName();;
@@ -32,37 +33,37 @@ public class List extends Command{
 
 	@Override
 	protected void execute(CommandEvent event) {
-        
         Button left = Button.danger("list-left", "<-");
         left = left.asDisabled();
+
         Button right = Button.primary("list-right", "->");
+
         Button center = Button.primary("list-center", "Page: 1");
         center = center.withStyle(ButtonStyle.SUCCESS);
         center = center.asDisabled();
-
 
         EmbedBuilder eb = new  EmbedBuilder();
         eb.setAuthor(event.getAuthor().getName(), "https://github.com/SafJNest", event.getAuthor().getAvatarUrl());
         eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
         eb.setTitle("List of " + event.getGuild().getName());
-        eb.setColor(Color.decode(
-        BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
-        String query = "SELECT id, name, guild_id, user_id, extension FROM sound WHERE guild_id = '" + event.getGuild().getId() + "' ORDER BY name ASC;";
-        ArrayList<ArrayList<String>> sounds = DatabaseHandler.getSql().getAllRows(query, 2);
+        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+
+        QueryResult sounds = DatabaseHandler.getlistGuildSounds(event.getGuild().getId());
+
         eb.setDescription("Total Sound: " + sounds.size());
-        int cont = 0;
-        while(cont <24 && cont < sounds.size()){
-            eb.addField("**"+sounds.get(cont).get(1)+"**", "ID: " + sounds.get(cont).get(0), true);
-            cont++;
+        
+
+        for(int i = 0; i < sounds.size() && i < 24; i++){
+            ResultRow sound = sounds.get(i);
+            String locket = sound.getAsBoolean("public") ? "" : ":lock:";
+            eb.addField("**" + sound.get("name") + "**" + locket, "ID: " + sound.get("id"), true);
         }
-        
-        
+         
         if(sounds.size() <= 24){
             right = right.withStyle(ButtonStyle.DANGER);
             right = right.asDisabled();
         }
+        
         event.getChannel().sendMessageEmbeds(eb.build()).addActionRow(left, center, right).queue();
     }
-    
 }

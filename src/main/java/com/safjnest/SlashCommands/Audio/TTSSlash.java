@@ -11,12 +11,12 @@ import org.voicerss.tts.Voice.Voices;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
-import com.safjnest.Utilities.SQL;
 import com.safjnest.Utilities.SafJNest;
 import com.safjnest.Utilities.TTSHandler;
 import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.ResultRow;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -30,14 +30,26 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 
 public class TTSSlash extends SlashCommand{
-    private String speech;
     private TTSHandler tts;
-    private SQL sql;
     private PlayerManager pm;
     
     public static final HashMap<String, Set<String>> voices = new HashMap<String, Set<String>>();
     
     public TTSSlash(TTSHandler tts){
+        this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
+        this.aliases = new CommandsLoader().getArray(this.name, "alias");
+        this.help = new CommandsLoader().getString(this.name, "help");
+        this.cooldown = new CommandsLoader().getCooldown(this.name);
+        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
+        this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.options = Arrays.asList(
+            new OptionData(OptionType.STRING, "text", "Text to be read", true),
+            new OptionData(OptionType.STRING, "voice", "Reader's voice (also language)", false)
+                .setAutoComplete(true)
+        );
+
+        this.tts = tts;
+
         voices.put(Voices.Arabic_Egypt.id, Set.of(Voices.Arabic_Egypt.array));
         voices.put(Voices.Chinese_China.id, Set.of(Voices.Chinese_China.array));
         voices.put(Voices.Dutch_Netherlands.id, Set.of(Voices.Dutch_Netherlands.array));
@@ -56,82 +68,66 @@ public class TTSSlash extends SlashCommand{
         voices.put(Voices.Russian.id, Set.of(Voices.Russian.array));
         voices.put(Voices.Swedish.id, Set.of(Voices.Swedish.array));
         voices.put(Voices.Spanish_Spain.id, Set.of(Voices.Spanish_Spain.array));
-
-
-        this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
-        this.aliases = new CommandsLoader().getArray(this.name, "alias");
-        this.help = new CommandsLoader().getString(this.name, "help");
-        this.cooldown = new CommandsLoader().getCooldown(this.name);
-        this.category = new Category(new CommandsLoader().getString(this.name, "category"));
-        this.arguments = new CommandsLoader().getString(this.name, "arguments");
-        this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "text", "Text to be read", true),
-            new OptionData(OptionType.STRING, "voice", "Change the reader's voice", false));
-        this.tts = tts;
-        this.sql = DatabaseHandler.getSql();
-
-    
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        String language = "it-it";
-        String voice = "keria";
-        String defaultVoice = "keria";
-        EmbedBuilder eb = null;
+        String voice = null, defaultVoice = null, language = null;
+        String speech = event.getOption("text").getAsString();
+        EmbedBuilder eb;
 
-
-        if((event.getMember().getVoiceState().getChannel() != event.getGuild().getSelfMember().getVoiceState().getChannel()) && event.getGuild().getSelfMember().getVoiceState().getChannel() != null){
-            event.deferReply(false).addContent("The bot is used by someone else, dont be annoying and use another beebot instance.").queue();
+        AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
+        AudioChannel botChannel = event.getGuild().getSelfMember().getVoiceState().getChannel();
+        
+        if(myChannel == null){
+            event.deferReply(true).addContent("You need to be in a voice channel to use this command.").queue();
             return;
         }
 
+        if(botChannel != null && (myChannel != botChannel)){
+            event.deferReply(true).addContent("The bot is already being used in another voice channel.").queue();
+            return;
+        }
 
-        speech = event.getOption("text").getAsString();
+        ResultRow defaultVoiceRow = DatabaseHandler.getDefaultVoice(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
+        if(!defaultVoiceRow.emptyValues())
+            defaultVoice = defaultVoiceRow.get("name_tts");
 
+        if(event.getOption("voice") != null) {
+            String possibleVoice = event.getOption("voice").getAsString();
+            for(String key : voices.keySet()) {
+                if(voices.get(key).contains(possibleVoice)) {
+                    language = key;
+                    voice = possibleVoice;
+                    break;
+                }
+            }
+        }
+
+        if(voice == null) {
+            if(defaultVoice != null) {
+                voice = defaultVoice;
+                language = defaultVoiceRow.get("language_tts");
+            }
+            else {
+                voice = "mia";
+                language = "it-it";
+            }
+        }
 
         File file = new File("rsc" + File.separator + "tts");
         if(!file.exists())
             file.mkdirs();
 
-        //checking the selected voice, otherwise default is used
-        String query = "SELECT name_tts FROM tts_guilds WHERE guild_id = '" + event.getGuild().getId() + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        if(sql.getString(query, "name_tts") != null && voice.equals("keria"))
-            defaultVoice = sql.getString(query, "name_tts");
-        
-        //if the user chose a voice
-        if(event.getOption("voice") != null){
-            for(String key : voices.keySet()){ 
-                if(voices.get(key).contains(event.getOption("voice").getAsString())){
-                    language = key;
-                    voice = event.getOption("voice").getAsString();
-                }
-            }
-            if(voice.equals("keria")){
-                event.deferReply(true).addContent("voice not found.").queue();
-                return;
-            }
-        }//check if there is a default voice and the user hasnt asked for a specific speaker
-        else if(!defaultVoice.equals("keria")){
-            voice = defaultVoice;
-            query = "SELECT language_tts FROM tts_guilds WHERE guild_id = '" + event.getGuild().getId() + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-            language = sql.getString(query, "language_tts");
-        //used the default system voice
-        }else{
-            voice = "Mia"; 
-            defaultVoice = "Not setted"; 
-        }
         tts.makeSpeech(speech, event.getMember().getEffectiveName(), voice, language);
         
         String nameFile = "rsc" + File.separator + "tts" + File.separator + event.getMember().getEffectiveName() + ".mp3";
         
         pm = new PlayerManager();
-        AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
+        
         AudioManager audioManager = event.getGuild().getAudioManager();
-
         audioManager.setSendingHandler(pm.getAudioHandler());
-
-        audioManager.openAudioConnection(myChannel);
+        
 
         pm.getAudioPlayerManager().loadItem(nameFile, new AudioLoadResultHandler() {
             @Override
@@ -160,33 +156,27 @@ public class TTSSlash extends SlashCommand{
             }
         });
 
-        pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());;
+        pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
+        if(pm.getPlayer().getPlayingTrack() == null) {
+            return;
+        }
+
+        audioManager.openAudioConnection(myChannel);
         
         eb = new EmbedBuilder();
         eb.setTitle("Playing now:");
-        eb.addField("Lenght",SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length),true);
         eb.setAuthor(event.getMember().getEffectiveName(), "https://github.com/SafJNest",event.getMember().getAvatarUrl());
-        eb.setFooter("*This is not SoundFx, this is much worse cit. steve jobs (probably)", null); //Questo non e' SoundFx, questa e' perfezione cit. steve jobs (probabilmente)
-
+        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
         eb.setDescription(speech);
+
+        eb.addField("Lenght",SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length),true);
         eb.addField("Language", language, true);
         eb.addBlankField(true);
         eb.addField("Voice", voice, true);
-        eb.addField("Default voice", defaultVoice, true);
+        eb.addField("Default voice", (defaultVoice == null ? "Not setted" : defaultVoice), true);
         eb.addBlankField(true);
-        eb.setColor(Color.decode(
-            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-            ));
-            
-            /* 
-            String img = "tts.png";
-            File path = new File("rsc" + File.separator + "img" + File.separator + img);
-        eb.setThumbnail("attachment://" + img);
-        event.deferReply(false).addEmbeds(eb.build())
-            .addFiles(FileUpload.fromData(path))
-            .queue();
-        */
-        eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
+
         event.deferReply(false).addEmbeds(eb.build()).queue();
     }
 }

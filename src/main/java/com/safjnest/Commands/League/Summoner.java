@@ -5,25 +5,21 @@ import java.awt.Color;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
 import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.LOL.RiotHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
-
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
  * @since 1.3
  */
 public class Summoner extends Command {
-    
-    /**
-     * Constructor
-     */
+
     public Summoner(){
         this.name = this.getClass().getSimpleName();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
@@ -33,9 +29,6 @@ public class Summoner extends Command {
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
     }
 
-    /**
-     * This method is called every time a member executes the command.
-     */
 	@Override
 	protected void execute(CommandEvent event) {
         Button left = Button.primary("lol-left", "<-");
@@ -50,7 +43,7 @@ public class Summoner extends Command {
             s = RiotHandler.getSummonerFromDB(event.getAuthor().getId());
             searchByUser = true;
             if(s == null){
-                event.reply("You dont have a Riot account connected, for more information /help setUser");
+                event.reply("You dont have a Riot account connected, check /help setUser (or write the name of a summoner).");
                 return;
             }
             theGuy = event.getAuthor();
@@ -60,17 +53,16 @@ public class Summoner extends Command {
             searchByUser = true;
             theGuy = event.getMessage().getMentions().getUsers().get(0);
             if(s == null){
-                event.reply(event.getMessage().getMentions().getMembers().get(0).getEffectiveName() + " has not connected his Riot account.");
+                event.reply(event.getMessage().getMentions().getMembers().get(0).getEffectiveName() + " doesn't have a Riot account connected.");
                 return;
             }
         }else{
             s = RiotHandler.getSummonerByName(args);
             if(s == null){
-                event.reply("Didn't find this user. ");
+                event.reply("Couldn't find the specified summoner.");
                 return;
             }
         }
-        
         
         EmbedBuilder builder = createEmbed(event.getJDA(), event.getJDA().getSelfUser().getId(), s);
         
@@ -83,20 +75,15 @@ public class Summoner extends Command {
         }
 
         event.reply(builder.build());
-            
-       
-
 	}
 
     public static EmbedBuilder createEmbed(JDA jda, String id, no.stelar7.api.r4j.pojo.lol.summoner.Summoner s){
         EmbedBuilder builder = new EmbedBuilder();
         builder.setAuthor(s.getName());
-        builder.setColor(Color.decode(
-            BotSettingsHandler.map.get(id).color
-        ));
+        builder.setColor(Color.decode(BotSettingsHandler.map.get(id).color));
         builder.setThumbnail(RiotHandler.getSummonerProfilePic(s));
-        String query = "SELECT guild_id FROM lol_user WHERE account_id = '" + s.getAccountId() + "';";
-        String userId = DatabaseHandler.getSql().getString(query, "guild_id");
+
+        String userId = DatabaseHandler.getUserIdByLOLAccountId(s.getAccountId());
         if(userId != null){
             User theGuy = jda.getUserById(userId);
             builder.addField("User:", theGuy.getName(), true);
@@ -105,15 +92,15 @@ public class Summoner extends Command {
         }else{
             builder.addField("Level:", String.valueOf(s.getSummonerLevel()), false);
         }
-        builder.addField("5v5 Ranked Solo", RiotHandler.getSoloQStats(jda, s), true);
-        builder.addField("5v5 Ranked Flex Queue", RiotHandler.getFlexStats(jda, s), true);
+        
+        builder.addField("Solo/duo Queue", RiotHandler.getSoloQStats(jda, s), true);
+        builder.addField("Flex Queue", RiotHandler.getFlexStats(jda, s), true);
         String masteryString = "";
         for(int i = 1; i < 4; i++)
             masteryString += RiotHandler.getMastery(jda, s, i) + "\n";
         
-        builder.addField("Top 3 Champ", masteryString, false); 
+        builder.addField("Top 3 Champs", masteryString, false); 
         builder.addField("Activity", RiotHandler.getActivity(jda, s), true);
         return builder;
     }
-
 }

@@ -44,7 +44,7 @@ public class EmojiInfo extends Command {
                 sticker = event.getGuild().getStickersByName(event.getArgs(), true).get(0);
                 isSticker = true;
             } catch (Exception e1) {
-                event.reply("Emote/Sticker not found");
+                event.reply("Couldn't find the Emote/Sticker. Remember to insert ':' at the start/end of the name.");
                 return;
             }
         }

@@ -40,7 +40,7 @@ public class DiceSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "text", "Digit help for more information", true));
+            new OptionData(OptionType.STRING, "text", "/help dice for more information", true));
         
     }
 

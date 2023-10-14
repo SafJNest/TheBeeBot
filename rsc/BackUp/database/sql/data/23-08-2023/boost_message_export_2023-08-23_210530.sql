@@ -1,2 +1,0 @@
-insert into `boost_message` (`bot_id`, `channel_id`, `guild_id`, `message_text`) values ('1098906798016184422', '691005529354665984', '474935164451946506', 'As always we got #user who is 1v9 machine and boost the best server in the focking world');
-insert into `boost_message` (`bot_id`, `channel_id`, `guild_id`, `message_text`) values ('939876818465488926', '1094186418705793097', '608967318789160970', 'enacoid');

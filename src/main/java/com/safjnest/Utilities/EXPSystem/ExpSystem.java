@@ -1,10 +1,10 @@
 package com.safjnest.Utilities.EXPSystem;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 
 /**
@@ -20,7 +20,6 @@ public class ExpSystem {
      */
     private HashMap<String, UserTime> users;
     
-
     /**
      * Constructor for the ExpSystem class.
      */
@@ -41,26 +40,26 @@ public class ExpSystem {
      * @return
      */
     public synchronized int receiveMessage(String userId, String guildId, double modifier) {
-        if(!users.containsKey(userId+"-"+guildId)){
-            users.put(userId+"-"+guildId, new UserTime());
+        if(!users.containsKey(userId + "-" + guildId)) {
+            users.put(userId + "-" + guildId, new UserTime());
             return addExp(userId, guildId, modifier);
         }
-        UserTime user =  users.get(userId+"-"+guildId);
+
+        UserTime user = users.get(userId + "-" + guildId);
         if (user.canReceiveExperience()) {
            return addExp(userId, guildId, modifier);
-           
-        }else{
-           return -1;
         }
         
+        return -1;
     }
+
 
     /**
      * This method is used to calculate the experience that the user will receive.
      * <p> The experience is calculated randomly between 15 and 25.
      * @return
      */
-    public int calculateExp(){
+    public int getRandomExp(){
         return new Random().nextInt((25 - 15) + 1) + 15;
     }
 
@@ -87,8 +86,12 @@ public class ExpSystem {
      * @param lvl
      * @return
      */
-    public static int totalExpToLvlUp(int lvl){
+    public static int getExpToReachLvlFromZero(int lvl){
         return (int) ((5.0/6.0) * (lvl) * (2 * (lvl) * (lvl) + 27 * (lvl) + 91));
+    }
+
+    public static int getExpToReachLvl(int lvl){
+        return ExpSystem.getExpToReachLvlFromZero(lvl + 1) - ExpSystem.getExpToReachLvlFromZero(lvl);
     }
 
 
@@ -100,11 +103,15 @@ public class ExpSystem {
      * @param exp
      * @return 
      */
-    public static int expToLvlUp(int lvl, int exp){
+    public static int getExpToLvlUp(int lvl, int exp){
         if(lvl == 1 && exp < 100)
             lvl = 0;
-        return (exp - totalExpToLvlUp(lvl));
-    }  
+        return (exp - getExpToReachLvlFromZero(lvl));
+    }
+
+    public static int getLvlUpPercentage(int lvl, int exp) {
+        return Math.round((float)ExpSystem.getExpToLvlUp(lvl, exp)/(float)(getExpToReachLvl(lvl))*100);
+    }
 
     /**
      * This method is used to add the experience to the user.
@@ -115,35 +122,26 @@ public class ExpSystem {
      * @return
      * int
      */
-    public int addExp(String userId, String guildId, double modifer){
-        int exp, lvl, msg;
-        String query = "select exp, level, messages from exp_table where user_id ='"+userId+"' and guild_id = '"+guildId+"';";
-        ArrayList<String> arr = DatabaseHandler.getSql().getSpecifiedRow(query, 0);
-        if(arr == null){
-            query = "INSERT INTO exp_table (user_id, guild_id, exp, level, messages) VALUES ('"+userId+"','"+guildId+"',"+0+","+1+","+0+");";
-            if(!DatabaseHandler.getSql().runQuery(query))
+    public int addExp(String userId, String guildId, double modifer) {
+        ResultRow expData = DatabaseHandler.getExp(guildId, userId);
+        if (expData == null) {
+            
+            if (!DatabaseHandler.addExpData(guildId, userId)) {
                 return -1;
-            exp = Math.round(Float.parseFloat(String.valueOf(Double.parseDouble(String.valueOf(calculateExp()))*modifer)));
-            lvl = 1;
-            msg = 1;
-        }else{
+            }
+            return 1;
+        }
 
-            int newExp = Math.round(Float.parseFloat(String.valueOf(Double.parseDouble(String.valueOf(calculateExp()))*modifer)));
-            exp = Integer.valueOf(arr.get(0)) + newExp;
-            lvl = Integer.valueOf(arr.get(1));
-            msg = Integer.valueOf(arr.get(2)) + 1;
+        int exp = expData.getAsInt("exp") + Math.round((float) ((double) getRandomExp() * modifer));
+        int lvl = expData.getAsInt("level");
+        int msg = expData.getAsInt("messages") + 1;
+
+        int expNeeded = getExpToReachLvlFromZero(lvl + 1) - exp;
+        if (expNeeded <= 0) {
+            DatabaseHandler.updateExp(guildId, userId, exp,(lvl + 1),  msg);
+            return lvl + 1;
         }
-        int expNeeded = totalExpToLvlUp(lvl + 1) - exp;
-        if(expNeeded <= 0){
-            query = "update exp_table set exp = " + exp + ", level = " + (lvl+1) + ", messages = "+msg+" where user_id ='"+userId+"' and guild_id = '"+guildId+"';";
-            DatabaseHandler.getSql().runQuery(query);
-            return lvl+1;
-        }
-        
-        query = "update exp_table set exp = " + exp + ", messages = "+msg+" where user_id ='"+userId+"' and guild_id = '"+guildId+"';";
-        DatabaseHandler.getSql().runQuery(query);
+        DatabaseHandler.updateExp(guildId, userId, exp,  msg);
         return -1;
-        
-
-    }   
+    }
 }

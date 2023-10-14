@@ -12,28 +12,21 @@ public class TableHandler {
         for(int i = 0; i < data.length; i++){
             for(int j = 0; j < data[i].length; j++){
                 if(data[i][j] == null) data[i][j] = "";
-                if(data[i][j].matches("\\d+")) {
+                if(data[i][j].matches("\\b\\d{17,21}\\b")) {
                     if(jda.getUserById(data[i][j]) != null){
-                        data[i][j] = jda.getUserById(data[i][j]).getName(); 
-                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
+                        data[i][j] = EmojiParser.removeAllEmojis(jda.getUserById(data[i][j]).getName());
                     }
                     else if(jda.getGuildById(data[i][j]) != null){
-                        data[i][j] = jda.getGuildById(data[i][j]).getName();
-                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
-                    }
-                    else if(jda.getGuildById(data[i][j]) != null){
-                        data[i][j] = jda.getGuildById(data[i][j]).getName();
-                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
+                        data[i][j] = EmojiParser.removeAllEmojis(jda.getGuildById(data[i][j]).getName());
                     }
                     else if(jda.getTextChannelById(data[i][j]) != null){
-                        data[i][j] = jda.getTextChannelById(data[i][j]).getName();
-                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
-                    }else if(jda.getVoiceChannelById(data[i][j]) != null){
-                        data[i][j] = jda.getVoiceChannelById(data[i][j]).getName();
-                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
-                    }else if(jda.getRoleById(data[i][j]) != null){
-                        data[i][j] = jda.getRoleById(data[i][j]).getName();
-                        data[i][j] = EmojiParser.removeAllEmojis(data[i][j]);
+                        data[i][j] = EmojiParser.removeAllEmojis(jda.getTextChannelById(data[i][j]).getName());
+                    }
+                    else if(jda.getVoiceChannelById(data[i][j]) != null){
+                        data[i][j] = EmojiParser.removeAllEmojis(jda.getVoiceChannelById(data[i][j]).getName());
+                    }
+                    else if(jda.getRoleById(data[i][j]) != null){
+                        data[i][j] = EmojiParser.removeAllEmojis(jda.getRoleById(data[i][j]).getName());
                     }
                 }
             }
@@ -46,7 +39,7 @@ public class TableHandler {
         for (int col = 0; col < numColumns; col++) {
             colWidths[col] = headers[col].length();
             for (int row = 0; row < numRows; row++) {
-                if (data[row][col].length() > colWidths[col]) {
+                if ((data[row][col].length() > colWidths[col])) {
                     colWidths[col] = data[row][col].length();
                 }
             }
@@ -117,7 +110,7 @@ public class TableHandler {
         
         String temp = "";
         for(int i = 0; i < splittedTable.length; i++){
-            if(temp.length() + splittedTable[i].length() < 1950)
+            if(temp.length() + splittedTable[i].length() < 2000)
                 temp += splittedTable[i] + "\n";
             else{
                 splitty.add(temp);

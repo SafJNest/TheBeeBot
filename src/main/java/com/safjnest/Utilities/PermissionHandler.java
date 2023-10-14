@@ -5,9 +5,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.jagrosh.jdautilities.command.CommandEvent;
+
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 
 /**
  * This class handles all matters related to discord permissions.
@@ -191,4 +197,43 @@ public class PermissionHandler {
         return false;
     }
 
+    public static User getMentionedUser(CommandEvent event, String name){
+        User user = null;
+        if(event.getMessage().getMentions().getMembers().size() > 0)
+            user = event.getMessage().getMentions().getMembers().get(0).getUser();
+        else
+            try {
+                user = event.getJDA().retrieveUserById(name).complete();
+            } catch (Exception e) {}
+        return user;
+    }
+
+    public static Member getMentionedMember(CommandEvent event, String name){
+        Member member = null;
+        if(event.getMessage().getMentions().getMembers().size() > 0)
+            member = event.getMessage().getMentions().getMembers().get(0);
+        else
+            try {
+                member = event.getGuild().getMemberById(name);
+            } catch (Exception e) {}
+        return member;
+    }
+
+    public static Guild getGuild(CommandEvent event, String guildName) {
+        Guild guild = null;
+        try {
+            guild = event.getJDA().getGuildById(guildName);
+        }
+        catch (Exception e) {}
+        return guild;
+    }
+
+    public static boolean isUserBanned(Guild guild, User user) throws InsufficientPermissionException{
+        try {
+            guild.retrieveBan(user).complete();
+            return true;
+        } catch (ErrorResponseException e) {
+            return false;
+        }
+    }
 }

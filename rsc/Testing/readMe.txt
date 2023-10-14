@@ -1,1 +1,0 @@
-yo imbesils remeber to fix the focking commands

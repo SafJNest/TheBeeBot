@@ -6,17 +6,13 @@ import java.util.Arrays;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
-import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 import net.dv8tion.jda.api.entities.Message.Attachment;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.utils.FileProxy;
 
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
@@ -25,8 +21,7 @@ import net.dv8tion.jda.api.utils.FileProxy;
  * @since 1.2.5
  */
 public class UploadSlash extends SlashCommand{
-    private String fileName;
-    private SQL sql;
+    private String soundName;
     
     public UploadSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
@@ -36,75 +31,55 @@ public class UploadSlash extends SlashCommand{
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "name", "Soundn name", true));
-        this.sql = DatabaseHandler.getSql();
+            new OptionData(OptionType.STRING, "name", "Sound name", true),
+            new OptionData(OptionType.ATTACHMENT, "file", "Sound file (mp3 or opus)", true),
+            new OptionData(OptionType.BOOLEAN, "public", "true or false", false)
+        );
     }
     
 	@Override
 	protected void execute(SlashCommandEvent event) {
-        fileName = event.getOption("name").getAsString();
-        if(fileName.matches("[0123456789]*")){
-            event.reply("You can't use a name that only contains numbers");
+        soundName = event.getOption("name").getAsString();
+        Attachment attachment = event.getOption("file").getAsAttachment();
+
+        boolean isPublic;
+        if(event.getOption("public") != null)
+            isPublic = event.getOption("public").getAsBoolean();
+        else
+            isPublic = true;
+        
+        if(soundName.matches("[0123456789]*")){
+            event.reply("You can't use a name that only contains numbers.");
             return;
         }
 
-        event.deferReply(false).addContent("Ok, now upload the sound here in mp3 or **opus** format").queue();
-        FileListener fileListener = new FileListener(event, fileName, event.getChannel(),sql);
-        event.getJDA().addEventListener(fileListener);
-	}
-}
-
-class FileListener extends ListenerAdapter {
-    private String name;
-    private SlashCommandEvent event;
-    private MessageChannel channel;
-    private float maxFileSize = 1049000; //in bytes
-    private SQL sql;
-
-    public FileListener(SlashCommandEvent event, String name, MessageChannel channel, SQL sql){
-        this.name = name;
-        this.event = event;
-        this. channel = channel;
-        this.sql = sql;
-    }
-
-    
-    
-    @Override
-    public void onMessageReceived(MessageReceivedEvent e){
-        if(!e.getChannel().equals(channel) || e.getAuthor().isBot()){
-            return;
-        }
-        if(e.getMessage().getAttachments().size() <= 0){
-            channel.sendMessage("You have to upload the sound, you can try again by reusing the command").queue();
-            e.getJDA().removeEventListener(this);
+        if(!attachment.getFileExtension().equals("mp3") && !attachment.getFileExtension().equals("opus")){
+            event.deferReply(true).addContent("Only upload the sound in **mp3** or **opus** format.").queue();
             return;
         }
 
-        Attachment attachment = e.getMessage().getAttachments().get(0);
+        QueryResult sounds = DatabaseHandler.getDuplicateSoundsByName(soundName, event.getGuild().getId(), event.getMember().getId());
 
-        if(attachment.getSize() > maxFileSize && !PermissionHandler.isUntouchable(event.getMember().getId())){
-            channel.sendMessage("The file is too big (" + maxFileSize/1048576 + "mb max)").queue();
-            e.getJDA().removeEventListener(this);
+        if(!sounds.isEmpty()) {
+            for(ResultRow sound : sounds) {
+                if(sound.get("guild_id").equals(event.getGuild().getId()))
+                    event.deferReply(true).addContent("That name is already in use by you.").queue();
+                if(sound.get("user_id").equals(event.getMember().getId()))
+                    event.deferReply(true).addContent("That name is already in use in this guild.").queue();
+            }
             return;
         }
 
-        String query = "INSERT INTO sound(name, guild_id, user_id, extension) VALUES('" 
-                     + name + "','" + event.getGuild().getId() + "','" + event.getMember().getId() + "','" + attachment.getFileExtension() + "');";
-        query = "SELECT id FROM sound WHERE name = '" + name + "' AND guild_id = '" + event.getGuild().getId() + "' AND user_id = '" + event.getMember().getId() + "';";
-        String id = sql.getString(query, "id");
+        String id = DatabaseHandler.insertSound(soundName, event.getGuild().getId(), event.getMember().getId(), attachment.getFileExtension(), isPublic);
 
-        if(id.equals(null)){
-            event.deferReply(true).addContent("An error with the PostgreSQL database occured").queue();
-            e.getJDA().removeEventListener(this);
+        if(id == null){
+            event.deferReply(true).addContent("Something went wrong.").queue();
             return;
         }
 
         File saveFile = new File("rsc" + File.separator + "SoundBoard" + File.separator + (id + "." + attachment.getFileExtension()));
 
-        new FileProxy(attachment.getUrl()).downloadToFile(saveFile);
-        channel.sendMessage("File uploaded succesfully").queue();
-        
-        e.getJDA().removeEventListener(this);
-    }
+        attachment.getProxy().downloadToFile(saveFile);
+        event.deferReply(false).addContent("Sound uploaded succesfully").queue();
+	}
 }

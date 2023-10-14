@@ -33,9 +33,6 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
  * @since 1.1.01
  */
 public class HelpSlash extends SlashCommand {
-    /**
-     * Default constructor for the class.
-     */
     GuildSettings gs;
 
     public HelpSlash(GuildSettings gs) {
@@ -46,15 +43,13 @@ public class HelpSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-                new OptionData(OptionType.STRING, "command", "Name of the command you want the information about",
-                        false)
-                        .setAutoComplete(true));
+            new OptionData(OptionType.STRING, "command", "Name of the command you want information on",
+                false)
+                .setAutoComplete(true)
+            );
         this.gs = gs;
     }
 
-    /**
-     * This method is called every time a member executes the command.
-     */
     @Override
     protected void execute(SlashCommandEvent event) {
         int nCom = 0;
@@ -91,7 +86,7 @@ public class HelpSlash extends SlashCommand {
                 ss = "```\n";
             }
             eb.addField("Number of commands avaible:", "```" + nCom + "```", false);
-            eb.setFooter("Beebot is continuously updated by the two KINGS ;D", null);
+            eb.setFooter("Sorry if things don't work, Beebot was made for fun by only 2 people.", null);
 
         } else {
             SlashCommand e = null;
@@ -164,7 +159,7 @@ public class HelpSlash extends SlashCommand {
             eb.addField("**COOLDOWN**", "```" + e.getCooldown() + "```", true);
         }
 
-        eb.addField("**OTHER INFORMATION**", "Beebot has been developed by only two people, so dont break the balls", false);
+        //eb.addField("**OTHER INFORMATION**", "Beebot has been developed by only two people, so dont break the balls", false);
         eb.setAuthor(event.getJDA().getSelfUser().getName(), "https://github.com/SafJNest", event.getJDA().getSelfUser().getAvatarUrl());
         event.replyEmbeds(eb.build()).setEphemeral(false).queue();
     }
@@ -179,5 +174,4 @@ public class HelpSlash extends SlashCommand {
         });
         return keys;
     }
-
 }

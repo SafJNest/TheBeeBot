@@ -76,14 +76,19 @@ public class HttpUtil {
 
 		StringBuilder out = new StringBuilder();
 
-		String line;
+		//String line;
 
-		BufferedReader input = new BufferedReader(new InputStreamReader(
-				conn.getInputStream()));
+		BufferedReader input = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 		try {
-			while ((line = input.readLine()) != null) {
-				out.append(line).append("\n");
+			int BUFFER_SIZE=1024;
+			char[] buffer = new char[BUFFER_SIZE]; // or some other size, 
+			int charsRead = 0;
+			while ( (charsRead  = input.read(buffer, 0, BUFFER_SIZE)) != -1) {
+				out.append(buffer, 0, charsRead);
 			}
+			/*while ((line = input.readLine()) != null) {
+				out.append(line).append("\n");
+			}*/
 		} finally {
 			input.close();
 		}

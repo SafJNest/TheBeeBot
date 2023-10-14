@@ -23,9 +23,6 @@ import net.dv8tion.jda.api.requests.restaction.WebhookMessageEditAction;
  */
 public class SummonerSlash extends SlashCommand {
  
-    /**
-     * Constructor
-     */
     public SummonerSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
@@ -34,13 +31,10 @@ public class SummonerSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "summoner", "Summoner name you want to get data", false),
-            new OptionData(OptionType.USER, "user", "User you want to get data", false));
+            new OptionData(OptionType.STRING, "summoner", "Name of the summoner you want to get information on", false),
+            new OptionData(OptionType.USER, "user", "Discord user you want to get information on (if riot account is connected)", false));
     }
 
-    /**
-     * This method is called every time a member executes the command.
-     */
 	@Override
 	protected void execute(SlashCommandEvent event) {
         Button left = Button.primary("lol-left", "<-");
@@ -58,7 +52,7 @@ public class SummonerSlash extends SlashCommand {
             s = RiotHandler.getSummonerFromDB(event.getUser().getId());
             theGuy = event.getUser();
             if(s == null){
-                event.getHook().editOriginal("You dont have connected a Riot account, for more information /help setSummoner").queue();
+                event.getHook().editOriginal("You dont have a Riot account connected, check /help setUser (or write the name of a summoner).").queue();
                 return;
             }
         }else if(event.getOption("user") != null){
@@ -66,13 +60,13 @@ public class SummonerSlash extends SlashCommand {
             s = RiotHandler.getSummonerFromDB(theGuy.getId());
             searchByUser = true;
             if(s == null){
-                 event.getHook().editOriginal(theGuy.getEffectiveName() + " has not connected his Riot account.").queue();
+                 event.getHook().editOriginal(theGuy.getEffectiveName() + " doesn't have a Riot account connected.").queue();
                 return;
             }
         }else{
             s = RiotHandler.getSummonerByName(event.getOption("summoner").getAsString());
             if(s == null){
-                event.getHook().editOriginal("Didn't find this user. ").queue();
+                event.getHook().editOriginal("Couldn't find the specified summoner.").queue();
                 return;
             }
             

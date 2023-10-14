@@ -76,22 +76,24 @@ public class PlayYoutubeSlash extends SlashCommand {
 
 	@Override
 	protected void execute(SlashCommandEvent event) {
+        AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
+        AudioChannel botChannel = event.getGuild().getSelfMember().getVoiceState().getChannel();
+        
+        if(myChannel == null){
+            event.deferReply(true).addContent("You need to be in a voice channel to use this command.").queue();
+            return;
+        }
+
+        if(botChannel != null && (myChannel != botChannel)){
+            event.deferReply(true).addContent("The bot is already being used in another voice channel.").queue();
+            return;
+        }
+
         String video = event.getOption("video").getAsString();
-        if(event.getMember().getVoiceState().getChannel() == null){
-            event.deferReply(false).addContent("You need to be in a voice channel to use this command").queue();
-            return;
-        }
-
-        if(event.getGuild().getSelfMember().getVoiceState().getChannel() != null && (event.getMember().getVoiceState().getChannel() != event.getGuild().getSelfMember().getVoiceState().getChannel())){
-            event.deferReply(false).addContent("The bot is used by someone else, dont be annoying and use another beebot instance.").queue();
-            return;
-        }
-
         String toPlay = getVideoIdFromYoutubeUrl(video);
         if(toPlay == null){
             try {
                 URL theUrl = new URL("https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=" + video.replace(" ", "+") + "&key=" + youtubeApiKey);
-                System.out.println(theUrl);
                 URLConnection request = theUrl.openConnection();
                 request.connect();
                 JSONParser parser = new JSONParser();
@@ -101,17 +103,12 @@ public class PlayYoutubeSlash extends SlashCommand {
                 JSONObject id = (JSONObject) item.get("id");
                 toPlay = (String) id.get("videoId");
             } catch (Exception e) {
-                event.deferReply().addContent("No video found").queue();
+                event.deferReply(true).addContent("Couldn't find a video for the given search.").queue();
                 return;
             }
         }
 
         pm = new PlayerManager();
-        
-        AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
-        AudioManager audioManager = event.getGuild().getAudioManager();
-        audioManager.setSendingHandler(pm.getAudioHandler());
-        audioManager.openAudioConnection(myChannel);
         
         pm.getAudioPlayerManager().loadItem(toPlay, new AudioLoadResultHandler() {
             @Override
@@ -130,29 +127,33 @@ public class PlayYoutubeSlash extends SlashCommand {
         
             @Override
             public void noMatches() {
-                event.deferReply().addContent("Not found").queue();
+                event.deferReply(true).addContent("Not found").queue();
                 pm.getTrackScheduler().addQueue(null);
             }
 
             @Override
             public void loadFailed(FriendlyException throwable) {
-                event.deferReply().addContent(throwable.getMessage()).queue();
+                event.deferReply(true).addContent(throwable.getMessage()).queue();
             }
         });
 
         pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
+        if(pm.getPlayer().getPlayingTrack() == null) {
+            return;
+        }
+
+        AudioManager audioManager = event.getGuild().getAudioManager();
+        audioManager.setSendingHandler(pm.getAudioHandler());
+        audioManager.openAudioConnection(myChannel);
 
         EmbedBuilder eb = new EmbedBuilder();
-        eb = new EmbedBuilder();
         eb.setTitle("Playing now:");
-        eb.addField("Lenght", SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length) , true);
         eb.setAuthor(event.getJDA().getSelfUser().getName(), "https://github.com/SafJNest",event.getJDA().getSelfUser().getAvatarUrl());
-        eb.setFooter("*Questo non e' rhythm, questa e' perfezione cit. steve jobs (probabilmente)", null);
-        eb.setColor(Color.decode(
-            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
+        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
         eb.setDescription("[" + pm.getPlayer().getPlayingTrack().getInfo().title + "](" + pm.getPlayer().getPlayingTrack().getInfo().uri + ")");
         eb.setThumbnail("https://img.youtube.com/vi/" + pm.getPlayer().getPlayingTrack().getIdentifier() + "/hqdefault.jpg");
+        eb.addField("Lenght", SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length) , true);
+
         event.deferReply(false).addEmbeds(eb.build()).queue();
 	
     }

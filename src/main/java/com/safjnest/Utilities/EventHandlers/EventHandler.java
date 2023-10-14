@@ -1,6 +1,6 @@
 package com.safjnest.Utilities.EventHandlers;
 
-import java.sql.Timestamp;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,15 +8,28 @@ import java.util.List;
 
 import com.safjnest.Commands.League.Summoner;
 import com.safjnest.SlashCommands.ManageGuild.RewardsSlash;
-import com.safjnest.Utilities.DatabaseHandler;
-import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.Audio.PlayerManager;
 import com.safjnest.Utilities.Guild.GuildSettings;
 import com.safjnest.Utilities.LOL.Augment;
 import com.safjnest.Utilities.LOL.RiotHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
+import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
+import net.dv8tion.jda.api.events.guild.GuildBanEvent;
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateBoostTimeEvent;
@@ -28,6 +41,9 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.Command.Choice;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.managers.AudioManager;
 
 /**
  * This class handles all events that could occur during the listening:
@@ -41,23 +57,82 @@ import net.dv8tion.jda.api.interactions.commands.Command.Choice;
  * @since 1.2
  */
 public class EventHandler extends ListenerAdapter {
-    private SQL sql;
     private GuildSettings gs;
-    public EventHandler(SQL sql, GuildSettings gs) {
-        this.sql = sql;
+    private String PREFIX;
+
+    public EventHandler(GuildSettings gs, String PREFIX) {
         this.gs = gs;
+        this.PREFIX = PREFIX;
     }
+
 
     /**
      * On update of a voice channel (to make the bot leave an empty voice channel)
      */
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
+        AudioChannel ac = e.getChannelJoined();
+        AudioChannel bebyc = e.getGuild().getAudioManager().getConnectedChannel();
+
         if((e.getGuild().getAudioManager().isConnected() && e.getChannelLeft() != null) &&
             (e.getGuild().getAudioManager().getConnectedChannel().getId().equals(e.getChannelLeft().getId())) &&
             (e.getChannelLeft().getMembers().size() == 1)){
             e.getGuild().getAudioManager().closeAudioConnection();
         }
+
+
+        if(e.getJDA().getUserById(e.getMember().getId()).isBot() || ac == null)
+            return;
+
+        if(bebyc != null && ac.getId().equals(bebyc.getId()) || bebyc == null){
+            Member theGuy = e.getMember();
+            ResultRow sound = DatabaseHandler.getGreet(theGuy.getId(), e.getGuild().getId(), e.getJDA().getSelfUser().getId());
+            if(sound.emptyValues())
+                return;
+
+            PlayerManager pm = new PlayerManager();
+            AudioManager audioManager = e.getGuild().getAudioManager();
+            audioManager.setSendingHandler(pm.getAudioHandler());
+            audioManager.openAudioConnection(ac);
+
+            if(pm.getPlayer().getPlayingTrack() != null){
+                //pm.stopAudioHandler();
+            }
+
+            String path = "rsc" + File.separator + "SoundBoard"+ File.separator + sound.get("id") + "." + sound.get("extension");
+            pm.getAudioPlayerManager().loadItem(path, new AudioLoadResultHandler() {
+                @Override
+                public void trackLoaded(AudioTrack track) {
+                    pm.getTrackScheduler().addQueue(track);
+                }
+
+                @Override
+                public void playlistLoaded(AudioPlaylist playlist) {
+                    /*
+                    * for (AudioTrack track : playlist.getTracks()) {
+                    * trackScheduler.queue(track);
+                    * }
+                    */
+                }
+                
+                @Override
+                public void noMatches() {
+                    pm.getTrackScheduler().addQueue(null);
+                }
+
+                @Override
+                public void loadFailed(FriendlyException throwable) {
+                    System.out.println("error: " + throwable.getMessage());
+                }
+            });
+
+            pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
+        }
+    }
+
+    @Override
+    public void onGuildJoin(GuildJoinEvent event){
+        DatabaseHandler.insertGuild(event.getGuild().getId(), event.getJDA().getSelfUser().getId(), PREFIX);
     }
 
 
@@ -68,38 +143,67 @@ public class EventHandler extends ListenerAdapter {
         if(!gs.getServer(event.getGuild().getId()).getCommandStatsRoom(event.getChannel().getIdLong()))
             return;
         String commandName = event.getName() + "Slash";
-        String query = "INSERT INTO command_analytic(name, time, user_id) VALUES ('" + commandName + "', '" + new Timestamp(System.currentTimeMillis()) + "', '" + event.getUser().getId() + "');";
-        sql.runQuery(query);
+        String args = event.getOptions().toString();
+        DatabaseHandler.insertCommand(event.getGuild().getId(), event.getJDA().getSelfUser().getId(), event.getMember().getId(), commandName, args);
     }
 
 
     @Override
     public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent e) {
         ArrayList<Choice> choices = new ArrayList<>();
-        switch (e.getName()){
-            
+        String name = e.getName();
+
+        if(e.getFullCommandName().equals("soundboard create"))
+            name = "play";
+        
+        else if(e.getFocusedOption().getName().equals("sound_add"))
+            name = "play";
+
+        else if(e.getFocusedOption().getName().equals("sound_remove"))
+            name = "sound_remove";
+
+        else if(e.getFullCommandName().equals("soundboard select") || e.getFullCommandName().equals("soundboard add") || e.getFullCommandName().equals("soundboard remove") || e.getFullCommandName().equals("soundboard delete"))
+            name = "soundboard_select";
+        
+        else if(e.getFullCommandName().equals("customizesound"))
+            name = "user_sound";
+
+        else if(e.getFullCommandName().equals("bugsnotifier"))
+            name = "help";
+
+        else if(e.getFullCommandName().equals("TTS"))
+            name = "tts";
+        
+        switch (name) {
             case "play":
-                if(e.getFocusedOption().getValue().equals("")){
-                    String query = "SELECT name, id FROM sound WHERE guild_id = '" + e.getGuild().getId() + "' ORDER BY RAND() LIMIT 25;";
-                    for(ArrayList<String> arr : DatabaseHandler.getSql().getAllRows(query, 2))
-                        choices.add(new Choice(arr.get(0), arr.get(1)));
-                }else{
-                    String query = "SELECT name, id FROM sound WHERE name LIKE '"+e.getFocusedOption().getValue()+"%' AND guild_id = '" + e.getGuild().getId() + "' ORDER BY RAND() LIMIT 25;";
-                    for(ArrayList<String> arr : DatabaseHandler.getSql().getAllRows(query, 2))
-                        choices.add(new Choice(arr.get(0), arr.get(1)));
+                if (e.getFocusedOption().getValue().equals("")) {
+                    for (ResultRow sound : DatabaseHandler.getGuildRandomSound(e.getGuild().getId()))
+                        choices.add(new Choice(sound.get("name"), sound.get("id")));
+                } else {
+                    for (ResultRow sound : DatabaseHandler.getFocusedGuildSound(e.getGuild().getId(), e.getFocusedOption().getValue()))
+                        choices.add(new Choice(sound.get("name"), sound.get("id")));
                 }
+
                 break;
+            case "user_sound":
+                if (e.getFocusedOption().getValue().equals("")) {
+                    for (ResultRow sound : DatabaseHandler.getUserRandomSound(e.getGuild().getId()))
+                        choices.add(new Choice(sound.get("name"), sound.get("id")));
+                } else {
+                    for (ResultRow sound : DatabaseHandler.getFocusedUserSound(e.getGuild().getId(), e.getFocusedOption().getValue()))
+                        choices.add(new Choice(sound.get("name"), sound.get("id")));
+                }
 
+                break;
             case "help":
-
                 List<Command> allCommands = e.getJDA().retrieveCommands().complete();
-                if(e.getFocusedOption().getValue().equals("")){
+                if (e.getFocusedOption().getValue().equals("")) {
                     Collections.shuffle(allCommands);
-                    for(int i = 0; i < 10; i++)
+                    for (int i = 0; i < 10; i++)
                         choices.add(new Choice(allCommands.get(i).getName(), allCommands.get(i).getName()));
-                }else{
-                    for(Command c : allCommands){
-                        if(c.getName().startsWith(e.getFocusedOption().getValue()))
+                } else {
+                    for (Command c : allCommands) {
+                        if (c.getName().startsWith(e.getFocusedOption().getValue()))
                             choices.add(new Choice(c.getName(), c.getName()));
                     }
                 }
@@ -107,46 +211,87 @@ public class EventHandler extends ListenerAdapter {
 
             case "champion":
                 List<String> champions = Arrays.asList(RiotHandler.getChampions());
-                if(e.getFocusedOption().getValue().equals("")){
+                if (e.getFocusedOption().getValue().equals("")) {
                     Collections.shuffle(champions);
-                    for(int i = 0; i < 10; i++)
+                    for (int i = 0; i < 10; i++)
                         choices.add(new Choice(champions.get(i), champions.get(i)));
-                }else{
+                } else {
                     int max = 0;
-                    for(int i = 0; i < champions.size() && max < 10; i++){
-                        if(champions.get(i).toLowerCase().startsWith(e.getFocusedOption().getValue().toLowerCase())){
+                    for (int i = 0; i < champions.size() && max < 10; i++) {
+                        if (champions.get(i).toLowerCase().startsWith(e.getFocusedOption().getValue().toLowerCase())) {
                             choices.add(new Choice(champions.get(i), champions.get(i)));
                             max++;
                         }
                     }
                 }
-                break; 
-            
+                break;
+
             case "infoaugment":
                 List<Augment> augments = RiotHandler.getAugments();
-                if(e.getFocusedOption().getValue().equals("")){
+                if (e.getFocusedOption().getValue().equals("")) {
                     Collections.shuffle(augments);
-                    for(int i = 0; i < 10; i++)
+                    for (int i = 0; i < 10; i++)
                         choices.add(new Choice(augments.get(i).getName(), augments.get(i).getId()));
-                }else{
+                } else {
                     int max = 0;
-                    if(e.getFocusedOption().getValue().matches("\\d+")){
-                        for(int i = 0; i < augments.size() && max < 10; i++){
-                            if(augments.get(i).getId().startsWith(e.getFocusedOption().getValue())){
+                    if (e.getFocusedOption().getValue().matches("\\d+")) {
+                        for (int i = 0; i < augments.size() && max < 10; i++) {
+                            if (augments.get(i).getId().startsWith(e.getFocusedOption().getValue())) {
                                 choices.add(new Choice(augments.get(i).getName(), augments.get(i).getId()));
                                 max++;
                             }
                         }
-                        }else{
-                            for(int i = 0; i < augments.size() && max < 10; i++){
-                                if(augments.get(i).getName().toLowerCase().startsWith(e.getFocusedOption().getValue().toLowerCase())){
-                                    choices.add(new Choice(augments.get(i).getName(), augments.get(i).getId()));
-                                    max++;
-                                }
+                    } else {
+                        for (int i = 0; i < augments.size() && max < 10; i++) {
+                            if (augments.get(i).getName().toLowerCase()
+                                    .startsWith(e.getFocusedOption().getValue().toLowerCase())) {
+                                choices.add(new Choice(augments.get(i).getName(), augments.get(i).getId()));
+                                max++;
                             }
+                        }
                     }
                 }
-            break; 
+                break;
+                
+            case "soundboard_select":
+                if (e.getFocusedOption().getValue().equals("")) {
+                    for (ResultRow sound : DatabaseHandler.getRandomSoundboard(e.getGuild().getId()))
+                        choices.add(new Choice(sound.get("name"), sound.get("id")));
+                } else {
+                    for (ResultRow sound : DatabaseHandler.getFocusedSoundboard(e.getGuild().getId(), e.getFocusedOption().getValue()))
+                        choices.add(new Choice(sound.get("name"), sound.get("id")));
+                }
+                break;
+            case "sound_remove":
+                if (e.getOption("name") == null)
+                    return;
+                String soundboardId = e.getOption("name").getAsString();
+                if (e.getFocusedOption().getValue().equals("")) {
+                    for (ResultRow sound : DatabaseHandler.getSoundsFromSoundBoard(soundboardId))
+                        choices.add(new Choice(sound.get("sound.name"), sound.get("soundboard_sounds.sound_id")));
+                } else {
+                    for (ResultRow sound : DatabaseHandler.getFocusedSoundFromSounboard(soundboardId, e.getFocusedOption().getValue()))
+                        choices.add(new Choice(sound.get("s.name"), sound.get("s.id")));
+                }
+                break;
+
+            case "greet":
+                if (e.getFocusedOption().getValue().equals("")) {
+                    for (ResultRow greet : DatabaseHandler.getlistGuildSounds(e.getGuild().getId()))
+                        choices.add(new Choice(greet.get("name"), greet.get("id")));
+                } else {
+                    for (ResultRow greet : DatabaseHandler.getFocusedListUserSounds(e.getUser().getId(), e.getGuild().getId(), e.getFocusedOption().getValue()))
+                        choices.add(new Choice(greet.get("name") + " (" + greet.get("id") + ")", greet.get("id")));
+                }
+            break;
+            case "tts":
+                if (e.getFocusedOption().getValue().equals("")) {
+                    //TODO non ho voglia
+                    //TODO nemmeno io
+                } else {
+
+                }
+            break;
         }
         e.replyChoices(choices).queue();
     }
@@ -166,10 +311,10 @@ public class EventHandler extends ListenerAdapter {
                 event.reply("Role not found").queue();
                 return;
             }
-            String query = "INSERT INTO rewards_table (guild_id, role_id, level, message_text) VALUES ('" + event.getGuild().getId() + "', '" + role + "', '" + lvl + "', '" + msg + "');";
-            DatabaseHandler.getSql().runQuery(query);
+
+            DatabaseHandler.insertRewards(event.getGuild().getId(), role, lvl, msg);
             event.deferEdit().queue();
-            RewardsSlash.createEmbed(event.getMessage(), event.getGuild()).queue();
+            RewardsSlash.createEmbed(event.getMessage()).queue();
         }
     }
 
@@ -178,43 +323,129 @@ public class EventHandler extends ListenerAdapter {
      */
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
+        /**
+         * Welcome message 
+         */
         MessageChannel channel = null;
         User newGuy = event.getUser();
-        String query = "SELECT channel_id FROM welcome_message WHERE guild_id = '" + event.getGuild().getId()
-                + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String notNullPls = sql.getString(query, "channel_id");
-        if (notNullPls == null)
-            return;
-        channel = event.getGuild().getTextChannelById(notNullPls);
-        query = "SELECT message_text FROM welcome_message WHERE guild_id = '" + event.getGuild().getId()
-                + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String message = sql.getString(query, "message_text");
-        message = message.replace("#user", newGuy.getAsMention());
-        channel.sendMessage(message).queue();
-        query = "SELECT role_id FROM welcome_roles WHERE guild_id = '" + event.getGuild().getId() + "' AND bot_id = '"
-                + event.getJDA().getSelfUser().getId() + "';";
-        ArrayList<String> roles = sql.getAllRowsSpecifiedColumn(query, "role_id");
-        if (roles.size() > 0) {
-            for (String role : roles) {
-                event.getGuild().addRoleToMember(newGuy, event.getGuild().getRoleById(role)).queue();
+        ResultRow alert = DatabaseHandler.getAlert(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
+
+        String notNullPls = alert.get("welcome_channel");
+        if (notNullPls != null && alert.getAsBoolean("welcome_enabled")){
+            channel = event.getGuild().getTextChannelById(notNullPls);
+            String message = alert.get("welcome_message");
+
+            message = message.replace("#user", newGuy.getAsMention());
+            channel.sendMessage(message).queue();
+
+            if(alert.get("welcome_role") != null)
+                event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById(alert.get("welcome_role"))).queue();
+                
+            /* 
+            ArrayList<String> roles = sql.getAllRowsSpecifiedColumn(query, "role_id");
+            if (roles.size() > 0) {
+                for (String role : roles) {
+                    event.getGuild().addRoleToMember(newGuy, event.getGuild().getRoleById(role)).queue();
+                }
             }
+            */
         }
+
+        /**
+         * Blacklist
+         */
+        int threshold = gs.getServer(event.getGuild().getId()).getThreshold();
+        if(threshold == 0)
+            return;
+        
+        int times = DatabaseHandler.getBlacklistBan(event.getUser().getId());
+
+        if(!gs.getServer(event.getGuild().getId()).blacklistEnabled() || gs.getServer(event.getGuild().getId()).getThreshold() == 0 || gs.getServer(event.getGuild().getId()).getThreshold() > times)
+            return;
+        
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setAuthor(event.getJDA().getSelfUser().getName());
+        eb.setThumbnail(newGuy.getAvatarUrl());
+        eb.setTitle(":radioactive:Blacklist:radioactive:");
+        eb.setDescription("The new member " + newGuy.getAsMention() + " is on the blacklist for being banned in " + times + " different guilds.\nYou have the discretion to choose the next steps.");
+
+        channel = event.getGuild().getTextChannelById(gs.getServer(event.getGuild().getId()).getBlackChannelId());
+
+        Button kick = Button.primary("kick-" + newGuy.getId(), "Kick");
+        Button ban = Button.primary("ban-" + newGuy.getId(), "Ban");
+        Button ignore = Button.primary("ignore-" + newGuy.getId(), "Ignore");
+
+
+        kick = kick.withStyle(ButtonStyle.PRIMARY);
+        ban = ban.withStyle(ButtonStyle.PRIMARY);
+        ignore = ignore.withStyle(ButtonStyle.SUCCESS);
+        channel.sendMessageEmbeds(eb.build()).addActionRow(ignore, kick, ban).queue();
+        
     }
 
     @Override
     public void onGuildMemberRemove(GuildMemberRemoveEvent event){
+        
         MessageChannel channel = null;
-        String query = "SELECT channel_id FROM left_message WHERE guild_id = '" + event.getGuild().getId()
-                + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String notNullPls = sql.getString(query, "channel_id");
-        if (notNullPls == null)
+        ResultRow alert = DatabaseHandler.getAlert(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
+        
+        String notNullPls = alert.get("leave_channel");
+        if (notNullPls == null || !alert.getAsBoolean("leave_enabled"))
             return;
         channel = event.getGuild().getTextChannelById(notNullPls);
-        query = "SELECT message_text FROM left_message WHERE guild_id = '" + event.getGuild().getId()
-                + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String message = sql.getString(query, "message_text");
+        
+        String message = alert.get("leave_message");
         message = message.replace("#user", event.getUser().getAsMention());
         channel.sendMessage(message).queue();
+    }
+
+
+    @Override
+    public void onGuildBan(GuildBanEvent event) {
+        User theGuy = event.getUser();
+        int threshold = gs.getServer(event.getGuild().getId()).getThreshold();
+
+        if(threshold == 0)
+            return;
+        
+        DatabaseHandler.insertUserBlacklist(event.getUser().getId(), event.getGuild().getId());
+
+        int times = 0;
+        times = times + DatabaseHandler.getBannedTimes(event.getUser().getId());
+
+        QueryResult guilds = DatabaseHandler.getGuildByThreshold(times, event.getJDA().getSelfUser().getId(), event.getGuild().getId());
+        if(guilds == null)
+            return;
+        
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setAuthor(event.getJDA().getSelfUser().getName());
+        eb.setThumbnail(theGuy.getAvatarUrl());
+        eb.setTitle(":radioactive:Blacklist:radioactive:");
+        eb.setDescription("The member " + theGuy.getAsMention() + " is on the blacklist for being banned in " + times + " different guilds.\nYou have the discretion to choose the next steps.");
+        for(ResultRow g : guilds){
+            Guild gg = event.getJDA().getGuildById(g.get("guild_id"));
+            if(gg.getMemberById(theGuy.getId()) == null)
+                continue;
+
+            TextChannel channel = gg.getTextChannelById(g.get("blacklist_channel"));
+
+            Button kick = Button.primary("kick-" + theGuy.getId(), "Kick");
+            Button ban = Button.primary("ban-" + theGuy.getId(), "Ban");
+            Button ignore = Button.primary("ignore-" + theGuy.getId(), "Ignore");
+
+            kick = kick.withStyle(ButtonStyle.PRIMARY);
+            ban = ban.withStyle(ButtonStyle.PRIMARY);
+            ignore = ignore.withStyle(ButtonStyle.SUCCESS);
+            channel.sendMessageEmbeds(eb.build()).addActionRow(ignore, kick, ban).queue();
+            //channel.sendMessage("THIS PIECE OF SHIT DOGSHIT RANDOM " + theGuy.getName() + " HAS BEEN BANNED " + times + " TIMES").queue();
+        }
+        
+    }
+
+    @Override
+    public void onGuildUnban(GuildUnbanEvent event) {
+        User theGuy = event.getUser();
+        DatabaseHandler.deleteBlacklist(event.getGuild().getId(), theGuy.getId());
     }
 
     /**
@@ -222,28 +453,16 @@ public class EventHandler extends ListenerAdapter {
      */
     public void onGuildMemberUpdateBoostTime(GuildMemberUpdateBoostTimeEvent event) {
         MessageChannel channel = null;
-        String query = "SELECT channel_id FROM boost_message WHERE guild_id = '" + event.getGuild().getId()
-                + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String notNullPls = sql.getString(query, "channel_id");
-        if (notNullPls == null)
+        ResultRow alert = DatabaseHandler.getAlert(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
+        String notNullPls = alert.get("boost_channel");
+        if (notNullPls == null || !alert.getAsBoolean("boost_enabled"))
             return;
         channel = event.getGuild().getTextChannelById(notNullPls);
-        query = "SELECT message_text FROM boost_message WHERE guild_id = '" + event.getGuild().getId()
-                + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        String message = sql.getString(query, "message_text");
+        String message = alert.get("boost_message");
         message = message.replace("#user", event.getUser().getAsMention());
         channel.sendMessage(message).queue();
     }
 
-
-    @Override
-    public void onChannelDelete(ChannelDeleteEvent event){
-        if(event.getChannelType().isAudio()){
-            String query = "DELETE from rooms_settings WHERE guild_id = '" + event.getGuild().getId()
-                           + "' AND room_id = '" + event.getChannel().getId() + "';";
-            DatabaseHandler.getSql().runQuery(query);
-        }
-    }
 
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {

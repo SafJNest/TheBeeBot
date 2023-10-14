@@ -1,12 +1,10 @@
 package com.safjnest.SlashCommands.Settings.Welcome;
 
-import java.util.ArrayList;
-
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
-import com.safjnest.Utilities.SQL;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.ResultRow;
 
 public class WelcomePreviewSlash extends SlashCommand{
 
@@ -19,30 +17,24 @@ public class WelcomePreviewSlash extends SlashCommand{
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        SQL sql = DatabaseHandler.getSql();
-        
-        String query = "SELECT message_text, channel_id FROM welcome_message WHERE guild_id = '" + event.getGuild().getId() + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';"; 
-        ArrayList<String> list = sql.getSpecifiedRow(query, 0);
-        if(list == null){
-            event.deferReply(false).addContent("You need to set a welcome message first.").queue();
+        String guildId = event.getGuild().getId();
+        String botId = event.getJDA().getSelfUser().getId();
+
+        ResultRow welcome = DatabaseHandler.getWelcome(guildId, botId);
+
+        if(welcome.get("welcome_message") == null) {
+            event.deferReply(true).addContent("This guild doesn't have a welcome message.").queue();
             return;
         }
 
-        query = "SELECT role_id FROM welcome_roles WHERE guild_id = '" + event.getGuild().getId() + "' AND bot_id = '" + event.getJDA().getSelfUser().getId() + "';";
-        ArrayList<String> roles = sql.getAllRowsSpecifiedColumn(query, "role_id");
+        String welcomeMessage = welcome.get("welcome_message").replace("#user", event.getUser().getAsMention());
+        welcomeMessage = welcomeMessage + "\nThis message would be sent to <#" + welcome.get("welcome_channel") + ">";
 
-        String message = list.get(0).replace("#user", event.getUser().getAsMention());
-        message = message + "\nThis message would be sent to <#" + list.get(1) + ">";
-
-        if(roles != null){
-            message = message + "\nRoles that would be given to the user:";
-            for(String role : roles){
-                message = message + "\n<" + event.getGuild().getRoleById(role).getName() + ">";
-            }
+        if(welcome.get("welcome_role") != null){
+            welcomeMessage += "\nRoles that would be given to the user:" + event.getGuild().getRoleById(welcome.get("welcome_role")).getName();
         }
 
-        event.deferReply(false).addContent(message).queue();
-        
+        event.deferReply(false).addContent(welcomeMessage).queue();
     }
     
 }

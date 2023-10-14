@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 
 /**
- * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
  * @author <a href="https://github.com/Leon412">Leon412</a>
  * 
  * @since 1.1
@@ -25,35 +24,45 @@ public class UnMute extends Command{
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.botPermissions = new Permission[]{Permission.VOICE_MUTE_OTHERS};
+        this.userPermissions = new Permission[]{Permission.VOICE_MUTE_OTHERS};
     }
 
     @Override
     protected void execute(CommandEvent event) {
-        Member theGuy = null;
         try {
-            if(event.getMessage().getMentions().getMembers().size() > 0)
-                theGuy = event.getMessage().getMentions().getMembers().get(0);
-            else
-                theGuy = event.getGuild().retrieveMemberById(event.getArgs()).complete();
-            final Member surelyTheGuy = theGuy;
+            String mentionedName = event.getArgs();
 
-            if (!event.getGuild().getMember(event.getJDA().getSelfUser()).hasPermission(Permission.VOICE_MUTE_OTHERS))
-                event.reply(event.getJDA().getSelfUser().getAsMention() + " you dont have permission to unmute.");
-                
-            else if(PermissionHandler.hasPermission(event.getMember(), Permission.VOICE_MUTE_OTHERS) && !theGuy.getVoiceState().isMuted())
-                event.reply("Cant unmute who is not muted.");
+            Member selfMember = event.getGuild().getSelfMember();
+            Member author = event.getMember();
+            Member mentionedMember = PermissionHandler.getMentionedMember(event, mentionedName);
 
-            else if (PermissionHandler.hasPermission(event.getMember(), Permission.VOICE_MUTE_OTHERS)) {
-                event.getGuild().mute(surelyTheGuy, false).queue(
-                                                        (e) -> event.reply("unmuted " + surelyTheGuy.getAsMention()), 
-                                                        new ErrorHandler().handle(
-                                                            ErrorResponse.MISSING_PERMISSIONS,
-                                                                (e) -> event.replyError("sorry, " + e.getMessage()))
+            if(mentionedMember == null) { 
+                event.reply("Couldn't find the specified member, please mention or write the id of a member.");
+            }// if you mention a user not in the guild or write a wrong id
+
+            else if(!selfMember.canInteract(mentionedMember)) {
+                event.reply(selfMember.getAsMention() + " can't unmute a member with higher or equal highest role than itself.");
+            }// if the bot doesnt have a high enough role to unmute the member 
+
+            else if(!author.canInteract(mentionedMember) && author != mentionedMember) {
+                event.reply("You can't unmute a member with higher or equal highest role than yourself.");
+            }// if the author doesnt have a high enough role to unmute the member and if its not yourself!
+
+            else if(!mentionedMember.getVoiceState().isMuted()) {
+                event.reply("Member is already unmuted.");
+            }// if the member is already unmuted
+            
+            else {
+                event.getGuild().mute(mentionedMember, false).queue(
+                    (e) -> event.reply(mentionedMember.getAsMention() + " has been unmuted"), 
+                    new ErrorHandler().handle(
+                        ErrorResponse.MISSING_PERMISSIONS,
+                        (e) -> event.replyError("Error. " + e.getMessage()))
                 );
-            } else
-                event.reply("Brutto fallito non kickare se non sei admin UwU");
+            }
         } catch (Exception e) {
-            event.replyError("sorry, " + e.getMessage());
+            event.replyError("Error: " + e.getMessage());
         }
     }
 }

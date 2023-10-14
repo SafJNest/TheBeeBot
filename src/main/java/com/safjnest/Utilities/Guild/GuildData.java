@@ -1,9 +1,13 @@
 package com.safjnest.Utilities.Guild;
 
-import java.util.ArrayList;
+
 import java.util.HashMap;
 
-import com.safjnest.Utilities.DatabaseHandler;
+
+import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.SQL.QueryResult;
+import com.safjnest.Utilities.SQL.ResultRow;
+
 
 /**
  * Class that stores all the settings for a guild.
@@ -28,10 +32,19 @@ public class GuildData {
 
     private HashMap<Long, Room> rooms;
 
-    public GuildData(Long id, String prefix, boolean expSystem) {
+    private int threshold;
+
+    private String blackChannelId;
+
+    private boolean blacklist_enabled;
+
+    public GuildData(Long id, String prefix, boolean expSystem, int threshold, String channel, boolean blacklist_enabled) {
         this.id = id;
         this.prefix = prefix;
         this.expSystem = expSystem;
+        this.threshold = threshold;
+        this.blackChannelId = channel;
+        this.blacklist_enabled = blacklist_enabled;
         loadRooms();
     }
 
@@ -39,12 +52,28 @@ public class GuildData {
         return id;
     }
 
-    public synchronized String getPrefix() {
+    public String getPrefix() {
         return prefix;
     }
 
-    public boolean getExpSystem() {
+    public boolean isExpSystemEnabled() {
         return expSystem;
+    }
+
+    public int getThreshold() {
+        return threshold;
+    }
+
+    public String getBlackChannelId() {
+        return blackChannelId;
+    }
+
+    public synchronized void setBlackChannel(String blackChannel) {
+        this.blackChannelId = blackChannel;
+    }
+
+    public synchronized void setThreshold(int threshold) {
+        this.threshold = threshold;
     }
 
     public synchronized void setPrefix(String prefix) {
@@ -64,17 +93,16 @@ public class GuildData {
      */
     public void loadRooms(){
         rooms = new HashMap<>();
-        String query = "SELECT room_id, room_name, has_exp, exp_value, has_command_stats FROM rooms_settings WHERE guild_id ='" + id + "';";
-        ArrayList<ArrayList<String>> result = DatabaseHandler.getSql().getAllRows(query, 5);
-        for(ArrayList<String> row: result){;
+        QueryResult result = DatabaseHandler.getRoomsData(String.valueOf(id));
+        for(ResultRow row: result){;
             rooms.put(
-                Long.parseLong(row.get(0)),
+                row.getAsLong("room_id"),
                 new Room(
-                    Long.parseLong(row.get(0)), 
-                    row.get(1), 
-                    row.get(2).equals("1") ? true : false, 
-                    row.get(3),
-                    row.get(4).equals("1") ? true : false
+                    row.getAsLong("room_id"), 
+                    row.get("room_name"), 
+                    row.getAsBoolean("has_exp"), 
+                    row.getAsDouble("exp_value"),
+                    row.getAsBoolean("has_command_stats")
                     )
             );
         }
@@ -87,11 +115,12 @@ public class GuildData {
 
     public Boolean getExpSystemRoom(Long id){
         try {
-            return rooms.get(id).getExpSystem();
+            return rooms.get(id).isExpSystemEnabled();
         } catch (Exception e) {
             return true;
         }
     }
+
     public Boolean getCommandStatsRoom(Long id){
         try {
             return rooms.get(id).getCommand();
@@ -100,11 +129,11 @@ public class GuildData {
         }
     }
 
-    public String getExpValueRoom(Long id){
+    public double getExpValueRoom(Long id){
         try {
             return rooms.get(id).getExpValue();
         } catch (Exception e) {
-            return "1";
+            return 1;
         }
     }
 
@@ -120,9 +149,16 @@ public class GuildData {
         rooms.get(id).setName(name);
     }
 
-    public synchronized void setExpValueRoom(Long id, String value){
+    public synchronized void setExpValueRoom(Long id, double value){
         rooms.get(id).setExpValue(value);
     }
 
+    public boolean blacklistEnabled() {
+        return blacklist_enabled;
+    }
+    
+    public void setBlacklistEnabled(boolean blacklist_enabled) {
+        this.blacklist_enabled = blacklist_enabled;
+    }
     
 }

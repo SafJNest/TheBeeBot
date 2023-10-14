@@ -38,7 +38,7 @@ public class TalkSlash extends SlashCommand {
                     .addChoice("Norsk", "no")
                     .addChoice("Suomi", "fi")
                     .addChoice("Svenska", "sv"),
-            new OptionData(OptionType.STRING, "interests", "common interests separated by a comma (anime, manga)", false),
+            new OptionData(OptionType.STRING, "interests", "common interests separated by a comma (music, anime, ...)", false),
             new OptionData(OptionType.BOOLEAN, "party-mode", "if party mode is true everyone in the discord channel can talk (false by default)", false));
     }
 
@@ -115,7 +115,7 @@ public class TalkSlash extends SlashCommand {
 				@Override
 				public void strangerDisconnected(OmegleSession session) {
 					System.out.println("Stranger disconnected");
-                    channel.sendMessage("Stranger disconnected, goodbye and go fuck yourself!").queue();
+                    channel.sendMessage("Stranger disconnected.").queue();
                     terminator2LaRivolta(event, channel);
                     omegle.removeSession(session);
 				}
@@ -123,7 +123,7 @@ public class TalkSlash extends SlashCommand {
                 @Override
 				public void chatDisconnected(OmegleSession session) {
 					System.out.println("user disconnected");
-                    channel.sendMessage("You disconnected, goodbye and go fuck yourself!").queue();
+                    channel.sendMessage("You disconnected.").queue();
                     terminator2LaRivolta(event, channel);
                     omegle.removeSession(session);
 				}   

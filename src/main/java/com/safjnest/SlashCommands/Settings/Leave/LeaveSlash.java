@@ -19,7 +19,7 @@ public class LeaveSlash extends SlashCommand {
         this.help = "json";
         
         ArrayList<SlashCommand> slashCommandsList = new ArrayList<SlashCommand>();
-        Collections.addAll(slashCommandsList, new LeaveMoveSlash(father), new LeavePreviewSlash(father), new LeaveTextSlash(father), new LeaveDeleteSlash(father));
+        Collections.addAll(slashCommandsList, new LeaveChannelSlash(father), new LeaveCreateSlash(father), new LeaveDeleteSlash(father), new LeavePreviewSlash(father), new LeaveTextSlash(father), new LeaveToggleSlash(father));
         this.children = slashCommandsList.toArray(new SlashCommand[slashCommandsList.size()]);
 
     }

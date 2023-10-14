@@ -35,7 +35,7 @@ public class ChannelInfoSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.CHANNEL, "channel", "Channel to get the information about", false));
+            new OptionData(OptionType.CHANNEL, "channel", "Channel to get information on", false));
     }
 
 	@Override

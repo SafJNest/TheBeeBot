@@ -30,7 +30,7 @@ public class EmojiInfoSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-                new OptionData(OptionType.STRING, "name", "name emoji or sticker", true));
+            new OptionData(OptionType.STRING, "name", "Emoji/Sticker to get information on", true));
     }
 
     @Override
@@ -49,7 +49,7 @@ public class EmojiInfoSlash extends SlashCommand {
                 sticker = event.getGuild().getStickersByName(event.getOption("name").getAsString(), true).get(0);
                 isSticker = true;
             } catch (Exception e1) {
-                event.reply("Emote/Sticker not found. Remember to inser ':' when you write the emoji name.");
+                event.reply("Couldn't find the Emoji/Sticker. Remembert to write the emoji in the correct format :emojiname:.");
             }
         }
         EmbedBuilder eb = new EmbedBuilder();
@@ -88,7 +88,6 @@ public class EmojiInfoSlash extends SlashCommand {
                         + "<t:" + em.getTimeCreated().toEpochSecond() + ":R>",
                         false);
         }
-        eb.setFooter("Remembert to write the emoji in the correct format :emojiname:.");
         event.deferReply(false).addEmbeds(eb.build()).queue();
     }
 }

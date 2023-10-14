@@ -5,9 +5,8 @@ import java.util.Arrays;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.DatabaseHandler;
+import com.safjnest.Utilities.SQL.DatabaseHandler;
 
-import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
@@ -19,36 +18,27 @@ public class BoostTextSlash extends SlashCommand {
         this.cooldown = new CommandsLoader().getCooldown(this.name, father.toLowerCase());
         this.category = new Category(new CommandsLoader().getString(father.toLowerCase(), "category"));
         this.options = Arrays.asList(
-                new OptionData(OptionType.STRING, "msg", "Welcome message", true),
-                new OptionData(OptionType.CHANNEL, "channel", "User to get the information about", false)
-                            .setChannelTypes(ChannelType.TEXT));
+            new OptionData(OptionType.STRING, "message", "Boost message", true)
+        );
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        String channel = null;
-        if (event.getOption("channel") == null) {
-            try {
-                channel = event.getGuild().getSystemChannel().getId();
-            } catch (Exception e) {
-                event.deferReply(true).addContent(
-                        "No channel was selected and there isn't a system channel (check your server discord settings). Be sure to select a channel next time.")
-                        .queue();
-                return;
-            }
-        } else {
-            channel = event.getOption("channel").getAsChannel().getId();
+        String message = event.getOption("message") != null ? event.getOption("message").getAsString() : null;
+
+        String guildId = event.getGuild().getId();
+        String botId = event.getJDA().getSelfUser().getId();
+
+        if(!DatabaseHandler.hasBoost(guildId, botId)) {
+            event.deferReply(true).addContent("This guild doesn't have a boost message. Use the create command.").queue();
+            return;
         }
 
-        String message = event.getOption("msg").getAsString();
-        message = message.replace("'", "''");
+        if(!DatabaseHandler.updateBoostMessage(guildId, botId, message)) {
+            event.deferReply(true).addContent("Something went wrong.").queue();
+            return;
+        }
 
-        String discordId = event.getGuild().getId();
-        String query = "INSERT INTO boost_message(guild_id, channel_id, message_text, bot_id)"
-                + "VALUES('" + discordId + "','" + channel + "','" + message + "','"
-                + event.getJDA().getSelfUser().getId() + "');";
-        DatabaseHandler.getSql().runQuery(query);
-        event.deferReply(false).addContent("All set correctly").queue();
+        event.deferReply(false).addContent("Changed boost message.").queue();
     }
-
 }

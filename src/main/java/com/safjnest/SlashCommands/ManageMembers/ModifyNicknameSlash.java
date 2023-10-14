@@ -6,6 +6,7 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
 
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -23,24 +24,46 @@ public class ModifyNicknameSlash extends SlashCommand {
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
+        this.botPermissions = new Permission[]{Permission.NICKNAME_MANAGE};
+        this.userPermissions = new Permission[]{Permission.NICKNAME_MANAGE};
         this.options = Arrays.asList(
-            new OptionData(OptionType.USER, "user", "User to change the nickname", true),
-            new OptionData(OptionType.STRING, "nick","New Nickname", true));
+            new OptionData(OptionType.USER, "member", "Member to change the nickname of", true),
+            new OptionData(OptionType.STRING, "nickname","New nickname", true)
+                .setMaxLength(32)
+        );
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        Member theGuy = event.getOption("user").getAsMember();
-        
         try {
-            theGuy.modifyNickname(event.getOption("nick").getAsString()).queue(
-            (e) -> event.deferReply(false).addContent("Changed nickname of " + theGuy.getAsMention() + " exectued").queue(), 
-            new ErrorHandler().handle(
-                ErrorResponse.MISSING_PERMISSIONS,
-                    (e) -> event.deferReply(true).addContent("Sorry, " + e.getMessage()).queue())
-            );
+            Member mentionedMember = event.getOption("member").getAsMember();
+            String newNickname = event.getOption("nickname").getAsString();
+
+            Member selfMember = event.getGuild().getSelfMember();
+            Member author = event.getMember();
+
+            if(mentionedMember == null) { 
+                event.deferReply(true).addContent("Couldn't find the specified member, please mention or write the id of a member.").queue();
+            }// if you mention a user not in the guild or write a wrong id
+
+            else if(!selfMember.canInteract(mentionedMember)) {
+                event.deferReply(true).addContent(selfMember.getAsMention() + " can't change the nickname of a member with higher or equal highest role than itself.").queue();
+            }// if the bot doesnt have a high enough role to change the nickname of the member
+
+            else if(!author.canInteract(mentionedMember) && author != mentionedMember) {
+                event.deferReply(true).addContent("You can't change the nickname of a member with higher or equal highest role than yourself.").queue();
+            }// if the author doesnt have a high enough role to change the nickname of the member and if its not yourself!
+            
+            else {
+                mentionedMember.modifyNickname(newNickname).queue(
+                (e) -> event.deferReply(false).addContent("Changed nickname of " + mentionedMember.getAsMention()).queue(), 
+                new ErrorHandler().handle(
+                    ErrorResponse.MISSING_PERMISSIONS,
+                    (e) -> event.deferReply(true).addContent("Error. " + e.getMessage()).queue())
+                );
+            }
         } catch (Exception e) {
-            event.deferReply(true).addContent("Sorry, " + e.getMessage()).queue();
+            event.deferReply(true).addContent("Error: " + e.getMessage()).queue();
         }
     }
 }
