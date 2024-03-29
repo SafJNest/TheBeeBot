@@ -78,7 +78,8 @@ import org.voicerss.tts.Speech.SpeechErrorEventListener;
 /*     */     }
 /*     */   }
 /*     */   
-/*     */   private <T> void handleSpeechData(T data) {
+/*     */   @SuppressWarnings({ "rawtypes", "unchecked" })
+private <T> void handleSpeechData(T data) {
 /*  77 */     if (data != null && !data.equals("") && this._speechDataListeners != null)
 /*     */     {
 /*  79 */       for (SpeechDataEventListener _listener : this._speechDataListeners) {
@@ -88,7 +89,8 @@ import org.voicerss.tts.Speech.SpeechErrorEventListener;
 /*     */   }
 /*     */ 
 /*     */   
-/*     */   public <T> T speech(VoiceParameters params) throws Exception {
+/*     */   @SuppressWarnings("unchecked")
+public <T> T speech(VoiceParameters params) throws Exception {
 /*  87 */     validate(params);
 /*     */     
 /*  89 */     URL url = new URL(String.valueOf(this._ssl.booleanValue() ? "https" : "http") + "://api.voicerss.org/");

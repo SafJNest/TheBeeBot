@@ -9,7 +9,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
+
 import com.safjnest.Utilities.Guild.GuildSettings;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 
@@ -19,14 +19,12 @@ public class Connection extends WebSocketServer {
     private static int TCP_PORT = 8096;
     private Postman postman;
     private GuildSettings gs;
-    private BotSettingsHandler bs;
     
-    public Connection(JDA jda, GuildSettings gs, BotSettingsHandler bs){
+    public Connection(JDA jda, GuildSettings gs){
         super(new InetSocketAddress(TCP_PORT));
         this.jda = jda;
         this.gs = gs;
-        this.bs = bs;
-        this.postman = new Postman(jda, gs, bs);
+        this.postman = new Postman(jda, gs);
 
 
     }
@@ -37,7 +35,6 @@ public class Connection extends WebSocketServer {
        */
       jda.getClass();
       gs.doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed();
-      bs.doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed();
   }
     
     @Override
@@ -75,7 +72,7 @@ public class Connection extends WebSocketServer {
             case "newPrefix":
                 try {
                     gs.getServer(guildId).setPrefix(parseRequest(message, "prefix"));
-                    DatabaseHandler.insertGuild(guildId, userId, parseRequest(message, "prefix"));
+                    DatabaseHandler.insertGuild(guildId, parseRequest(message, "prefix"));
                     server = "newPrefix-ok"; 
                 } catch (Exception e) {
                     server = "newPrefix-!ok"; 
@@ -93,6 +90,7 @@ public class Connection extends WebSocketServer {
     public void onError(org.java_websocket.WebSocket conn, Exception ex) {
         System.out.println("Error from " + conn.getRemoteSocketAddress().getAddress().getHostAddress());
         ex.printStackTrace();
+        conn.close();
     }
 
 

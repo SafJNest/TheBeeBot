@@ -1,12 +1,22 @@
 package com.safjnest.Utilities;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 
 /**
@@ -255,6 +265,20 @@ public class SafJNest extends Thread {
             formattedTime = formattedTime.substring(3);
         return formattedTime;
     }
+
+    public static String formatDuration(long milliseconds) {
+        Duration duration = Duration.ofMillis(milliseconds);
+
+        long hours = duration.toHours();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+
+        if (hours > 0) {
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        } else
+            return String.format("%02d:%02d", minutes, seconds);
+
+    }
     
     public static double factorial(double n) {
         double fact = 1;
@@ -325,4 +349,45 @@ public class SafJNest extends Thread {
         }
         return costs[s2.length()];
     }
+
+    public static String getVideoIdFromYoutubeUrl(String youtubeUrl) {
+        //Matches possibile Youtube urls.
+        String pattern = "(?i)(.*?)(^|\\/|v=)([a-z0-9_-]{11})(.*)?";
+        Pattern compiledPattern = Pattern.compile(pattern);
+        Matcher matcher = compiledPattern.matcher(youtubeUrl);
+        if (matcher.find()) {
+            return matcher.group(3);
+        }
+        return null;
+    }
+
+    /**
+     * @deprecated
+     */
+    public static String searchYoutubeVideo(String query, String youtubeApiKey) throws Exception {
+        URL theUrl = new URL("https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=" + query.replace(" ", "+") + "&key=" + youtubeApiKey);
+        URLConnection request = theUrl.openConnection();
+        request.connect();
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(new InputStreamReader((InputStream) request.getContent()));
+        JSONArray items = (JSONArray) json.get("items");
+        JSONObject item = (JSONObject) items.get(0);
+        JSONObject id = (JSONObject) item.get("id");
+        return (String) id.get("videoId");
+    }
+
+    public static int extractSeconds(String youtubeLink) {
+        String regex = "[?&]t=(\\d+)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(youtubeLink);
+
+        if (matcher.find()) {
+            String secondsStr = matcher.group(1);
+            try {
+                return Integer.parseInt(secondsStr);
+            } catch (NumberFormatException e) {}
+        }
+        return -1;
+    }
+    
 }

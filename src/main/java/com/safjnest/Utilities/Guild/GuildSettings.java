@@ -2,6 +2,7 @@ package com.safjnest.Utilities.Guild;
 
 import java.util.HashMap;
 
+import com.safjnest.Bot;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 import com.safjnest.Utilities.SQL.QueryResult;
 import com.safjnest.Utilities.SQL.ResultRow;
@@ -19,17 +20,17 @@ public class GuildSettings {
      * <p>The key of the map is the guild's id.
      */
     public HashMap<String, GuildData> cache = new HashMap<>();
-    private String botId;
     private final String PREFIX;
-    final GuildData data;
 
     /**
      * Default constructor
      * @param input
      */
-    public GuildSettings(GuildData input, String botId, String PREFIX) {
-        data = input;
-        this.botId = botId;
+    public GuildSettings() {
+        this.PREFIX = Bot.getPrefix();
+    }
+    
+    public GuildSettings(String PREFIX) {
         this.PREFIX = PREFIX;
     }
 
@@ -42,12 +43,7 @@ public class GuildSettings {
      * @see {@link com.safjnest.Utilities.Guild.GuildData guildData and default guildData}
      */
     public GuildData getServer(String id) {
-        if(cache.containsKey(id)) 
-            return cache.get(id);
-         else 
-            return retrieveServer(id);
-         
-        
+        return cache.containsKey(id) ? cache.get(id) : retrieveServer(id);
     }
 
     /**
@@ -74,20 +70,17 @@ public class GuildSettings {
      */
     public GuildData retrieveServer(String stringId) {
         System.out.println("[CACHE] Retriving guild from database => " + stringId);
-        ResultRow guildData = DatabaseHandler.getGuildData(stringId, botId);
+        ResultRow guildData = DatabaseHandler.getGuildData(stringId);
         
-        if(guildData == null) {
+        if(guildData.emptyValues()) {
             return insertGuild(stringId);
         }
 
         Long guildId = guildData.getAsLong("guild_id");
         String PREFIX = guildData.get("prefix");
         boolean expEnabled = guildData.getAsBoolean("exp_enabled");
-        int threshold = guildData.getAsInt("threshold");
-        String blacklistChannel = guildData.get("blacklist_channel");
-        boolean blacklist_enabled = guildData.getAsBoolean("blacklist_enabled");
 
-        GuildData guild = new GuildData(guildId, PREFIX, expEnabled, threshold, blacklistChannel, blacklist_enabled);
+        GuildData guild = new GuildData(guildId, PREFIX, expEnabled);
         saveData(guild);
         return guild;
     }
@@ -105,26 +98,23 @@ public class GuildSettings {
      * Always a {@link com.safjnest.Utilities.Guild.GuildData guildData}, never {@code null}
      */
     public void retrieveAllServers() {
-        QueryResult guilds = DatabaseHandler.getGuildData(botId);
+        QueryResult guilds = DatabaseHandler.getGuildData();
         
         for(ResultRow guildData : guilds){
            Long guildId = guildData.getAsLong("guild_id");
             String PREFIX = guildData.get("prefix");
             boolean expEnabled = guildData.getAsBoolean("exp_enabled");
-            int threshold = guildData.getAsInt("threshold");
-            String blacklistChannel = guildData.get("blacklist_channel");
-            boolean blacklist_enabled = guildData.getAsBoolean("blacklist_enabled");
 
-            GuildData guild = new GuildData(guildId, PREFIX, expEnabled, threshold, blacklistChannel, blacklist_enabled);
+            GuildData guild = new GuildData(guildId, PREFIX, expEnabled);
             saveData(guild);
         }
     }
 
     public GuildData insertGuild(String guildId) {
-        DatabaseHandler.insertGuild(guildId, guildId, PREFIX);
+        DatabaseHandler.insertGuild(guildId, PREFIX);
         System.out.println("[ERROR] Missing guild in database => " + guildId);
 
-        GuildData guild = new GuildData(Long.parseLong(guildId), PREFIX, false, 0, null, false);
+        GuildData guild = new GuildData(Long.parseLong(guildId), PREFIX, false);
         saveData(guild);
         return guild;
     }
@@ -135,14 +125,6 @@ public class GuildSettings {
      */
     public void saveData(GuildData guild) {
         cache.put(String.valueOf(guild.getId()), guild);
-    }
-
-    public String getId() {
-        return data.getId().toString();
-    }
-
-    public String getPrefix() {
-        return data.getPrefix();
     }
 
     public void doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed() {

@@ -33,6 +33,7 @@ public class DisconnectSlash extends SlashCommand {
 	protected void execute(SlashCommandEvent event) {
         if(event.getOption("member") == null) {
             event.getGuild().getAudioManager().closeAudioConnection();
+            event.deferReply(false).addContent("The bot has been disconnected from the voice channel").queue();
             return;
         }
 
@@ -42,6 +43,7 @@ public class DisconnectSlash extends SlashCommand {
         }// if you mention a user not in the guild or write a wrong id
 
         event.getGuild().kickVoiceMember(mentionedMember).queue();
+        event.deferReply(false).addContent("The user has been disconnected from the voice channel").queue();
     }
         
 }

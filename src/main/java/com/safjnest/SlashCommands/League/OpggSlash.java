@@ -34,7 +34,8 @@ public class OpggSlash extends SlashCommand {
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
-            new OptionData(OptionType.STRING, "user", "Name of the summoner you want to get information on", false));
+            new OptionData(OptionType.STRING, "user", "Name of the summoner you want to get information on", false),
+            new OptionData(OptionType.STRING, "tag", "Tag of the summoner you want to get information on", false));
     }
 
     /**
@@ -60,9 +61,11 @@ public class OpggSlash extends SlashCommand {
             center = Button.primary("match-center", s.getName());
             center = center.asDisabled();
         }else{
-            s = RiotHandler.getSummonerByName(event.getOption("user").getAsString());
+            String name = event.getOption("summoner").getAsString();
+            String tag = (event.getOption("tag") != null) ? event.getOption("tag").getAsString() : "";
+            s = RiotHandler.getSummonerByName(name, tag);
             if(s == null){
-                event.getHook().editOriginal("Couldn't find the specified summoner.").queue();
+                event.reply("Couldn't find the specified summoner.");
                 return;
             }
             

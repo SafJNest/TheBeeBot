@@ -2,9 +2,11 @@ package com.safjnest.SlashCommands.Settings.Leave;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
-import com.safjnest.Utilities.SQL.ResultRow;
+import com.safjnest.Utilities.Guild.GuildData;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
 
 public class LeavePreviewSlash extends SlashCommand{
 
@@ -18,18 +20,16 @@ public class LeavePreviewSlash extends SlashCommand{
     @Override
     protected void execute(SlashCommandEvent event) {
         String guildId = event.getGuild().getId();
-        String botId = event.getJDA().getSelfUser().getId();
 
-        ResultRow leave = DatabaseHandler.getLeave(guildId, botId);
+        GuildData gs = Bot.getGuildData(guildId);
 
-        if(leave.get("leave_message") == null) {
+        AlertData leave = gs.getAlert(AlertType.LEAVE);
+
+        if(leave == null) {
             event.deferReply(true).addContent("This guild doesn't have a leave message.").queue();
             return;
         }
 
-        String leaveMessage = leave.get("leave_message").replace("#user", event.getUser().getAsMention());
-        leaveMessage = leaveMessage + "\nThis message would be sent to <#" + leave.get("leave_channel") + ">";
-
-        event.deferReply(false).addContent(leaveMessage).queue();
+        event.deferReply(false).addEmbeds(leave.getSampleEmbed(event.getGuild()).build()).queue();
     }
 }

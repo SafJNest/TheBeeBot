@@ -3,17 +3,16 @@ package com.safjnest.SlashCommands.Misc;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
+import com.safjnest.Utilities.BotCommand;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.Guild.GuildSettings;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -46,131 +45,128 @@ public class HelpSlash extends SlashCommand {
             new OptionData(OptionType.STRING, "command", "Name of the command you want information on",
                 false)
                 .setAutoComplete(true)
-            );
+        );
         this.gs = gs;
     }
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        int nCom = 0;
-        String command = (event.getOption("command") == null) ? "" : event.getOption("command").getAsString();
-        
-        HashMap<String, ArrayList<SlashCommand>> commands = new HashMap<>();
+        String inputCommand = (event.getOption("command") == null) ? "" : event.getOption("command").getAsString();
+        String prefix = gs.getServer(event.getGuild().getId()).getPrefix();
         EmbedBuilder eb = new EmbedBuilder();
-        
+
+        HashMap<String, BotCommand> commands = new HashMap<>();
+
+        for (Command e : event.getClient().getCommands())
+            if(!e.isHidden() || PermissionHandler.isUntouchable(event.getMember().getId()))
+                commands.put(e.getName(), new BotCommand(e));
+
         for (SlashCommand e : event.getClient().getSlashCommands()) {
-            if (!e.isHidden() || PermissionHandler.isUntouchable(event.getMember().getId())) {
-                if (!commands.containsKey(e.getCategory().getName()))
-                    commands.put(e.getCategory().getName(), new ArrayList<SlashCommand>());
-                commands.get(e.getCategory().getName()).add(e);
-                nCom++;
+            if(!e.isHidden() || PermissionHandler.isUntouchable(event.getMember().getId())){
+                if(!commands.containsKey(e.getName()))
+                    commands.put(e.getName(), new BotCommand(e));
+                else
+                    commands.get(e.getName()).addSlash(e);
             }
         }
 
-        eb.setColor(Color.decode(
-                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        HashMap<String, List<BotCommand>> categories = new HashMap<>();
 
-        if (command.equals("")) {
-            eb.setTitle("📒INFO AND COMMAND📒", null);
-            eb.setDescription("Current prefix is: **" + gs.getServer(event.getGuild().getId()).getPrefix() + "**\n"
-                + "You can get more information using: **/help <command>.**");
+        for(String command : commands.keySet())
+            categories.computeIfAbsent(commands.get(command).getCategory(), k -> new ArrayList<>()).add(commands.get(command));
 
+        for(String category : categories.keySet()) {
+            categories.get(category).sort((c1, c2) -> {
+                int c1p = (c1.isText() ? 2 : 0) + (c1.isSlash() ? 1 : 0);
+                int c2p = (c2.isText() ? 2 : 0) + (c2.isSlash() ? 1 : 0);
+                return Integer.compare(c1p, c2p);
+            });
+        }
+
+        if(inputCommand.equals("")) {
+            eb.setTitle("📒INFO AND COMMANDS📒");
+            eb.setDescription("Current prefix is: **" + prefix + "**\n"
+                + "For more information on a command: **" + prefix + "help <command name>.**\n"
+                + "In brackets is specified if the command is text only or slash only.");
             String ss = "```\n";
-            for (String k : getKeysInDescendingOrder(commands)) {
-                Collections.sort(commands.get(k), Comparator.comparing(Command::getName));
-                for (Command c : commands.get(k)) {
-                    ss += c.getName() + "\n";
+
+            for(String category : getCategoriesBySize(categories)) {
+                for(BotCommand command : categories.get(category)) {
+                    String brackets = "";
+                    if(command.isText() != command.isSlash())
+                        brackets += " [" + (command.isText() ? prefix : "") + (command.isSlash() ? "/" : "") + "]";
+                    ss += command.getName() + brackets + "\n";
                 }
-                ss += "```";
-                eb.addField(k, ss, true);
+                ss +="```";
+                eb.addField(category, ss, true);
                 ss = "```\n";
             }
-            eb.addField("Number of commands avaible:", "```" + nCom + "```", false);
+
+            int fieldNum = categories.size();
+            while (fieldNum++ % 3 != 0)
+                eb.addField("\u200E", "\u200E", true);
+            
+            eb.addField("Number of commands avaible:", "```" + commands.size() + "```", false);
             eb.setFooter("Sorry if things don't work, Beebot was made for fun by only 2 people.", null);
-
-        } else {
-            SlashCommand e = null;
-            for (String k : commands.keySet()) {
-                for (SlashCommand c : commands.get(k)) {
-                    if (c.getName().equalsIgnoreCase(command) || Arrays.asList(c.getAliases()).contains(command)) {
-                        e = c;
-                        break;
-                    }
-                }
+        } 
+        else {
+            if(!commands.containsKey(inputCommand.toLowerCase())) {
+                event.deferReply(true).addContent("Command not found").queue();
+                event.reply("Command not found");
+                return;
             }
-            eb.setTitle(e.getName().toUpperCase(), null);
-            eb.addField("**DESCRIPTION**", "```" +
-                    ((e.getHelp().equals("json"))
-                            ? new CommandsLoader().getString(e.getName(), "help")
-                            : e.getHelp())
-                    + "```", false);
+            
+            BotCommand commandToPrint = commands.get(inputCommand.toLowerCase());
 
-            String args = "";
-            /**
-             * if the command has children, it means that it has subcommands
-             * so the args are just /command subcommand 1...
-             * otherwise, we have to generate all the possible combinations of the options
-             */
-            if (e.getChildren().length > 0) {
-                args += "/" + e.getName() + "\n";
-                for (SlashCommand c : e.getChildren())
-                    args += "/" + e.getName() + " " + c.getName() + "\n";
-            } else {
-                List<OptionData> requiredOptions = new ArrayList<>();
-                List<OptionData> optionalOptions = new ArrayList<>();
-
-                for (OptionData op : e.getOptions()) {
-                    if (op.isRequired()) {
-                        requiredOptions.add(op);
-                    } else {
-                        optionalOptions.add(op);
-                    }
+            eb.setTitle("**📒" + commandToPrint.getName().toUpperCase() + " COMMAND📒**");
+            eb.setDescription("```" + commandToPrint.getHelp() + "```");
+            eb.addField("**Category**", "```" + commandToPrint.getCategory() + "```", true);
+            eb.addField("**Cooldown**", "```" + commandToPrint.getCooldown() + "s```", true);
+            if(commandToPrint.isText()) {
+                eb.addField("**Arguments** [text]", "```" + commandToPrint.getArguments() + "```", false);
+            }
+            if(commandToPrint.isSlash()) {
+                if(commandToPrint.getChildren().size() > 0) {
+                    eb.addField("**Children** [slash]", "```" + commandToPrint.getChildren() + "```", false);
                 }
-
-                List<List<OptionData>> combinations = new ArrayList<>();
-                combinations.add(requiredOptions);
-
-                if (!optionalOptions.isEmpty()) {
-                    for (int i = 0; i < optionalOptions.size(); i++) {
-                        List<List<OptionData>> temp = new ArrayList<>();
-                        for (List<OptionData> combination : combinations) {
-                            temp.add(new ArrayList<>(combination));
-                            combination.add(optionalOptions.get(i));
+                else if(commandToPrint.getOptions().size() > 0) {
+                    String options = "";
+                    for(OptionData option : commandToPrint.getOptions()) {
+                        if(option.isRequired()) {
+                            options += option.getName() + " - " + option.getDescription() + " [required]\n";
                         }
-                        combinations.addAll(temp);
                     }
-                }
-
-                StringBuilder argsBuilder = new StringBuilder();
-
-                for (int i = combinations.size() - 1; i >= 0; i--) {
-                    List<OptionData> combination = combinations.get(i);
-                    argsBuilder.append("/").append(e.getName());
-                    for (OptionData op : combination) {
-                        argsBuilder.append(" ").append(op.getName());
+                    for(OptionData option : commandToPrint.getOptions()) {
+                        if(!option.isRequired()) {
+                            options += option.getName() + " - " + option.getDescription() + "\n";
+                        }
                     }
-                    argsBuilder.append("\n");
+                    eb.addField("**Options** [slash]", "```" + options + "```", false);
                 }
-                args = argsBuilder.toString();
             }
+            
+            String aliases = "";
+            if(commandToPrint.getAliases().length > 0) {
+                for(String a : commandToPrint.getAliases())
+                    aliases += a + " - ";
+                aliases = aliases.substring(0, aliases.length() - 3);
+            }
+            else {
+                aliases = "No aliases";
+            }
+            eb.addField("**Aliases**", "```" + aliases + "```", false);
 
-            eb.addField("**ARG**", "```" + args + "```", false);
-            eb.addField("**CATEGORY**", "```" + e.getCategory().getName() + "```", true);
-            eb.addField("**COOLDOWN**", "```" + e.getCooldown() + "```", true);
+            eb.setFooter("In arguments [] is a required field and () is an optional field", null);
         }
-
-        //eb.addField("**OTHER INFORMATION**", "Beebot has been developed by only two people, so dont break the balls", false);
+        eb.setColor(Color.decode(Bot.getColor()));
         eb.setAuthor(event.getJDA().getSelfUser().getName(), "https://github.com/SafJNest", event.getJDA().getSelfUser().getAvatarUrl());
-        event.replyEmbeds(eb.build()).setEphemeral(false).queue();
+        event.deferReply(false).addEmbeds(eb.build()).queue();
     }
 
-    public List<String> getKeysInDescendingOrder(HashMap<String, ArrayList<SlashCommand>> map) {
+    public List<String> getCategoriesBySize(HashMap<String, List<BotCommand>> map) {
         List<String> keys = new ArrayList<>(map.keySet());
-        Collections.sort(keys, new Comparator<String>() {
-            @Override
-            public int compare(String key1, String key2) {
-                return Integer.compare(map.get(key2).size(), map.get(key1).size());
-            }
+        keys.sort((k1, k2) -> {
+            return Integer.compare(map.get(k2).size(), map.get(k1).size());
         });
         return keys;
     }

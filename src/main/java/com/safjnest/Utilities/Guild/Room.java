@@ -4,7 +4,6 @@ package com.safjnest.Utilities.Guild;
  * Class that stores all the settings for a guild.
  * <ul>
  * <li>ID</li>
- * <li>Name(only for vocal)</li>
  * <li>expSystem</li>
  * <li>expValue</li>
  * <li>command</li>
@@ -17,15 +16,10 @@ public class Room {
      * ID of the room
      */
     private Long id;
-    
-    /**
-     * Name of the room
-     */
-    private String name;
-    
+        
     /**
      * If the room has the exp system
-     * @see com.safjnest.Utilities.EXPSystem.ExpSystem EXPSystem  
+     * @see com.safjnest.Utilities.ExperienceSystem EXPSystem  
      */
     private boolean expSystem;
 
@@ -47,9 +41,8 @@ public class Room {
      * @param expValue
      * @param command
      */
-    public Room(Long id, String name, boolean expSystem, double expValue, boolean command) {
+    public Room(Long id, boolean expSystem, double expValue, boolean command) {
         this.id = id;
-        this.name = name;
         this.expSystem = expSystem;
         this.expValue = expValue;
         this.command = command;
@@ -57,10 +50,6 @@ public class Room {
 
     public Long getId() {
         return id;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public boolean isExpSystemEnabled() {
@@ -77,10 +66,6 @@ public class Room {
 
     public void setExpSystem(boolean exp) {
         this.expSystem = exp;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void setExpValue(double value) {

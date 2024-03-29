@@ -10,20 +10,23 @@ import org.voicerss.tts.Voice.Voices;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.App;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.SafJNest;
-import com.safjnest.Utilities.TTSHandler;
 import com.safjnest.Utilities.Audio.PlayerManager;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Audio.TTSHandler;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 import com.safjnest.Utilities.SQL.ResultRow;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.managers.AudioManager;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -35,7 +38,7 @@ public class TTSSlash extends SlashCommand{
     
     public static final HashMap<String, Set<String>> voices = new HashMap<String, Set<String>>();
     
-    public TTSSlash(TTSHandler tts){
+    public TTSSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
@@ -48,7 +51,8 @@ public class TTSSlash extends SlashCommand{
                 .setAutoComplete(true)
         );
 
-        this.tts = tts;
+        this.tts = App.getTTS();
+        this.pm = PlayerManager.get();
 
         voices.put(Voices.Arabic_Egypt.id, Set.of(Voices.Arabic_Egypt.array));
         voices.put(Voices.Chinese_China.id, Set.of(Voices.Chinese_China.array));
@@ -74,10 +78,11 @@ public class TTSSlash extends SlashCommand{
     protected void execute(SlashCommandEvent event) {
         String voice = null, defaultVoice = null, language = null;
         String speech = event.getOption("text").getAsString();
-        EmbedBuilder eb;
 
+        Guild guild = event.getGuild();
+        User self = event.getJDA().getSelfUser();
         AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
-        AudioChannel botChannel = event.getGuild().getSelfMember().getVoiceState().getChannel();
+        AudioChannel botChannel = guild.getSelfMember().getVoiceState().getChannel();
         
         if(myChannel == null){
             event.deferReply(true).addContent("You need to be in a voice channel to use this command.").queue();
@@ -89,7 +94,7 @@ public class TTSSlash extends SlashCommand{
             return;
         }
 
-        ResultRow defaultVoiceRow = DatabaseHandler.getDefaultVoice(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
+        ResultRow defaultVoiceRow = DatabaseHandler.getDefaultVoice(guild.getId());
         if(!defaultVoiceRow.emptyValues())
             defaultVoice = defaultVoiceRow.get("name_tts");
 
@@ -123,60 +128,63 @@ public class TTSSlash extends SlashCommand{
         
         String nameFile = "rsc" + File.separator + "tts" + File.separator + event.getMember().getEffectiveName() + ".mp3";
         
-        pm = new PlayerManager();
-        
-        AudioManager audioManager = event.getGuild().getAudioManager();
-        audioManager.setSendingHandler(pm.getAudioHandler());
-        
+        pm.loadItemOrdered(guild, self, nameFile, new ResultHandler(event, voice, defaultVoice, language));
+    }
 
-        pm.getAudioPlayerManager().loadItem(nameFile, new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                pm.getTrackScheduler().addQueue(track);
-            }
+    private class ResultHandler implements AudioLoadResultHandler {
+        private final SlashCommandEvent event;
+        private final Guild guild;
+        private final User self;
+        private final Member author;
+        private final String voice;
+        private final String defaultVoice;
+        private final String language;
 
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
-                /*
-                 * for (AudioTrack track : playlist.getTracks()) {
-                 * trackScheduler.queue(track);
-                 * }
-                 */
-            }
+        private ResultHandler(SlashCommandEvent event, String voice, String defaultVoice, String language) {
+            this.event = event;
+            this.guild = event.getGuild();
+            this.self = event.getJDA().getSelfUser();
+            this.author = event.getMember();
+            this.voice = voice;
+            this.defaultVoice = defaultVoice;
+            this.language = language;
+        }
+        
+        @Override
+        public void trackLoaded(AudioTrack track) {
+            pm.getGuildMusicManager(guild, self).getTrackScheduler().playForce(track);
+
+            guild.getAudioManager().openAudioConnection(author.getVoiceState().getChannel());
+
+            EmbedBuilder eb = new EmbedBuilder();
+        
+            eb.setTitle("Playing now:");
+            eb.setDescription(event.getOption("text").getAsString());
+            eb.setColor(Color.decode(Bot.getColor()));
+            eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
+            eb.setAuthor(event.getMember().getEffectiveName(), "https://github.com/SafJNest", event.getMember().getAvatarUrl());
             
-            @Override
-            public void noMatches() {
-                event.deferReply(true).addContent("Not found").queue();
-                pm.getTrackScheduler().addQueue(null);
-            }
+            eb.addField("Lenght", SafJNest.getFormattedDuration(track.getInfo().length),true);
+            eb.addField("Language", language, true);
+            eb.addBlankField(true);
+            eb.addField("Voice", voice, true);
+            eb.addField("Default voice", (defaultVoice == null ? "Not set" : defaultVoice), true);
+            eb.addBlankField(true);
 
-            @Override
-            public void loadFailed(FriendlyException throwable) {
-                System.out.println("error: " + throwable.getMessage());
-            }
-        });
-
-        pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
-        if(pm.getPlayer().getPlayingTrack() == null) {
-            return;
+            event.deferReply(false).addEmbeds(eb.build()).queue();
         }
 
-        audioManager.openAudioConnection(myChannel);
-        
-        eb = new EmbedBuilder();
-        eb.setTitle("Playing now:");
-        eb.setAuthor(event.getMember().getEffectiveName(), "https://github.com/SafJNest",event.getMember().getAvatarUrl());
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
-        eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
-        eb.setDescription(speech);
+        @Override
+        public void playlistLoaded(AudioPlaylist playlist) {}
 
-        eb.addField("Lenght",SafJNest.getFormattedDuration(pm.getPlayer().getPlayingTrack().getInfo().length),true);
-        eb.addField("Language", language, true);
-        eb.addBlankField(true);
-        eb.addField("Voice", voice, true);
-        eb.addField("Default voice", (defaultVoice == null ? "Not setted" : defaultVoice), true);
-        eb.addBlankField(true);
+        @Override
+        public void noMatches() {
+            event.reply("No matches");
+        }
 
-        event.deferReply(false).addEmbeds(eb.build()).queue();
+        @Override
+        public void loadFailed(FriendlyException throwable) {
+            event.reply(throwable.getMessage());
+        }
     }
 }

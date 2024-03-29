@@ -6,9 +6,9 @@ import java.util.List;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
@@ -45,7 +45,7 @@ public class ChannelInfoSlash extends SlashCommand {
         EmbedBuilder eb = new EmbedBuilder();
 
         eb.setTitle("**CHANNEL INFO**");
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
 
         eb.addField("Channel name", "```" + gc.getName() + "```", true);   
         eb.addField("Channel ID", "```" + gc.getId() + "```", true); 

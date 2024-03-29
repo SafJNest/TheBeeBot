@@ -22,15 +22,15 @@ public class LevelUpSlash extends SlashCommand {
         this.help = "json";
         
         ArrayList<SlashCommand> slashCommandsList = new ArrayList<SlashCommand>();
-        Collections.addAll(slashCommandsList, new LevelUpPreviewSlash(father), new LevelUpTextSlash(father), new LevelUpToggleSlash(gs, father), new LevelUpChannelToggleSlash(father, gs), new LevelUpModifierSlash(father, gs));
+        Collections.addAll(slashCommandsList, new LevelUpPreviewSlash(father), new LevelUpTextSlash(father), new LevelUpToggleSlash(gs, father), new LevelUpChannelToggleSlash(father, gs), new LevelUpModifierSlash(father, gs), new LevelUpUpdateTimeSlash(father, gs));
         this.children = slashCommandsList.toArray(new SlashCommand[slashCommandsList.size()]);                                 
         
         this.gs = gs;
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
-        gs.getId();
+    protected void execute(SlashCommandEvent event) { 
+        gs.doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed();
     }
     
 }

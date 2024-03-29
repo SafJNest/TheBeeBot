@@ -2,25 +2,26 @@ package com.safjnest.Commands.Misc;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommand;
+import com.safjnest.Bot;
+import com.safjnest.Utilities.BotCommand;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.Guild.GuildSettings;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 /**
  * This commands once is called sends a message with a full list of all commands, grouped by category.
  * <p>The user can then use the command to get more information about a specific command.</p>
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
+ * @author <a href="https://github.com/Leon412">Leon412</a>
  * 
  * @since 1.1.01
  */
@@ -28,7 +29,7 @@ public class Help extends Command {
 
     GuildSettings gs;
     public Help(GuildSettings gs) {
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -39,80 +40,126 @@ public class Help extends Command {
 
     @Override
     protected void execute(CommandEvent event) {
-        int nCom = 0;
-        String command = event.getArgs();
+        String prefix = gs.getServer(event.getGuild().getId()).getPrefix();
+        String inputCommand = event.getArgs();
         EmbedBuilder eb = new EmbedBuilder();
-        HashMap<String, ArrayList<Command>> commands = new HashMap<>();
-        for (Command e : event.getClient().getCommands()) {
+
+        HashMap<String, BotCommand> commands = new HashMap<>();
+
+        for (Command e : event.getClient().getCommands())
+            if(!e.isHidden() || PermissionHandler.isUntouchable(event.getMember().getId()))
+                commands.put(e.getName(), new BotCommand(e));
+
+        for (SlashCommand e : event.getClient().getSlashCommands()) {
             if(!e.isHidden() || PermissionHandler.isUntouchable(event.getMember().getId())){
-                if(!commands.containsKey(e.getCategory().getName()))
-                    commands.put(e.getCategory().getName(), new ArrayList<Command>());
-                commands.get(e.getCategory().getName()).add(e);
-                nCom++;
+                if(!commands.containsKey(e.getName()))
+                    commands.put(e.getName(), new BotCommand(e));
+                else
+                    commands.get(e.getName()).addSlash(e);
             }
         }
-        eb.setTitle("📒INFO AND COMMAND📒", null);
-        eb.setDescription("Current prefix is: **" + gs.getServer(event.getGuild().getId()).getPrefix() + "**\n"
-        + "You can get more information using: **"+ gs.getServer(event.getGuild().getId()).getPrefix() +"help <nameCommand>.**");
-        eb.setColor(Color.decode(
-            BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color
-        ));
-        if(command.equals("")){
+
+        HashMap<String, List<BotCommand>> categories = new HashMap<>();
+
+        for(String command : commands.keySet())
+            categories.computeIfAbsent(commands.get(command).getCategory(), k -> new ArrayList<>()).add(commands.get(command));
+
+        for(String category : categories.keySet()) {
+            categories.get(category).sort((c1, c2) -> {
+                int c1p = (c1.isText() ? 2 : 0) + (c1.isSlash() ? 1 : 0);
+                int c2p = (c2.isText() ? 2 : 0) + (c2.isSlash() ? 1 : 0);
+                if(c1p == c2p)
+                    return c1.getName().compareTo(c2.getName());
+                return Integer.compare(c1p, c2p);
+            });
+        }
+
+        if(inputCommand.equals("")) {
+            eb.setTitle("📒INFO AND COMMANDS📒");
+            eb.setDescription("Current prefix is: **" + prefix + "**\n"
+                + "For more information on a command: **" + prefix + "help <command name>.**\n"
+                + "In **brackets** is specified if the command is **text only** or **slash only**.\n"
+                + "If it doesn't have brackets it's **both**. **s** means the command has **sub-commands**.");
             String ss = "```\n";
-            for(String k : getKeysInDescendingOrder(commands)){
-                Collections.sort(commands.get(k), Comparator.comparing(Command::getName));
-                for(Command c : commands.get(k)){
-                    ss+= c.getName() + "\n";
+
+            for(String category : getCategoriesBySize(categories)) {
+                for(BotCommand command : categories.get(category)) {
+                    String brackets = "";
+                    if(command.isText() != command.isSlash())
+                        brackets += " [" + (command.isText() ? prefix : "") + (command.isSlash() ? "/" : "") + ((command.getChildren().size() != 0) ? "s" : "") + "]";
+                    else if(command.getChildren().size() != 0)
+                        brackets += " [s]";
+                    ss += command.getName() + brackets + "\n";
                 }
-                ss+="```";
-                eb.addField(k, ss, true);
+                ss +="```";
+                eb.addField(category, ss, true);
                 ss = "```\n";
             }
-            eb.addField("Number of commands avaible:", "```"+nCom+"```", false);
+
+            int fieldNum = categories.size();
+            while (fieldNum++ % 3 != 0)
+                eb.addField("\u200E", "\u200E", true);
+            
+            eb.addField("Number of commands avaible:", "```" + commands.size() + "```", false);
             eb.setFooter("Sorry if things don't work, Beebot was made for fun by only 2 people.", null);
-        }else{
-            Command e = null;
-            for(String k : commands.keySet()){
-                for(Command c : commands.get(k)){
-                    if(c.getName().equalsIgnoreCase(command) || Arrays.asList(c.getAliases()).contains(command) ){
-                        e = c;
-                        break;
+        } 
+        else {
+            if(!commands.containsKey(inputCommand.toLowerCase())) {
+                event.reply("Command not found");
+                return;
+            }
+            
+            BotCommand commandToPrint = commands.get(inputCommand.toLowerCase());
+
+            eb.setTitle("**📒" + commandToPrint.getName().toUpperCase() + " COMMAND📒**");
+            eb.setDescription("```" + commandToPrint.getHelp() + "```");
+            eb.addField("**Category**", "```" + commandToPrint.getCategory() + "```", true);
+            eb.addField("**Cooldown**", "```" + commandToPrint.getCooldown() + "s```", true);
+            if(commandToPrint.isText()) {
+                eb.addField("**Arguments** [text]", "```" + commandToPrint.getArguments() + "```", false);
+            }
+            if(commandToPrint.isSlash()) {
+                if(commandToPrint.getChildren().size() > 0) {
+                    eb.addField("**Children** [slash]", "```" + commandToPrint.getChildren() + "```", false);
+                }
+                else if(commandToPrint.getOptions().size() > 0) {
+                    String options = "";
+                    for(OptionData option : commandToPrint.getOptions()) {
+                        if(option.isRequired()) {
+                            options += option.getName() + " - " + option.getDescription() + " [required]\n";
+                        }
                     }
+                    for(OptionData option : commandToPrint.getOptions()) {
+                        if(!option.isRequired()) {
+                            options += option.getName() + " - " + option.getDescription() + "\n";
+                        }
+                    }
+                    eb.addField("**Options** [slash]", "```" + options + "```", false);
                 }
             }
-            eb.setDescription("**COMMAND " + e.getName().toUpperCase() + "**");
-            eb.addField("**DESCRIPTION**","```"+e.getHelp()+"```", false);
-            eb.addField("**CATEGORY**","```"+e.getCategory().getName()+"```", false);
-            eb.addField("**ARG**","```"+e.getArguments()+"```", true);
-            eb.addField("**COOLDOWN**","```"+e.getCooldown()+"```", true);
-            if(e.getAliases().length > 0){
-                String aliases = "";
-                for(String a : e.getAliases())
-                    aliases+=a+" - ";
-                eb.addField("**ALIASES**","```"+aliases+"```", false);
-            }else{
-                eb.addField("**ALIASES**","```"+"NULL"+"```", false);
-            }
-
             
-            eb.setFooter("IN CASE ARGS IS NULL ITS ENOUGH WRITE JUST THE COMMAND, [] MEANS A REQUIRED FIELD WHITE () DONT ", null);
+            String aliases = "";
+            if(commandToPrint.getAliases().length > 0) {
+                for(String a : commandToPrint.getAliases())
+                    aliases += a + " - ";
+                aliases = aliases.substring(0, aliases.length() - 3);
+            }
+            else {
+                aliases = "No aliases";
+            }
+            eb.addField("**Aliases**", "```" + aliases + "```", false);
+
+            eb.setFooter("In arguments [] is a required field and () is an optional field", null);
         }
-        //eb.addField("**OTHER INFORMATION**", "Beebot has been developed by only two people, so dont break the balls", false);
-        eb.setAuthor(event.getJDA().getSelfUser().getName(), "https://github.com/SafJNest",
-                event.getJDA().getSelfUser().getAvatarUrl());
-
-        event.getChannel().sendMessageEmbeds(eb.build())
-                .queue();
-
+        eb.setColor(Color.decode(Bot.getColor()));
+        eb.setAuthor(event.getJDA().getSelfUser().getName(), "https://github.com/SafJNest", event.getJDA().getSelfUser().getAvatarUrl());
+        event.reply(eb.build());
     }
 
-    public List<String> getKeysInDescendingOrder(HashMap<String, ArrayList<Command>> map) {
+    public List<String> getCategoriesBySize(HashMap<String, List<BotCommand>> map) {
         List<String> keys = new ArrayList<>(map.keySet());
-        Collections.sort(keys, new Comparator<String>() {
-            @Override
-            public int compare(String key1, String key2) {
-                return Integer.compare(map.get(key2).size(), map.get(key1).size());
-            }
+        keys.sort((k1, k2) -> {
+            return Integer.compare(map.get(k2).size(), map.get(k1).size());
         });
         return keys;
     }

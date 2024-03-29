@@ -20,6 +20,6 @@ public class CommandEventHandler implements CommandListener{
         
         String commandName = command.getName();
         String args = event.getArgs();
-        DatabaseHandler.insertCommand(event.getGuild().getId(), event.getJDA().getSelfUser().getId(), event.getMember().getId(), commandName, args);
+        DatabaseHandler.insertCommand(event.getGuild().getId(), event.getMember().getId(), commandName, args);
     }
 }

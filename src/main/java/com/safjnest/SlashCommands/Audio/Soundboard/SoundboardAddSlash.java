@@ -28,7 +28,7 @@ public class SoundboardAddSlash extends SlashCommand{
         this.cooldown = new CommandsLoader().getCooldown(this.name, father.toLowerCase());
         this.category = new Category(new CommandsLoader().getString(father.toLowerCase(), "category"));
         this.options = new ArrayList<>();
-        this.options.add(new OptionData(OptionType.STRING, "name", "Soundboard to add the sound(s) to.", true).setAutoComplete(true));
+        this.options.add(new OptionData(OptionType.STRING, "soundboard_name", "Soundboard to add the sound(s) to.", true).setAutoComplete(true));
         for(int i = 1; i <= maxSounds-1; i++) {
             this.options.add(new OptionData(OptionType.STRING, "sound-" + i, "Sound " + i, false).setAutoComplete(true));
         }
@@ -38,7 +38,7 @@ public class SoundboardAddSlash extends SlashCommand{
 	protected void execute(SlashCommandEvent event) {
         Set<String> soundIDs = new HashSet<String>();
         for(OptionMapping option : event.getOptions())
-            if(option != null && !option.getName().equals("name"))
+            if(option != null && !option.getName().equals("soundboard_name"))
                 soundIDs.add(option.getAsString());
 
         if(soundIDs.isEmpty()) {
@@ -46,13 +46,13 @@ public class SoundboardAddSlash extends SlashCommand{
             return;
         }
 
-        String soundboardName = event.getOption("name").getAsString();
+        String soundboardName = event.getOption("soundboard_name").getAsString();
         if(!DatabaseHandler.soundboardExists(soundboardName, event.getGuild().getId())) {
             event.deferReply(true).addContent("A soundboard with that name does not exist in this guild.").queue();
             return;
         }
 
-        String soundboardID = event.getOption("name").getAsString();
+        String soundboardID = event.getOption("soundboard_name").getAsString();
         int soundCount = DatabaseHandler.getSoundInSoundboardCount(soundboardID);
 
         if(soundCount >= maxSounds) {

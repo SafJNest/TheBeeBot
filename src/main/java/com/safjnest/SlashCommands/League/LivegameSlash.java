@@ -21,7 +21,6 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageEditAction;
-import no.stelar7.api.r4j.impl.R4J;
 import no.stelar7.api.r4j.pojo.lol.spectator.SpectatorParticipant;
 
 /**
@@ -31,7 +30,7 @@ import no.stelar7.api.r4j.pojo.lol.spectator.SpectatorParticipant;
 public class LivegameSlash extends SlashCommand {
 
 
-    public LivegameSlash(R4J r){
+    public LivegameSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
@@ -40,6 +39,7 @@ public class LivegameSlash extends SlashCommand {
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
         this.options = Arrays.asList(
             new OptionData(OptionType.STRING, "summoner", "Name of the summoner you want to get information on", false),
+            new OptionData(OptionType.STRING, "tag", "Tag of the summoner you want to get information on", false),
             new OptionData(OptionType.USER, "user", "Discord user you want to get information on (if riot account is connected)", false)
         );
     }
@@ -71,9 +71,11 @@ public class LivegameSlash extends SlashCommand {
                 return;
             }
         }else{
-            s = RiotHandler.getSummonerByName(event.getOption("summoner").getAsString());
+            String name = event.getOption("summoner").getAsString();
+            String tag = (event.getOption("tag") != null) ? event.getOption("tag").getAsString() : "";
+            s = RiotHandler.getSummonerByName(name, tag);
             if(s == null){
-                event.getHook().editOriginal("Couldn't find the specified summoner.").queue();
+                event.reply("Couldn't find the specified summoner.");
                 return;
             }
             

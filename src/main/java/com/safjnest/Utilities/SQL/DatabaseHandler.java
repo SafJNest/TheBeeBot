@@ -2,19 +2,27 @@ package com.safjnest.Utilities.SQL;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.HashMap;
+
+import com.safjnest.Utilities.Guild.Alert.AlertType;
 
 /**
  * Useless (now usefull) class but {@link <a href="https://github.com/Leon412">Leon412</a>} is one
  * of the biggest caterpies ever made
  */
 public class DatabaseHandler {
-    
-    /** Object that opens the connection between database and beeby */
+    private static String hostName;
+    private static String database;
+    private static String user;
+    private static String password;
+
     private static Connection c;
 
     /**
@@ -26,7 +34,18 @@ public class DatabaseHandler {
      * @param password Password
      */
     public DatabaseHandler(String hostName, String database, String user, String password){
+        DatabaseHandler.hostName = hostName;
+        DatabaseHandler.database = database;
+        DatabaseHandler.user = user;
+        DatabaseHandler.password = password;
+        
+        connectIfNot();
+    }
+
+    private static void connectIfNot() {
         try {
+            if (c != null && !c.isClosed()) return;
+
             Class.forName("org.mariadb.jdbc.Driver");
             c = DriverManager.getConnection("jdbc:mariadb://" + hostName + "/" + database + "?autoReconnect=true", user, password);
             c.setAutoCommit(false);
@@ -34,13 +53,15 @@ public class DatabaseHandler {
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.out.println("[SQL] INFO Connection to the extreme db ANNODAM!");
+            System.out.println("[SQL] ERROR Connection to the extreme db failed!");
         }
     }
 
     public static QueryResult safJQuery(String query) {
-        QueryResult result = new QueryResult();
+        connectIfNot();
 
+        QueryResult result = new QueryResult();
+        
         try (Statement stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery(query)) {
 
@@ -48,7 +69,7 @@ public class DatabaseHandler {
             while (rs.next()) {
                 ResultRow beeRow = new ResultRow();
                 for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-                    String columnName = rsmd.getColumnName(i);
+                    String columnName = rsmd.getColumnLabel(i);
                     String columnValue = rs.getString(i);
                     beeRow.put(columnName, columnValue);
                 }
@@ -76,6 +97,8 @@ public class DatabaseHandler {
      * @throws SQLException
      */ 
     public static QueryResult safJQuery(Statement stmt, String query) throws SQLException {
+        connectIfNot();
+
         QueryResult result = new QueryResult();
 
         ResultSet rs = stmt.executeQuery(query);
@@ -103,6 +126,8 @@ public class DatabaseHandler {
      * @throws SQLException
      */
     public static ResultRow fetchJRow(String query) {
+        connectIfNot();
+
         ResultRow beeRow = new ResultRow();
 
         try (Statement stmt = c.createStatement();
@@ -138,6 +163,8 @@ public class DatabaseHandler {
      * @throws SQLException
      */
     public static ResultRow fetchJRow(Statement stmt, String query) throws SQLException {
+        connectIfNot();
+        
         ResultRow beeRow = new ResultRow();
 
         ResultSet rs = stmt.executeQuery(query);
@@ -161,6 +188,8 @@ public class DatabaseHandler {
      * @param queries
      */
     public static boolean runQuery(String... queries) {
+        connectIfNot();
+
         try (Statement stmt = c.createStatement()) {
             for (String query : queries)
                 stmt.execute(query);
@@ -187,24 +216,26 @@ public class DatabaseHandler {
      * @throws SQLException
      */
     public static void runQuery(Statement stmt, String... queries) throws SQLException {
+        connectIfNot();
+        
         for (String query : queries)
             stmt.execute(query);
     }
 
-
+    //-------------------------------------------------------------------------
 
     public static QueryResult getGuildsData(String filter){        
-        String query = "SELECT guild_id, prefix, exp_enabled, threshold, blacklist_channel FROM guild_settings WHERE " + filter + ";";
+        String query = "SELECT guild_id, prefix, exp_enabled, threshold, blacklist_channel FROM guild WHERE " + filter + ";";
         return safJQuery(query);
     }
 
-    public static QueryResult getRoomsData(String filter){        
-        String query = "SELECT guild_id, room_id, room_name, has_exp, exp_value, has_command_stats FROM rooms_settings WHERE " + filter + ";";
-        return safJQuery(query);
-    }
 
     public static QueryResult getlistGuildSounds(String guild_id) {
         return safJQuery("SELECT id, name, guild_id, user_id, extension, public FROM sound WHERE guild_id = '" + guild_id + "' ORDER BY name ASC");
+    }
+
+    public static QueryResult getlistGuildSounds(String guild_id, int limit) {
+        return safJQuery("SELECT id, name, guild_id, user_id, extension, public FROM sound WHERE guild_id = '" + guild_id + "' ORDER BY name ASC LIMIT " + limit);
     }
 
     public static QueryResult getGuildRandomSound(String guild_id){
@@ -245,11 +276,11 @@ public class DatabaseHandler {
     }
 
     public static QueryResult getSoundsById(String id, String guild_id, String author_id) {
-        return safJQuery("SELECT id, name, guild_id, user_id, extension, public FROM sound WHERE id = '" + id + "' AND  (guild_id = '" + guild_id + "'  OR public = 1 OR user_id = '" + author_id + "')");
+        return safJQuery("SELECT id, name, guild_id, user_id, extension, public, time FROM sound WHERE id = '" + id + "' AND  (guild_id = '" + guild_id + "'  OR public = 1 OR user_id = '" + author_id + "')");
     }
 
     public static QueryResult getSoundsByName(String name, String guild_id, String author_id) {
-        return safJQuery("SELECT id, name, guild_id, user_id, extension, public FROM sound WHERE name = '" + name + "' AND  (guild_id = '" + guild_id + "'  OR public = 1 OR user_id = '" + author_id + "')");
+        return safJQuery("SELECT id, name, guild_id, user_id, extension, public, time FROM sound WHERE name = '" + name + "' AND  (guild_id = '" + guild_id + "'  OR public = 1 OR user_id = '" + author_id + "')");
     }
 
     public static QueryResult getDuplicateSoundsByName(String name, String guild_id, String author_id) {
@@ -267,7 +298,7 @@ public class DatabaseHandler {
     public static String insertSound(String name, String guild_id, String user_id, String extension, boolean isPublic) {
         String soundId = null;
         try (Statement stmt = c.createStatement()) {
-            runQuery(stmt, "INSERT INTO sound(name, guild_id, user_id, extension, public) VALUES('" + name + "','" + guild_id + "','" + user_id + "','" + extension + "', " + ((isPublic == true) ? "1" : "0") + "); ");
+            runQuery(stmt, "INSERT INTO sound(name, guild_id, user_id, extension, public, time) VALUES('" + name + "','" + guild_id + "','" + user_id + "','" + extension + "', " + ((isPublic == true) ? "1" : "0") + ", '" +  Timestamp.from(Instant.now()) + "'); ");
             soundId = fetchJRow(stmt, "SELECT LAST_INSERT_ID() AS id; ").get("id");
             c.commit();
         } catch (SQLException ex) {
@@ -311,8 +342,8 @@ public class DatabaseHandler {
         return fetchJRow("select sum(times) as sum from play where user_id = '" + user_id + "';").get("sum");
     }
 
-    public static boolean soundboardExists(String name, String guild_id) {
-        return !fetchJRow("SELECT id from soundboard WHERE name = '" + name + "' AND guild_id = '" + guild_id + "'").emptyValues();
+    public static boolean soundboardExists(String id, String guild_id) {
+        return !fetchJRow("SELECT id from soundboard WHERE ID = '" + id + "' AND guild_id = '" + guild_id + "'").emptyValues();
     }
 
     public static int getSoundInSoundboardCount(String id) {
@@ -386,296 +417,108 @@ public class DatabaseHandler {
         return runQuery("DELETE FROM soundboard_sounds WHERE id = '" + id + "' AND sound_id = '" + sound_id + "'");
     }
  
-    public static ResultRow getDefaultVoice(String guild_id, String bot_id) {
-        return fetchJRow("SELECT name_tts, language_tts FROM guild_settings WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
+    public static ResultRow getDefaultVoice(String guild_id) {
+        return fetchJRow("SELECT name_tts, language_tts FROM guild WHERE guild_id = '" + guild_id + "';");
     }
 
     public static String getLOLAccountIdByUserId(String user_id){
-        String query = "SELECT account_id FROM lol_user WHERE user_id = '" + user_id + "';";
+        String query = "SELECT account_id FROM summoner WHERE user_id = '" + user_id + "';";
         return fetchJRow(query).get("account_id");
     }
 
     public static QueryResult getLOLAccountsByUserId(String user_id){
-        String query = "SELECT account_id FROM lol_user WHERE user_id = '" + user_id + "';";
+        String query = "SELECT account_id FROM summoner WHERE user_id = '" + user_id + "';";
         return safJQuery(query);
     }
 
     public static String getUserIdByLOLAccountId(String account_id) {
-        return fetchJRow("SELECT user_id FROM lol_user WHERE account_id = '" + account_id + "';").get("user_id");
+        return fetchJRow("SELECT user_id FROM summoner WHERE account_id = '" + account_id + "';").get("user_id");
     }
 
     
 
     public static boolean addLOLAccount(String user_id, String summoner_id, String account_id){
-        String query = "INSERT INTO lol_user(user_id, summoner_id, account_id) VALUES('" + user_id + "','" + summoner_id + "','" + account_id + "');";
+        String query = "INSERT INTO summoner(user_id, summoner_id, account_id) VALUES('" + user_id + "','" + summoner_id + "','" + account_id + "');";
         return runQuery(query);
     }
 
     public static boolean deleteLOLaccount(String user_id, String account_id){
-        String query = "DELETE FROM lol_user WHERE account_id = '" + account_id + "' and user_id = '" + user_id + "';";
+        String query = "DELETE FROM summoner WHERE account_id = '" + account_id + "' and user_id = '" + user_id + "';";
         return runQuery(query);
     }
 
     public static String getLolProfilesCount(String user_id){
-        String query = "SELECT count(user_id) as count FROM lol_user WHERE user_id = '" + user_id + "';";
+        String query = "SELECT count(user_id) as count FROM summoner WHERE user_id = '" + user_id + "';";
         return fetchJRow(query).get("count");
     }
 
-    public static QueryResult getGuildData(String bot_id){
-        String query = "SELECT guild_id, PREFIX, exp_enabled, threshold, blacklist_channel, blacklist_enabled FROM guild_settings WHERE bot_id = '" + bot_id + "';";
+    public static QueryResult getGuildData(){
+        String query = "SELECT guild_id, PREFIX, exp_enabled, threshold, blacklist_channel, blacklist_enabled FROM guild;";
         return safJQuery(query);
     }
     
-    public static ResultRow getGuildData(String guild_id, String bot_id) {
-        String query = "SELECT guild_id, PREFIX, exp_enabled, threshold, blacklist_channel, blacklist_enabled FROM guild_settings WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';";
+    public static ResultRow getGuildData(String guild_id) {
+        String query = "SELECT guild_id, PREFIX, exp_enabled, threshold, blacklist_channel, blacklist_enabled FROM guild WHERE guild_id = '" + guild_id + "';";
         return fetchJRow(query);
     }
 
-    public static boolean insertGuild(String guild_id, String bot_id, String prefix) {
-        String query = "INSERT INTO guild_settings (guild_id, bot_id, PREFIX, exp_enabled, threshold, blacklist_channel) VALUES ('" + guild_id + "', '" + bot_id + "', '" + prefix + "', '0', '0', null); ON DUPLICATE KEY UPDATE prefix = '" + prefix + "';";
+    public static boolean updateVoiceGuild(String guild_id, String language, String voice) {
+        String query = "INSERT INTO guild (guild_id, language_tts, name_tts) VALUES ('" + guild_id + "', '" + language + "', '" + voice + "') ON DUPLICATE KEY UPDATE language_tts = '" + language + "', name_tts = '" + voice + "'";
         return runQuery(query);
     }
 
-    public static boolean updateVoiceGuild(String guild_id, String bot_id, String language, String voice) {
-        String query = "INSERT INTO guild_settings (guild_id, bot_id, language_tts, name_tts) VALUES ('" + guild_id + "', '" + bot_id + "', '" + language + "', '" + voice + "') ON DUPLICATE KEY UPDATE language_tts = '" + language + "', name_tts = '" + voice + "'";
+    public static boolean insertGuild(String guild_id, String prefix) {
+        String query = "INSERT INTO guild (guild_id, bot_id, PREFIX, exp_enabled, threshold, blacklist_channel) VALUES ('" + guild_id + "', '" + prefix + "', '0', '0', null) ON DUPLICATE KEY UPDATE prefix = '" + prefix + "';";
         return runQuery(query);
     }
 
-    public static QueryResult getRoomsSettings(String guild_id) {
-        String query = "SELECT room_id, room_name, has_exp, exp_value, has_command_stats FROM rooms_settings WHERE guild_id ='" + guild_id + "';";
-        return safJQuery(query);
-    }
-
-    public static QueryResult getRoomsSettingsWithExpModifier(String guild_id) {
-        String query = "SELECT room_id, room_name, has_exp, exp_value, has_command_stats FROM rooms_settings WHERE guild_id ='" + guild_id + "' AnND has_exp = 1 AND exp_value > 1;";
-        return safJQuery(query);
-    }
-
-    public static QueryResult getRoomsSettingsWithoutExp(String guild_id) {
-        String query = "SELECT room_id, has_exp, exp_value from rooms_settings WHERE guild_id = '"+ guild_id +"' AND has_exp = 0;";
-        return safJQuery(query);
-    }
-
-    public static ResultRow getExp(String guild_id, String user_id) {
-        String query = "SELECT exp, level, messages FROM exp_table WHERE user_id = '" + user_id + "' AND guild_id = '" + guild_id + "';";
-        return fetchJRow(query);
-    }
-
-    public static boolean addExpData(String guild_id, String user_id) {
-        String query = "INSERT INTO exp_table (user_id, guild_id, exp, level, messages) VALUES ('" + user_id + "','" + guild_id + "',0,1,0);";
-        return runQuery(query);
-    }
-
-    public static boolean updateExp(String guild_id, String user_id, int exp, int level, int messages){
-        String  query = "UPDATE exp_table SET exp = " + exp + ", level = " + level + ", messages = " + messages + " WHERE user_id = '" + user_id + "' AND guild_id = '" + guild_id + "';";
-        return runQuery(query);
-    }
-
-    public static boolean updateExp(String guild_id, String user_id, int exp, int messages){
-        String  query = "UPDATE exp_table SET exp = " + exp + ", messages = " + messages + " WHERE user_id = '" + user_id + "' AND guild_id = '" + guild_id + "';";
-        return runQuery(query);
-    }
 
     public static QueryResult getUsersByExp(String guild_id, int limit) {
-        return safJQuery("SELECT user_id, messages, level, exp from exp_table WHERE guild_id = '" + guild_id + "' order by exp DESC limit " + limit + ";");
+        if (limit == 0) {
+            return safJQuery("SELECT user_id, messages, level, experience as exp from user WHERE guild_id = '" + guild_id + "' order by experience DESC;");
+        }
+        return safJQuery("SELECT user_id, messages, level, experience as exp from user WHERE guild_id = '" + guild_id + "' order by experience DESC limit " + limit + ";");
     }
 
     public static QueryResult getLolAccounts(String user_id) {
-        return safJQuery("SELECT summoner_id FROM lol_user WHERE user_id = '" + user_id + "';");
+        return safJQuery("SELECT summoner_id FROM summoner WHERE user_id = '" + user_id + "';");
     }
 
-    public static ResultRow getUserExp(String user_id, String guild_id) {
-        return fetchJRow("select exp, level, messages from exp_table where user_id ='" + user_id + "' and guild_id = '" + guild_id + "';");
+    public static boolean toggleLevelUp(String guild_id, boolean toggle) {
+        return runQuery("INSERT INTO guild(guild_id, exp_enabled) VALUES ('" + guild_id + "', '" + (toggle ? "1" : "0") + "') ON DUPLICATE KEY UPDATE exp_enabled = '" + (toggle ? "1" : "0") + "';");
     }
 
-    public static ResultRow getAlert(String guild_id, String bot_id) {
-        return fetchJRow("SELECT * FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "'");
+    public static boolean toggleBlacklist(String guild_id, boolean toggle) {
+        return runQuery("UPDATE guild SET blacklist_enabled = '" + toggle + "' WHERE guild_id = '" + guild_id + "';");
     }
 
-    public static boolean hasWelcome(String guild_id, String bot_id) {
-        return fetchJRow("SELECT welcome_message FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "'").get("welcome_message") != null;
+
+    public static boolean setPrefix(String guild_id, String prefix) {
+        return runQuery("INSERT INTO guild(guild_id, prefix)" + "VALUES('" + guild_id + "','" + prefix +"') ON DUPLICATE KEY UPDATE prefix = '" + prefix + "';");
     }
 
-    public static ResultRow getWelcome(String guild_id, String bot_id) {
-        return fetchJRow("SELECT welcome_message, welcome_channel, welcome_role, welcome_enabled FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
+    public static boolean updatePrefix(String guild_id, String prefix) {
+        return runQuery("UPDATE guild SET prefix = '" + prefix + "' WHERE guild_id = '" + guild_id + "';");
     }
 
-    public static boolean setWelcome(String guild_id, String bot_id, String welcome_channel, String welcome_message, String welcome_role) {
-        if(welcome_role == null) {
-            return runQuery("INSERT INTO alert(guild_id, bot_id, welcome_channel, welcome_message, welcome_enabled)"
-                + "VALUES('" + guild_id + "','" + bot_id + "','" + welcome_channel + "','" + welcome_message + "','" + "1" + "') "
-                + "ON DUPLICATE KEY UPDATE welcome_channel = '" + welcome_channel + "', welcome_message = '" + welcome_message + "', welcome_enabled = '" + "1" + "';");
-        }
-        return runQuery("INSERT INTO alert(guild_id, bot_id, welcome_channel, welcome_message, welcome_role, welcome_enabled)"
-            + "VALUES('" + guild_id + "','" + bot_id + "','" + welcome_channel + "','" + welcome_message + "','" + "1" + "') "
-            + "ON DUPLICATE KEY UPDATE welcome_channel = '" + welcome_channel + "', welcome_message = '" + welcome_message + "', welcome_role = '" + welcome_role + "', welcome_enabled = '" + "1" + "';");
+    public static boolean setGreet(String user_id, String guild_id, String sound_id) {
+        return runQuery("INSERT INTO greeting (user_id, guild_id, sound_id) VALUES ('" + user_id + "', '" + guild_id + "', '" + sound_id + "') ON DUPLICATE KEY UPDATE sound_id = '" + sound_id + "';");
     }
 
-    public static boolean deleteWelcome(String guild_id, String bot_id) {
-        return runQuery("UPDATE alert SET welcome_message = NULL, welcome_channel = NULL, welcome_role = NULL, welcome_enabled = 0 WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "'"); 
-    }
-
-    public static boolean updateWelcomeChannel(String guild_id, String bot_id, String welcome_channel) {
-        return runQuery("UPDATE alert SET welcome_channel = '" + welcome_channel + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean updateWelcomeRole(String guild_id, String bot_id, String welcome_role) {
-        return runQuery("UPDATE alert SET welcome_role = '" + welcome_role + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean updateWelcomeMessage(String guild_id, String bot_id, String welcome_message) {
-        return runQuery("UPDATE alert SET welcome_message = '" + welcome_message + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean toggleWelcome(String guild_id, String bot_id, boolean toggle) {
-        return runQuery("UPDATE alert SET welcome_enabled = '" + (toggle ? "1" : "0") + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean hasLeave(String guild_id, String bot_id) {
-        return fetchJRow("SELECT leave_message FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "'").get("leave_message") != null;
-    }
-
-    public static ResultRow getLeave(String guild_id, String bot_id) {
-        return fetchJRow("SELECT leave_message, leave_channel, leave_enabled FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean setLeave(String guild_id, String bot_id, String leave_channel, String leave_message) {
-        return runQuery("INSERT INTO alert(guild_id, bot_id, leave_channel, leave_message, leave_enabled)"
-            + "VALUES('" + guild_id + "','" + bot_id + "','" + leave_channel + "','" + leave_message + "','" + "1" + "') "
-            + "ON DUPLICATE KEY UPDATE leave_channel = '" + leave_channel + "', leave_message = '" + leave_message + "', leave_enabled = '" + "1" + "';");
-    }
-
-    public static boolean deleteLeave(String guild_id, String bot_id) {
-        return runQuery("UPDATE alert SET leave_message = NULL, leave_channel = NULL, leave_enabled = 0 WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "'"); 
-    }
-
-    public static boolean updateLeaveChannel(String guild_id, String bot_id, String leave_message) {
-        return runQuery("UPDATE alert SET leave_message = '" + leave_message + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean updateLeaveMessage(String guild_id, String bot_id, String leave_message) {
-        return runQuery("UPDATE alert SET leave_message = '" + leave_message + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean toggleLeave(String guild_id, String bot_id, boolean toggle) {
-        return runQuery("UPDATE alert SET leave_enabled = '" + (toggle ? "1" : "0") + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean hasBoost(String guild_id, String bot_id) {
-        return fetchJRow("SELECT boost_message FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "'").get("boost_message") != null;
-    }
-
-    public static ResultRow getBoost(String guild_id, String bot_id) {
-        return fetchJRow("SELECT boost_message, boost_channel, boost_enabled FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean setBoost(String guild_id, String bot_id, String boost_channel, String boost_message) {
-        return runQuery("INSERT INTO alert(guild_id, bot_id, boost_channel, boost_message, boost_enabled)"
-            + "VALUES('" + guild_id + "','" + bot_id + "','" + boost_channel + "','" + boost_message + "','" + "1" + "') "
-            + "ON DUPLICATE KEY UPDATE boost_channel = '" + boost_channel + "', boost_message = '" + boost_message + "', boost_enabled = '" + "1" + "';");
-    }
-
-    public static boolean deleteBoost(String guild_id, String bot_id) {
-        return runQuery("UPDATE alert SET boost_message = NULL, boost_channel = NULL, boost_enabled = 0 WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "'"); 
-    }
-
-    public static boolean updateBoostChannel(String guild_id, String bot_id, String boost_message) {
-        return runQuery("UPDATE alert SET boost_message = '" + boost_message + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean updateBoostMessage(String guild_id, String bot_id, String boost_message) {
-        return runQuery("UPDATE alert SET boost_message = '" + boost_message + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean toggleBoost(String guild_id, String bot_id, boolean toggle) {
-        return runQuery("UPDATE alert SET boost_enabled = '" + (toggle ? "1" : "0") + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static ResultRow getLevelUp(String guild_id, String bot_id) {
-        return fetchJRow("SELECT levelup_message, levelup_enabled FROM alert WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean toggleLevelUp(String guild_id, String bot_id, boolean toggle) {
-        return runQuery("INSERT INTO guild_settings(guild_id, bot_id, exp_enabled) VALUES ('" + guild_id + "', '" + bot_id + "', '" + (toggle ? "1" : "0") + "') ON DUPLICATE KEY UPDATE exp_enabled = '" + (toggle ? "1" : "0") + "';");
+    public static boolean deleteGreet(String user_id, String guild_id) {
+        return runQuery("DELETE from greeting WHERE guild_id = '" + guild_id + "' AND user_id = '" + user_id + "';");
     }
     
-    public static boolean updateLevelupMessage(String guild_id, String bot_id, String levelup_message) {
-        return runQuery("INSERT INTO alert (guild_id, bot_id, levelup_message) VALUES ('" + guild_id + "', '" + bot_id + "', '" + levelup_message + "') ON DUPLICATE KEY UPDATE levelup_message = '" + levelup_message + "';");
+    public static boolean setBlacklistChannel(String blacklist_channel, String guild_id) {
+        return runQuery("UPDATE guild SET blacklist_channel = '" + blacklist_channel + "' WHERE guild_id = '" + guild_id +  "';");
     }
 
-    public static ResultRow getRoomSettings(String guild_id, String room_id) {
-        return fetchJRow("SELECT room_name, has_exp, exp_value, has_command_stats FROM alert WHERE guild_id = '" + guild_id + "' AND room_id = '" + room_id + "';");
+    public static boolean setBlacklistThreshold(String threshold, String guild_id) {
+        return runQuery("UPDATE guild SET threshold = '" + threshold + "' WHERE guild_id = '" + guild_id +  "';");
     }
 
-    public static boolean updateExpValue(String guild_id, String room_id, Double exp_value) {
-        return runQuery("INSERT INTO rooms_settings (guild_id, room_id, exp_value)" 
-            + " VALUES ('" + guild_id + "', '" + room_id + "', '" + exp_value + "')" 
-            + " ON DUPLICATE KEY UPDATE exp_value = " + exp_value + ";");
-    }
-
-    public static boolean toggleLevelUpChannel(String guild_id, String room_id, boolean toggle) {
-        return runQuery("INSERT INTO rooms_settings (guild_id, room_id, has_exp) "
-            + "VALUES ('" + guild_id + "', '" + room_id + "', '" + (toggle ? "1": "0") + "') "
-            + "ON DUPLICATE KEY UPDATE has_exp = " + (toggle ? "1": "0") +";");
-    }
-
-    public static boolean toggleBlacklist(String guild_id, String bot_id, boolean toggle) {
-        return runQuery("UPDATE guild_settings SET blacklist_enabled = '" + toggle + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean deleteRoom(String guild_id, String room_id) {
-        return runQuery("DELETE FROM rooms_settings WHERE guild_id = '" + guild_id + "' AND room_id = '" + room_id + "';");
-    }
-
-
-    public static boolean isExpEnabled(String guildId, String botId) {
-        return runQuery("SELECT exp_enabled FROM guild_settings WHERE guild_id = '" + guildId + "' AND bot_id = '" + botId + "';");
-    }
-
-
-    public static boolean setPrefix(String guild_id, String bot_id, String prefix) {
-        return runQuery("INSERT INTO guild_settings(guild_id, bot_id, prefix)" + "VALUES('" + guild_id + "','" + bot_id + "','" + prefix +"') ON DUPLICATE KEY UPDATE prefix = '" + prefix + "';");
-    }
-
-    public static boolean updatePrefix(String guild_id, String bot_id, String prefix) {
-        return runQuery("UPDATE guild_settings SET prefix = '" + prefix + "' WHERE guild_id = '" + guild_id + "' AND bot_id = '" + bot_id + "';");
-    }
-
-    public static boolean setGreet(String user_id, String guild_id, String bot_id, String sound_id) {
-        return runQuery("INSERT INTO greeting (user_id, guild_id, bot_id, sound_id) VALUES ('" + user_id + "', '" + guild_id + "', '" + bot_id + "', '" + sound_id + "') ON DUPLICATE KEY UPDATE sound_id = '" + sound_id + "';");
-    }
-
-    public static boolean deleteGreet(String user_id, String guild_id, String bot_id) {
-        return runQuery("DELETE from greeting WHERE guild_id = '" + guild_id + "' AND user_id = '" + user_id + "' AND bot_id = '" + bot_id + "';");
-    }
-    
-
-    public static boolean insertRewards(String guild_id, String role, String level, String message){
-        return runQuery("INSERT INTO rewards_table (guild_id, role_id, level, message_text) VALUES ('" + guild_id + "', '" + role + "', '" + level + "', '" + message + "');");
-    }
-    
-    public static QueryResult getRewards(String guild_id) {
-        return safJQuery("SELECT role_id, level, message_text FROM rewards_table WHERE guild_id = '" + guild_id + "' ORDER BY level DESC;");
-    }
-
-    public static ResultRow getReward(String guild_id, int level) {
-        return fetchJRow("SELECT role_id, message_text FROM rewards_table WHERE guild_id = '" + guild_id + "' and level = '" + level + "';");
-    }
-
-    public static boolean deleteReward(String role_id){
-        return runQuery("DELETE FROM rewards_table WHERE role_id = '" + role_id + "';");
-    }
-
-    public static boolean setBlacklistChannel(String blacklist_channel, String guild_id, String bot_id) {
-        return runQuery("UPDATE guild_settings SET blacklist_channel = '" + blacklist_channel + "' WHERE guild_id = '" + guild_id +  "' AND bot_id = '" + bot_id +  "';");
-    }
-
-    public static boolean setBlacklistThreshold(String threshold, String guild_id, String bot_id) {
-        return runQuery("UPDATE guild_settings SET threshold = '" + threshold + "' WHERE guild_id = '" + guild_id +  "' AND bot_id = '" + bot_id +  "';");
-    }
-
-    public static boolean enableBlacklist(String guild_id, String bot_id, String threshold, String blacklist_channel) {
-        return runQuery("INSERT INTO guild_settings(guild_id, bot_id, threshold, blacklist_channel, blacklist_enabled)" + "VALUES('" + guild_id + "','" + bot_id + "','" + threshold +"', '" + blacklist_channel + "', 1) ON DUPLICATE KEY UPDATE threshold = '" + threshold + "', blacklist_channel = '" + blacklist_channel + "', blacklist_enabled = 1;");
+    public static boolean enableBlacklist(String guild_id, String threshold, String blacklist_channel) {
+        return runQuery("INSERT INTO guild(guild_id, threshold, blacklist_channel, blacklist_enabled)" + "VALUES('" + guild_id + "','" + threshold +"', '" + blacklist_channel + "', 1) ON DUPLICATE KEY UPDATE threshold = '" + threshold + "', blacklist_channel = '" + blacklist_channel + "', blacklist_enabled = 1;");
     }
 
     public static boolean insertUserBlacklist(String user_id, String guild_id){
@@ -690,12 +533,12 @@ public class DatabaseHandler {
         return runQuery("DELETE FROM blacklist WHERE guild_id = '" + guild_id + "' AND user_id = '" + user_id + "'");
     }
 
-    public static QueryResult getGuildByThreshold(int threshold, String bot_id, String guild_id){
-        return safJQuery("SELECT guild_id, blacklist_channel, threshold FROM guild_settings WHERE blacklist_enabled == 1 AND threshold <= '" + threshold + "' AND blacklist_channel IS NOT NULL AND guild_id != '" + guild_id + "' AND bot_id = '" + bot_id + "'");
+    public static QueryResult getGuildByThreshold(int threshold, String guild_id){
+        return safJQuery("SELECT guild_id, blacklist_channel, threshold FROM guild WHERE blacklist_enabled = 1 AND threshold <= '" + threshold + "' AND blacklist_channel IS NOT NULL AND guild_id != '" + guild_id + "'");
     }
 
-    public static boolean insertCommand(String guild_id, String bot_id, String author_id, String command, String args){
-        return runQuery("INSERT INTO command_analytic(name, time, user_id, guild_id, bot_id, args) VALUES ('" + command + "', '" + new Timestamp(System.currentTimeMillis()) + "', '" + author_id + "', '"+ guild_id +"','"+ bot_id +"', '"+ args +"');");
+    public static boolean insertCommand(String guild_id, String author_id, String command, String args){
+        return runQuery("INSERT INTO command(name, time, user_id, guild_id, args) VALUES ('" + command + "', '" + new Timestamp(System.currentTimeMillis()) + "', '" + author_id + "', '"+ guild_id +"', '"+ fixSQL(args) +"');");
     }
 
     public static int getBannedTimes(String user_id){
@@ -706,10 +549,173 @@ public class DatabaseHandler {
         return fetchJRow("SELECT count(user_id) as times from blacklist WHERE guild_id = '" + guild_id + "'").getAsInt("times");
     }
 
-    public static ResultRow getGreet(String user_id, String guild_id, String bot_id) {
-        return fetchJRow("SELECT sound.id, sound.extension from greeting join sound on greeting.sound_id = sound.id WHERE greeting.user_id = '" + user_id + "' AND (greeting.guild_id = '" + guild_id + "' OR greeting.guild_id = '0') AND greeting.bot_id = '" + bot_id + "' ORDER BY CASE WHEN greeting.guild_id = '0' THEN 1 ELSE 0 END LIMIT 1;");
+    public static ResultRow getGreet(String user_id, String guild_id) {
+        return fetchJRow("SELECT sound.id, sound.extension from greeting join sound on greeting.sound_id = sound.id WHERE greeting.user_id = '" + user_id + "' AND (greeting.guild_id = '" + guild_id + "' OR greeting.guild_id = '0') ORDER BY CASE WHEN greeting.guild_id = '0' THEN 1 ELSE 0 END LIMIT 1;");
     }
 
+
+    public static boolean setAlertMessage(String ID, String message) {
+        try (PreparedStatement pstmt = c.prepareStatement("UPDATE alert SET message = ? WHERE ID = ?")) {
+            pstmt.setString(1, message);
+            pstmt.setString(2, ID);
+            int affectedRows = pstmt.executeUpdate();
+            c.commit();
+            return affectedRows > 0;
+        } catch (SQLException ex) {
+            try {
+                if(c != null) c.rollback();
+            } catch(SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            System.out.println(ex.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean setAlertChannel(String ID, String channel) {
+        return runQuery("UPDATE alert SET channel = '" + channel + "' WHERE ID = '" + ID + "';");
+    }
+
+    public static boolean setAlertEnabled(String ID, boolean toggle) {
+        return runQuery("UPDATE alert SET enabled = '" + (toggle ? 1 : 0) + "' WHERE ID = '" + ID + "';");
+    }
+
+    public static QueryResult getAlerts(String guild_id) {
+        return safJQuery("SELECT id, message, channel, enabled, type FROM alert WHERE guild_id = '" + guild_id + "';");
+    }
+
+    public static QueryResult getAlertsRoles(String guild_id) {
+        return safJQuery("SELECT r.id as row_id, a.id as alert_id, r.role_id as role_id  FROM alert_role as r JOIN alert as a ON r.alert_id = a.id WHERE a.guild_id = '" + guild_id + "';");
+    }
+
+    public static int createAlert(String guild_id, String message, String channelId, AlertType type) {
+        int id = 0;
+        try (Statement stmt = c.createStatement()) {
+            runQuery(stmt, "INSERT INTO alert(guild_id, message, channel, enabled, type) VALUES('" + guild_id + "','" + message + "','" + channelId + "', 1, '" + type.ordinal() + "');");
+            id = fetchJRow(stmt, "SELECT LAST_INSERT_ID() AS id; ").getAsInt("id");
+            c.commit();
+        } catch (SQLException ex) {
+            try {
+                if(c != null) c.rollback();
+            } catch(SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            System.out.println(ex.getMessage());
+        }
+        return id;
+    }
+
+    public static boolean createRewardData(String alertID, int level, boolean temporary) {
+        return runQuery("INSERT INTO alert_reward(alert_id, level, temporary) VALUES('" + alertID + "', '" + level + "', '" + (temporary ? 1 : 0) + "');");
+    }
+
+    public static QueryResult getRewardData(String guild_id) {
+        return safJQuery("SELECT r.id as id, a.id as alert_id, r.level as level, r.temporary as temporary FROM alert as a JOIN alert_reward as r ON a.id = r.alert_id WHERE a.guild_id = '" + guild_id + "';");
+    }
+
+    public static boolean deleteAlert(String valueOf) {
+        return runQuery("DELETE FROM alert WHERE id = '" + valueOf + "';");
+    }
+
+    public static boolean deleteAlertRoles(String valueOf) {
+        return runQuery("DELETE FROM alert_role WHERE alert_id = '" + valueOf + "';");
+    }
+
+    public static HashMap<Integer, String> createRolesAlert(String valueOf, String[] roles) {
+        
+        String values = "";
+        for(String role : roles) {
+            if(role != null) {
+                values += "('" + valueOf + "', '" + role + "'), ";
+            }
+        }
+
+        if (values.isEmpty()) {
+            return null;
+        }
+
+        values = values.substring(0, values.length() - 2);
+
+        if (deleteAlertRoles(valueOf) && runQuery("INSERT INTO alert_role(alert_id, role_id) VALUES " + values + ";")) {
+            HashMap<Integer, String> roleMap = new HashMap<>();
+            QueryResult result = safJQuery("SELECT id, role_id FROM alert_role WHERE alert_id = '" + valueOf + "';");
+            for(ResultRow row : result) {
+                roleMap.put(row.getAsInt("id"), row.get("role_id"));
+            }
+            return roleMap;
+        }
+
+        return null;
+                
+    }
+
+
+    public static int insertChannelData(long guild_id, long channel_id) {
+        int id = 0;
+        try (Statement stmt = c.createStatement()) {
+            runQuery(stmt, "INSERT INTO channel(guild_id, channel_id) VALUES('" + guild_id + "','" + channel_id + "');");
+            id = fetchJRow(stmt, "SELECT LAST_INSERT_ID() AS id; ").getAsInt("id");
+            c.commit();
+        } catch (SQLException ex) {
+            try {
+                if(c != null) c.rollback();
+            } catch(SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            System.out.println(ex.getMessage());
+        }
+        return id;
+    }
+
+    public static QueryResult getChannelData(String guild_id) {
+        return safJQuery("SELECT id, channel_id, exp_enabled, exp_modifier, stats_enabled FROM channel WHERE guild_id = '" + guild_id + "';");
+    }
+
+    public static boolean setChannelExpModifier(int ID, double exp_modifier) {
+        return runQuery("UPDATE channel SET exp_modifier = '" + exp_modifier + "' WHERE id = '" + ID + "';");
+    }
+
+    public static boolean setChannelExpEnabled(int ID, boolean toggle) {
+        return runQuery("UPDATE channel SET exp_enabled = '" + (toggle ? 1 : 0) + "' WHERE id = '" + ID + "';");
+    }
+
+    public static boolean deleteChannelData(int ID) {
+        return runQuery("DELETE FROM channel WHERE id = '" + ID + "';");
+    }
+
+
+    public static int insertUserData(long guild_id, long user_id) {
+        int id = 0;
+        try (Statement stmt = c.createStatement()) {
+            runQuery(stmt, "INSERT INTO user(guild_id, user_id) VALUES('" + guild_id + "','" + user_id + "');");
+            id = fetchJRow(stmt, "SELECT LAST_INSERT_ID() AS id; ").getAsInt("id");
+            c.commit();
+        } catch (SQLException ex) {
+            try {
+                if(c != null) c.rollback();
+            } catch(SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            System.out.println(ex.getMessage());
+        }
+        return id;
+    }
+
+    public static ResultRow getUserData(String guild_id, long user_id) {
+        return fetchJRow("SELECT id, experience, level, messages, update_time FROM user WHERE user_id = '"+ user_id +"' AND guild_id = '" + guild_id + "';");
+    }
+
+    public static boolean updateUserDataExperience(int ID, int experience, int level, int messages) {
+        return runQuery("UPDATE user SET experience = '" + experience + "', level = '" + level + "', messages = '" + messages + "' WHERE id = '" + ID + "';");
+    }
+
+    public static boolean updateUserDataUpdateTime(int ID, int updateTime) {
+        return runQuery("UPDATE user SET update_time = '" + updateTime + "' WHERE id = '" + ID + "';");
+    }
+
+    public static ResultRow getUserExp(String id, String id2) {
+        return fetchJRow("SELECT experience, level, messages FROM user WHERE user_id = '" + id + "' AND guild_id = '" + id2 + "'");
+    }
 
 
 
@@ -723,4 +729,21 @@ public class DatabaseHandler {
     public static String getCannuccia() {
         return ":cannuccia:";
     }
+
+    /**
+     * @deprecated
+     * deprecated this shit and use querySafe
+     * @param s
+     * @return
+     */
+    public static String fixSQL(String s){
+        s = s.replace("\"", "\\\"");
+        s = s.replace("\'", "\\\'");
+        return s;
+    }
+
+    public static Connection getConnection(){
+        return c;
+    }
+
 }

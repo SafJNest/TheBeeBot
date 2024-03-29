@@ -3,15 +3,18 @@ package com.safjnest.Utilities.EventHandlers;
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.safjnest.Bot;
 import com.safjnest.Commands.League.Livegame;
 import com.safjnest.Commands.League.Opgg;
 import com.safjnest.Commands.League.Summoner;
-import com.safjnest.SlashCommands.ManageGuild.RewardsSlash;
+import com.safjnest.Commands.Queue.Queue;
 import com.safjnest.Utilities.Audio.PlayerManager;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Audio.TrackScheduler;
+import com.safjnest.Utilities.Guild.Alert.RewardData;
 import com.safjnest.Utilities.LOL.RiotHandler;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 import com.safjnest.Utilities.SQL.QueryResult;
@@ -22,6 +25,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -31,14 +35,11 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
-import net.dv8tion.jda.api.managers.AudioManager;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import no.stelar7.api.r4j.pojo.lol.spectator.SpectatorParticipant;
@@ -48,11 +49,6 @@ public class EventButtonHandler extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String buttonId = event.getButton().getId();
-        
-        if(buttonId.startsWith("rewards-")){
-            rewardsButtonEvent(event);
-            return;
-        }
 
         event.deferEdit().queue();
 
@@ -85,8 +81,246 @@ public class EventButtonHandler extends ListenerAdapter {
 
         else if(buttonId.startsWith("soundboard-"))
             soundboardEvent(event);
+
+        else if(buttonId.startsWith("queue-"))
+            queue(event);
+        
+        else if (buttonId.startsWith("reward-"))
+            reward(event);
     }
 
+
+    public void reward(ButtonInteractionEvent event) {
+        String args = event.getButton().getId().split("-")[1];
+
+        Guild guild = event.getGuild();
+
+        Button left = Button.primary("reward-left", "<-");
+        Button right = Button.primary("reward-right", "->");
+        Button center = null;
+
+        String level = "";
+        for (Button b : event.getMessage().getButtons()) {
+            if (b.getLabel().startsWith("Level")) {
+                level = b.getLabel().substring(b.getLabel().indexOf(":") + 2);
+            }
+        }
+        
+        switch (args) {
+            case "right":
+                RewardData nextReward = Bot.getGuildData(guild.getId()).getHigherReward(Integer.parseInt(level));
+                RewardData nextNextReward = Bot.getGuildData(guild.getId()).getHigherReward(nextReward.getLevel());
+                
+                if (nextNextReward == null) {
+                    right = right.asDisabled();
+                    right = right.withStyle(ButtonStyle.DANGER);
+                }
+
+                center = Button.primary("center", "Level: " + nextReward.getLevel());
+                center = center.withStyle(ButtonStyle.SUCCESS);
+                center = center.asDisabled();
+                event.getMessage().editMessageEmbeds(nextReward.getSampleEmbed(guild).build())
+                        .setActionRow(left, center, right)
+                        .queue();
+                break;
+
+            case "left":
+                
+                RewardData previousRewardData = Bot.getGuildData(guild.getId()).getLowerReward(Integer.parseInt(level));
+                RewardData previousPreviousRewardData = Bot.getGuildData(guild.getId()).getLowerReward(previousRewardData.getLevel());
+                if (previousPreviousRewardData == null) {
+                    left = left.asDisabled();
+                    left = left.withStyle(ButtonStyle.DANGER);
+                }
+
+                center = Button.primary("center", "Level: " + previousRewardData.getLevel());
+                center = center.withStyle(ButtonStyle.SUCCESS);
+                center = center.asDisabled();
+                event.getMessage().editMessageEmbeds(previousRewardData.getSampleEmbed(guild).build())
+                        .setActionRow(left, center, right)
+                        .queue();
+
+
+                break;
+        }
+    }
+
+    public void queue(ButtonInteractionEvent event) {
+        String args = event.getButton().getId().split("-")[1];
+
+        Guild guild = event.getGuild();
+        User self = event.getJDA().getSelfUser();
+
+        PlayerManager pm = PlayerManager.get();
+        TrackScheduler ts = pm.getGuildMusicManager(guild, self).getTrackScheduler();
+
+
+        int previousIndex = ts.getIndex() - 11;
+        if(previousIndex < 0)
+            previousIndex = 0;
+
+        int nextIndex = ts.getIndex() + 11;
+        if(nextIndex > ts.getQueue().size())
+            nextIndex = ts.getQueue().size() - 1;
+
+        // for (Button b : event.getMessage().getButtons()) {
+        //     if(b.getId().split("-")[1].equalsIgnoreCase("previouspage"))
+        //         previousIndex = Integer.parseInt(b.getId().split("-", 3)[2]);
+
+        //     if(b.getId().split("-")[1].equalsIgnoreCase("nextpage"))
+        //         nextIndex = Integer.parseInt(b.getId().split("-", 3)[2]);
+            
+        // }
+
+        Button repeat = Button.secondary("queue-repeat", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "repeat"));  
+        Button previous = Button.primary("queue-previous", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "previous"));
+        Button play = Button.primary("queue-pause", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "pause"));
+        Button next = Button.primary("queue-next", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "next"));
+        Button shurima = Button.secondary("queue-shurima", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "shuffle"));
+
+        
+
+        java.util.List<LayoutComponent> rows = new ArrayList<>();
+        int startIndex = ts.getIndex(); 
+
+        switch (args) {
+            case "repeat":
+                ts.setRepeat(!ts.isRepeat());
+            
+                break;
+            case "previouspage":
+                startIndex = Integer.parseInt(event.getButton().getId().split("-", 3)[2]);
+                if(startIndex < 0)
+                    startIndex = 0;
+                
+                previousIndex = (startIndex == ts.getIndex() ? 0 : startIndex - 11);
+                nextIndex = startIndex + 11;
+
+                break;
+            case "previous":
+                if(event.getButton().getStyle() == ButtonStyle.DANGER)
+                    break;
+
+                ts.playForcePrev();
+                startIndex = ts.getIndex();
+                break;
+            case "pause":
+
+                ts.pause(true);
+                break;
+            case "play":
+
+                ts.pause(false);
+                break;
+            case "next":
+                if(event.getButton().getStyle() == ButtonStyle.DANGER)
+                    break;
+
+                ts.playForceNext();
+                startIndex = ts.getIndex();
+                break;
+            case "nextpage":
+                startIndex = Integer.parseInt(event.getButton().getId().split("-")[2]);
+
+                nextIndex = startIndex + 11;
+                previousIndex = startIndex - 11;
+
+                break;
+            case "shurima":
+                if(!ts.isShuffled()) 
+                    ts.shuffleQueue();
+                else
+                    ts.unshuffleQueue();
+                    
+                startIndex = ts.getIndex();
+                previousIndex = startIndex - 11;
+                if(previousIndex < 0)
+                    previousIndex = 0;
+
+                nextIndex = startIndex + 11;
+                if(nextIndex > ts.getQueue().size())
+                    nextIndex = ts.getQueue().size() - 1;
+                
+                break;
+            case "clear":
+                ts.clearQueue();
+                break;
+            default:
+            
+                break;
+        }
+
+        LinkedList<AudioTrack> queue = ts.getQueue(); 
+        
+        if(ts.isRepeat()) {
+            repeat = repeat.withStyle(ButtonStyle.DANGER);
+        }
+            
+        
+        if(ts.isShuffled()) {
+            shurima = shurima.withStyle(ButtonStyle.DANGER);
+        }
+
+        if(ts.getIndex() == 0) {
+            previous = previous.withStyle(ButtonStyle.DANGER);
+            previous = previous.asDisabled();
+        }
+
+        if(ts.getIndex() == ts.getQueue().size() - 1) {
+            next = next.withStyle(ButtonStyle.DANGER);
+            next = next.asDisabled();
+        }
+
+        if(!ts.isPaused()) {
+            play = Button.primary("queue-pause", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "pause"));
+        } else {
+            play = Button.primary("queue-play", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "play"));
+        }
+        
+        rows.add(ActionRow.of(
+            repeat,
+            previous,
+            play,
+            next,
+            shurima
+        ));
+
+
+        Button previousPage = Button.secondary("queue-previouspage-" + previousIndex, " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "leftarrow"));
+        Button nextPage = Button.secondary("queue-nextpage-" + nextIndex, " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "rightarrow"));
+
+        if(startIndex > ts.getQueue().size()) {
+            startIndex = ts.getQueue().size() - 1;
+            nextPage = nextPage.asDisabled();
+        }
+        
+        if(startIndex < ts.getIndex() && (startIndex + 11) > ts.getIndex()) { 
+            nextIndex = ts.getIndex();
+        }
+        else {
+            nextIndex = startIndex + 11;
+        }
+
+        if(previousIndex < 0) {
+            previousPage = previousPage.asDisabled();
+        }
+
+        nextPage = nextPage.withId("queue-nextpage-" + nextIndex);
+        previousPage = previousPage.withId("queue-previouspage-" + previousIndex);
+
+        rows.add(ActionRow.of(
+            Button.secondary("queue-blank", " ").asDisabled().withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "blank")),
+            previousPage,
+            Button.secondary("queue-blank1", " ").asDisabled().withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "blank")),
+            nextPage,
+            Button.secondary("queue-clear", " ").withEmoji(RiotHandler.getRichEmoji(event.getJDA(), "bin"))
+        ));
+
+        event.getMessage()
+                .editMessageEmbeds(Queue.getEmbed(event.getJDA(), guild, queue, startIndex).build())
+                .setComponents(rows)
+                .queue();
+    }
 
     public void lolButtonEvent(ButtonInteractionEvent event) {
         String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
@@ -372,8 +606,7 @@ public class EventButtonHandler extends ListenerAdapter {
                 event.getUser().getAvatarUrl());
         eb.setTitle("List of " + event.getGuild().getName());
         eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
-        eb.setColor(Color.decode(
-                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
         eb.setDescription("Total Sound: " + sounds.size());
         
         
@@ -460,8 +693,7 @@ public class EventButtonHandler extends ListenerAdapter {
                 event.getUser().getAvatarUrl());
         eb.setTitle("List of " + event.getJDA().getUserById(userId).getName());
         eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
-        eb.setColor(Color.decode(
-                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
         eb.setDescription("Total Sound: " + sounds.size());
         
 
@@ -511,56 +743,6 @@ public class EventButtonHandler extends ListenerAdapter {
         }
     }
 
-    private void rewardsButtonEvent(ButtonInteractionEvent event) {
-        if(!event.getMember().hasPermission(Permission.ADMINISTRATOR)){
-            event.deferReply(true).addContent("You don't have the permission to do that.").queue();
-            return;
-        }
-        String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
-        
-        switch (args){
-            case "add":
-                TextInput subject = TextInput.create("rewards-lvl", "Level", TextInputStyle.SHORT)
-                    .setPlaceholder("1")
-                    .setMinLength(1)
-                    .setMaxLength(100) // or setRequiredRange(10, 100)
-                    .build();
-
-                TextInput body = TextInput.create("rewards-message", "Message (write // for no message)", TextInputStyle.PARAGRAPH)
-                        .setPlaceholder("Contratulation #user you have reached level #level so you gain the role: #role")
-                        .setMinLength(2)
-                        .setMaxLength(1000)
-                        .build();
-                
-                TextInput role = TextInput.create("rewards-role", "Role (@rolename)", TextInputStyle.SHORT)
-                        .setPlaceholder("@king")
-                        .setMinLength(2)
-                        .setMaxLength(20)
-                        .build();
-
-                Modal modal = Modal.create("rewards", "Set a new Reward")
-                        .addComponents(ActionRow.of(subject), ActionRow.of(body), ActionRow.of(role))
-                        .build();
-                event.replyModal(modal).queue();
-            break;
-
-            default:
-                if(event.getButton().getId().startsWith("rewards-role-")){
-                    if(event.getButton().getStyle() == ButtonStyle.DANGER){
-                        String roleString = event.getButton().getId().split("-")[2];
-                        DatabaseHandler.deleteReward(roleString);
-                        event.deferEdit().queue();
-                        
-                        RewardsSlash.createEmbed(event.getMessage()).queue();
-                        return;
-                    }
-                    //modify button style into danger
-                    
-                    event.editButton(event.getButton().withStyle(ButtonStyle.DANGER)).queue();
-                }
-            break;
-        }
-    }
 
     private void banUserEvent(ButtonInteractionEvent event) {
         if(!event.getMember().hasPermission(Permission.BAN_MEMBERS)){
@@ -580,8 +762,7 @@ public class EventButtonHandler extends ListenerAdapter {
         eb.setAuthor(event.getUser().getName());
         eb.setTitle(theGuy.getUser().getName() + " has been banned");
         eb.setThumbnail(theGuy.getUser().getAvatarUrl());
-        eb.setColor(Color.decode(
-                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
         Button pardon = Button.primary("unban-" + theGuy.getId(), "Pardon");
         event.getGuild().ban(theGuy, 0, TimeUnit.SECONDS).reason("Entered the blacklist").queue(
                     (e) -> event.getMessage().editMessageEmbeds(eb.build()).setActionRow(pardon).queue(),
@@ -610,8 +791,7 @@ public class EventButtonHandler extends ListenerAdapter {
         eb.setAuthor(event.getUser().getName());
         eb.setTitle(theGuy.getUser().getName() + " has been kicked");
         eb.setThumbnail(theGuy.getUser().getAvatarUrl());
-        eb.setColor(Color.decode(
-                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
         event.getGuild().kick(theGuy).reason("Entered the blacklist").queue(
             (e) -> event.getMessage().editMessageEmbeds(eb.build()).setComponents().queue(),
             new ErrorHandler().handle(
@@ -640,8 +820,7 @@ public class EventButtonHandler extends ListenerAdapter {
         eb.setAuthor(event.getUser().getName());
         eb.setTitle(theGuy.getName() + " has been unbanned");
         eb.setThumbnail(theGuy.getAvatarUrl());
-        eb.setColor(Color.decode(
-                BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
 
         event.getGuild().unban(theGuy).queue(
             (e) -> event.getMessage().editMessageEmbeds(eb.build()).setComponents().queue(), 
@@ -653,41 +832,30 @@ public class EventButtonHandler extends ListenerAdapter {
 
 
     private void soundboardEvent(ButtonInteractionEvent event){
-
+        Guild guild = event.getGuild();
+        User self = event.getJDA().getSelfUser();
         String args = event.getButton().getId().substring(event.getButton().getId().indexOf("-") + 1);
-        PlayerManager pm = new PlayerManager();
-
-        TextChannel channel = event.getChannel().asTextChannel();
-
-        AudioChannel myChannel = event.getMember().getVoiceState().getChannel();
-        AudioManager audioManager = event.getGuild().getAudioManager();
-        audioManager.setSendingHandler(pm.getAudioHandler());
-        audioManager.openAudioConnection(myChannel);
-
-        if(pm.getPlayer().getPlayingTrack() != null){
-            //pm.stopAudioHandler();
-        }
-        
+        TextChannel textChannel = event.getChannel().asTextChannel();
+        AudioChannel audioChannel = event.getMember().getVoiceState().getChannel();
         String path = "rsc" + File.separator + "SoundBoard"+ File.separator + args;
-        pm.getAudioPlayerManager().loadItem(path, new AudioLoadResultHandler() {
+
+        PlayerManager pm = PlayerManager.get();
+        pm.loadItemOrdered(guild, self, path, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
-                pm.getTrackScheduler().addQueue(track);
+                pm.getGuildMusicManager(guild, self).getTrackScheduler().playForce(track);
+                guild.getAudioManager().openAudioConnection(audioChannel);
+
+                String id = args.split("\\.")[0];
+                DatabaseHandler.updateUserPlays(id, event.getMember().getId());
             }
 
             @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
-                /*
-                 * for (AudioTrack track : playlist.getTracks()) {
-                 * trackScheduler.queue(track);
-                 * }
-                 */
-            }
+            public void playlistLoaded(AudioPlaylist playlist) {}
             
             @Override
             public void noMatches() {
-                channel.sendMessage("File not found").queue();
-                pm.getTrackScheduler().addQueue(null);
+                textChannel.sendMessage("File not found").queue();
             }
 
             @Override
@@ -695,11 +863,6 @@ public class EventButtonHandler extends ListenerAdapter {
                 System.out.println("error: " + throwable.getMessage());
             }
         });
-
-        pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
-        
-        String id = args.split("\\.")[0];
-        DatabaseHandler.updateUserPlays(id, event.getMember().getId());
         
     }
 

@@ -1,6 +1,6 @@
 package com.safjnest.Utilities.Controller;
 
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
+
 import com.safjnest.Utilities.Guild.GuildSettings;
 
 import net.dv8tion.jda.api.JDA;
@@ -12,13 +12,12 @@ public class Postman {
 
     private GuildSettings gs;
 
-    private BotSettingsHandler bs;
 
-    public Postman(JDA jda, GuildSettings gs, BotSettingsHandler bs){
+
+    public Postman(JDA jda, GuildSettings gs){
 
         this.jda = jda;
         this.gs = gs;
-        this.bs = bs;
 
 
     }
@@ -28,7 +27,6 @@ public class Postman {
          * Smurfing
          */
         gs.doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed();
-        bs.doSomethingSoSunxIsNotHurtBySeeingTheFuckingThingSayItsNotUsed();
     }
 
     public String getServerList(String userId, String ids){

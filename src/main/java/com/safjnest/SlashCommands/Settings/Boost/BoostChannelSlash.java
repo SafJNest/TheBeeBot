@@ -4,8 +4,11 @@ import java.util.Arrays;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.Guild.GuildData;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
 
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -37,14 +40,17 @@ public class BoostChannelSlash extends SlashCommand{
         }
 
         String guildId = event.getGuild().getId();
-        String botId = event.getJDA().getSelfUser().getId();
 
-        if(!DatabaseHandler.hasBoost(guildId, botId)) {
+        GuildData gs = Bot.getGuildData(guildId);
+
+        AlertData boost = gs.getAlert(AlertType.BOOST);   
+
+        if(boost == null) {
             event.deferReply(true).addContent("This guild doesn't have a boost message. Use the create command.").queue();
             return;
         }
 
-        if(!DatabaseHandler.updateBoostChannel(guildId, botId, channelID)) {
+        if(!boost.setAlertChannel(channelID)) {
             event.deferReply(true).addContent("Something went wrong.").queue();
             return;
         }

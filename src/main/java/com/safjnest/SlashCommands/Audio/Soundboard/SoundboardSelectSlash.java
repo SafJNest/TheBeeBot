@@ -7,8 +7,8 @@ import java.awt.Color;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 import com.safjnest.Utilities.SQL.QueryResult;
 
@@ -50,7 +50,7 @@ public class SoundboardSelectSlash extends SlashCommand{
         eb.setThumbnail(event.getJDA().getSelfUser().getAvatarUrl());
         eb.setTitle("Soundboard: " + soundboardName);
         eb.setDescription("Press a button to play a sound");
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
         
         List<LayoutComponent> rows = new ArrayList<>();
         List<Button> row = new ArrayList<>();

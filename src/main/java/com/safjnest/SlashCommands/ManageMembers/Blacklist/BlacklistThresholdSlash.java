@@ -6,7 +6,6 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.Guild.GuildSettings;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -35,13 +34,12 @@ public class BlacklistThresholdSlash extends SlashCommand{
     protected void execute(SlashCommandEvent event) {
         String threshold = event.getOption("threshold").getAsString();
 
-        if(!DatabaseHandler.setBlacklistThreshold(threshold, event.getGuild().getId(), event.getJDA().getSelfUser().getId())) {
+        if(!gs.getServer(event.getGuild().getId()).setThreshold(Integer.parseInt(threshold))) {
             event.deferReply(true).addContent("Something went wrong.").queue();
             return;
         }
         
         event.deferReply(false).addContent("Blacklist threshold set to " + threshold + ".\n").queue();
         
-        gs.getServer(event.getGuild().getId()).setThreshold(Integer.parseInt(threshold));
     }
 }

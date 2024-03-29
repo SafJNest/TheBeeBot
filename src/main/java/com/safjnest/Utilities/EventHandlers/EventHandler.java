@@ -4,13 +4,19 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import com.safjnest.Commands.League.Summoner;
-import com.safjnest.SlashCommands.ManageGuild.RewardsSlash;
 import com.safjnest.Utilities.Audio.PlayerManager;
+import com.safjnest.Utilities.Guild.BlacklistData;
+import com.safjnest.Utilities.Guild.GuildData;
 import com.safjnest.Utilities.Guild.GuildSettings;
-import com.safjnest.Utilities.LOL.Augment;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertKey;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
+import com.safjnest.Utilities.Guild.Alert.RewardData;
+import com.safjnest.Utilities.LOL.AugmentData;
 import com.safjnest.Utilities.LOL.RiotHandler;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 import com.safjnest.Utilities.SQL.QueryResult;
@@ -23,10 +29,12 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
@@ -43,7 +51,8 @@ import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.Command.Choice;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import net.dv8tion.jda.api.managers.AudioManager;
+
+
 
 /**
  * This class handles all events that could occur during the listening:
@@ -71,68 +80,57 @@ public class EventHandler extends ListenerAdapter {
      */
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
-        AudioChannel ac = e.getChannelJoined();
-        AudioChannel bebyc = e.getGuild().getAudioManager().getConnectedChannel();
+        Guild guild = e.getGuild();
+        User self = e.getJDA().getSelfUser();
+        AudioChannel cj = e.getChannelJoined();
+        AudioChannel cl = e.getChannelLeft();
+        AudioChannel bebyc = guild.getAudioManager().getConnectedChannel();
 
-        if((e.getGuild().getAudioManager().isConnected() && e.getChannelLeft() != null) &&
-            (e.getGuild().getAudioManager().getConnectedChannel().getId().equals(e.getChannelLeft().getId())) &&
-            (e.getChannelLeft().getMembers().size() == 1)){
-            e.getGuild().getAudioManager().closeAudioConnection();
+        if(e.getMember().getId().equals(self.getId()) && cj == null) {
+            PlayerManager.get().getGuildMusicManager(guild, self).getTrackScheduler().clearQueue();
         }
 
-
-        if(e.getJDA().getUserById(e.getMember().getId()).isBot() || ac == null)
-            return;
-
-        if(bebyc != null && ac.getId().equals(bebyc.getId()) || bebyc == null){
+        if((bebyc != null && cl != null) && (bebyc.getId().equals(cl.getId()))
+            && (cl.getMembers().stream().filter(member -> !member.getUser().isBot()).count() == 0)) {
+                guild.getAudioManager().closeAudioConnection();
+                PlayerManager.get().getGuildMusicManager(guild, self).getTrackScheduler().clearQueue();
+        }
+        
+        if(cj != null && ((bebyc != null && cj.getId().equals(bebyc.getId())) || bebyc == null)) {
             Member theGuy = e.getMember();
-            ResultRow sound = DatabaseHandler.getGreet(theGuy.getId(), e.getGuild().getId(), e.getJDA().getSelfUser().getId());
+            ResultRow sound = DatabaseHandler.getGreet(theGuy.getId(), guild.getId());
             if(sound.emptyValues())
                 return;
 
-            PlayerManager pm = new PlayerManager();
-            AudioManager audioManager = e.getGuild().getAudioManager();
-            audioManager.setSendingHandler(pm.getAudioHandler());
-            audioManager.openAudioConnection(ac);
-
-            if(pm.getPlayer().getPlayingTrack() != null){
-                //pm.stopAudioHandler();
-            }
+            PlayerManager pm = PlayerManager.get();
 
             String path = "rsc" + File.separator + "SoundBoard"+ File.separator + sound.get("id") + "." + sound.get("extension");
-            pm.getAudioPlayerManager().loadItem(path, new AudioLoadResultHandler() {
+
+            pm.loadItemOrdered(guild, self, path, new AudioLoadResultHandler() {
                 @Override
                 public void trackLoaded(AudioTrack track) {
-                    pm.getTrackScheduler().addQueue(track);
+                    pm.getGuildMusicManager(guild, self).getTrackScheduler().playForce(track);
+                    guild.getAudioManager().openAudioConnection(cj);
                 }
 
                 @Override
-                public void playlistLoaded(AudioPlaylist playlist) {
-                    /*
-                    * for (AudioTrack track : playlist.getTracks()) {
-                    * trackScheduler.queue(track);
-                    * }
-                    */
-                }
+                public void playlistLoaded(AudioPlaylist playlist) {}
                 
                 @Override
-                public void noMatches() {
-                    pm.getTrackScheduler().addQueue(null);
-                }
+                public void noMatches() {}
 
                 @Override
                 public void loadFailed(FriendlyException throwable) {
                     System.out.println("error: " + throwable.getMessage());
                 }
             });
-
-            pm.getPlayer().playTrack(pm.getTrackScheduler().getTrack());
         }
     }
 
     @Override
     public void onGuildJoin(GuildJoinEvent event){
-        DatabaseHandler.insertGuild(event.getGuild().getId(), event.getJDA().getSelfUser().getId(), PREFIX);
+        System.out.println("[CACHE] Pushing new Guild into Database=> " + event.getGuild().getId());
+        DatabaseHandler.insertGuild(event.getGuild().getId(), PREFIX);
     }
 
 
@@ -144,16 +142,19 @@ public class EventHandler extends ListenerAdapter {
             return;
         String commandName = event.getName() + "Slash";
         String args = event.getOptions().toString();
-        DatabaseHandler.insertCommand(event.getGuild().getId(), event.getJDA().getSelfUser().getId(), event.getMember().getId(), commandName, args);
+        DatabaseHandler.insertCommand(event.getGuild().getId(), event.getMember().getId(), commandName, args);
     }
 
 
+    /**
+     * TODO: rifare questa merda
+     */
     @Override
     public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent e) {
         ArrayList<Choice> choices = new ArrayList<>();
         String name = e.getName();
-
-        if(e.getFullCommandName().equals("soundboard create"))
+        
+        if(e.getFullCommandName().equals("soundboard create") || e.getFocusedOption().getName().startsWith("sound-"))
             name = "play";
         
         else if(e.getFocusedOption().getName().equals("sound_add"))
@@ -162,7 +163,7 @@ public class EventHandler extends ListenerAdapter {
         else if(e.getFocusedOption().getName().equals("sound_remove"))
             name = "sound_remove";
 
-        else if(e.getFullCommandName().equals("soundboard select") || e.getFullCommandName().equals("soundboard add") || e.getFullCommandName().equals("soundboard remove") || e.getFullCommandName().equals("soundboard delete"))
+        else if(e.getFullCommandName().equals("soundboard select") || e.getFocusedOption().getName().equals("soundboard_name") || e.getFullCommandName().equals("soundboard remove") || e.getFullCommandName().equals("soundboard delete"))
             name = "soundboard_select";
         
         else if(e.getFullCommandName().equals("customizesound"))
@@ -174,6 +175,16 @@ public class EventHandler extends ListenerAdapter {
         else if(e.getFullCommandName().equals("TTS"))
             name = "tts";
         
+        else if(e.getFocusedOption().getName().equals("role_remove")) 
+            name = "alert_role";
+        
+        else if (e.getFocusedOption().getName().equals("reward_level")) 
+            name = "rewards_level";
+        
+            else if (e.getFocusedOption().getName().equals("reward_roles")) 
+            name = "reward_roles";
+        
+             
         switch (name) {
             case "play":
                 if (e.getFocusedOption().getValue().equals("")) {
@@ -227,7 +238,7 @@ public class EventHandler extends ListenerAdapter {
                 break;
 
             case "infoaugment":
-                List<Augment> augments = RiotHandler.getAugments();
+                List<AugmentData> augments = RiotHandler.getAugments();
                 if (e.getFocusedOption().getValue().equals("")) {
                     Collections.shuffle(augments);
                     for (int i = 0; i < 10; i++)
@@ -277,7 +288,7 @@ public class EventHandler extends ListenerAdapter {
 
             case "greet":
                 if (e.getFocusedOption().getValue().equals("")) {
-                    for (ResultRow greet : DatabaseHandler.getlistGuildSounds(e.getGuild().getId()))
+                    for (ResultRow greet : DatabaseHandler.getlistGuildSounds(e.getGuild().getId(), 25))
                         choices.add(new Choice(greet.get("name"), greet.get("id")));
                 } else {
                     for (ResultRow greet : DatabaseHandler.getFocusedListUserSounds(e.getUser().getId(), e.getGuild().getId(), e.getFocusedOption().getValue()))
@@ -292,64 +303,123 @@ public class EventHandler extends ListenerAdapter {
 
                 }
             break;
+            case "jumpto":
+                List<AudioTrack> queue = PlayerManager.get().getGuildMusicManager(e.getGuild(), e.getJDA().getSelfUser()).getTrackScheduler().getQueue();
+                if (e.getFocusedOption().getValue().equals("")) {
+                    //Collections.shuffle(queue);
+                    for (int i = 0; i < queue.size() && i < 10; i++)
+                        choices.add(new Choice(queue.get(i).getInfo().title, String.valueOf(i + 1)));
+                } else {
+                    String query = e.getFocusedOption().getValue().toLowerCase();
+
+                    int max = 0;
+                    for (int i = 0; i < queue.size() && max < 10; i++) {
+                        String title = queue.get(i).getInfo().title.toLowerCase();
+                        if (title.contains(query)) {
+                            choices.add(new Choice("[" + (i+1) +"] " + queue.get(i).getInfo().title, String.valueOf(i)));
+                            max++;
+                        }
+                    }
+                }
+            case "alert_role":
+                AlertData alert = gs.getServer(e.getGuild().getId()).getAlert(AlertType.WELCOME);
+                if (alert != null && alert.getRoles() != null) {
+                    HashMap<Integer, String> alertRoles = alert.getRoles();
+                    List<Role> roles = new ArrayList<>();
+                    for (Role r : e.getGuild().getRoles()) {
+                        if (alertRoles.containsValue(r.getId()))
+                            roles.add(r);
+                    }
+                    
+                    Collections.shuffle(roles);
+                    if (e.getFocusedOption().getValue().equals("")) {
+                        for (int i = 0; i < roles.size() && i < 10; i++)
+                            choices.add(new Choice(roles.get(i).getName(), roles.get(i).getId()));
+                    } else {
+                        for (Role role : roles) {
+                            if (role.getName().toLowerCase().contains(e.getFocusedOption().getValue().toLowerCase()))
+                                choices.add(new Choice(role.getName(), role.getId()));
+                        }
+                    
+                    }
+                }
+                break;
+            case "rewards_level":
+                HashMap<AlertKey, AlertData> alerts = gs.getServer(e.getGuild().getId()).getAlerts();
+                List<String> levels = new ArrayList<>();
+                for (AlertData data : alerts.values()) {
+                    if (data.getType() == AlertType.REWARD)
+                        levels.add(String.valueOf(((RewardData) data).getLevel()));
+                }
+                if (e.getFocusedOption().getValue().equals("")) {
+                    Collections.shuffle(levels);
+                    for (int i = 0; i < levels.size() && i < 10; i++)
+                        choices.add(new Choice(levels.get(i), levels.get(i)));
+                } else {
+                    for (String level : levels) {
+                        if (level.startsWith(e.getFocusedOption().getValue()))
+                            choices.add(new Choice(level, level));
+                    }
+                }
+                break;
+            case "reward_roles":
+                if (e.getOption("reward_level") == null)
+                    return;
+                String rewardLevel = e.getOption("reward_level").getAsString();
+                RewardData reward = gs.getServer(e.getGuild().getId()).getAlert(AlertType.REWARD, Integer.parseInt(rewardLevel));
+                if (reward != null && reward.getRoles() != null) {
+                    HashMap<Integer, String> rewardRoles = reward.getRoles();
+                    List<Role> roles = new ArrayList<>();
+                    for (Role r : e.getGuild().getRoles()) {
+                        if (rewardRoles.containsValue(r.getId()))
+                            roles.add(r);
+                    }
+                    Collections.shuffle(roles);
+                    if (e.getFocusedOption().getValue().equals("")) {
+                        for (int i = 0; i < roles.size() && i < 10; i++)
+                            choices.add(new Choice(roles.get(i).getName(), roles.get(i).getId()));
+                    } else {
+                        for (Role role : roles) {
+                            if (role.getName().toLowerCase().contains(e.getFocusedOption().getValue().toLowerCase()))
+                                choices.add(new Choice(role.getName(), role.getId()));
+                        }
+                    }
+                }
+                break;
         }
         e.replyChoices(choices).queue();
     }
 
     @Override
-    public void onModalInteraction(ModalInteractionEvent event) {
-        if(event.getModalId().startsWith("rewards")){
-            String role = event.getValue("rewards-role").getAsString();
-            String lvl = event.getValue("rewards-lvl").getAsString();
-            String msg = event.getValue("rewards-message").getAsString();
-
-            if(msg.equals("//")) 
-                msg = null;
-            try {
-                role = event.getGuild().getRolesByName(role.substring(1), true).get(0).getId();
-            } catch (Exception e) {
-                event.reply("Role not found").queue();
-                return;
-            }
-
-            DatabaseHandler.insertRewards(event.getGuild().getId(), role, lvl, msg);
-            event.deferEdit().queue();
-            RewardsSlash.createEmbed(event.getMessage()).queue();
-        }
-    }
+    public void onModalInteraction(ModalInteractionEvent event) { }
 
     /**
      * On join of a user (to make the bot welcome the new member)
      */
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-        /**
-         * Welcome message 
-         */
         MessageChannel channel = null;
         User newGuy = event.getUser();
-        ResultRow alert = DatabaseHandler.getAlert(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
 
-        String notNullPls = alert.get("welcome_channel");
-        if (notNullPls != null && alert.getAsBoolean("welcome_enabled")){
-            channel = event.getGuild().getTextChannelById(notNullPls);
-            String message = alert.get("welcome_message");
-
-            message = message.replace("#user", newGuy.getAsMention());
+        AlertData welcome = gs.getServer(event.getGuild().getId()).getAlert(AlertType.WELCOME);
+        if(welcome != null && welcome.isValid()) {
+            String channel_id = welcome.getChannelId();
+    
+            channel = event.getGuild().getTextChannelById(channel_id);
+            String message = welcome.getMessage().replace("#user", newGuy.getAsMention());
+    
             channel.sendMessage(message).queue();
-
-            if(alert.get("welcome_role") != null)
-                event.getGuild().addRoleToMember(event.getMember(), event.getGuild().getRoleById(alert.get("welcome_role"))).queue();
                 
-            /* 
-            ArrayList<String> roles = sql.getAllRowsSpecifiedColumn(query, "role_id");
-            if (roles.size() > 0) {
+            if (welcome.getRoles() != null) {
+                String[] roles = welcome.getRoles().values().toArray(new String[0]);
                 for (String role : roles) {
                     event.getGuild().addRoleToMember(newGuy, event.getGuild().getRoleById(role)).queue();
                 }
             }
-            */
         }
+
+
+        
 
         /**
          * Blacklist
@@ -387,16 +457,14 @@ public class EventHandler extends ListenerAdapter {
     public void onGuildMemberRemove(GuildMemberRemoveEvent event){
         
         MessageChannel channel = null;
-        ResultRow alert = DatabaseHandler.getAlert(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
+        AlertData leave = gs.getServer(event.getGuild().getId()).getAlert(AlertType.LEAVE);
+        if(leave != null && leave.isValid()) {
+            String channel_id = leave.getChannelId();
+            channel = event.getGuild().getTextChannelById(channel_id);
+            String message = leave.getMessage().replace("#user", event.getUser().getAsMention());
+            channel.sendMessage(message).queue();
+        }
         
-        String notNullPls = alert.get("leave_channel");
-        if (notNullPls == null || !alert.getAsBoolean("leave_enabled"))
-            return;
-        channel = event.getGuild().getTextChannelById(notNullPls);
-        
-        String message = alert.get("leave_message");
-        message = message.replace("#user", event.getUser().getAsMention());
-        channel.sendMessage(message).queue();
     }
 
 
@@ -413,7 +481,7 @@ public class EventHandler extends ListenerAdapter {
         int times = 0;
         times = times + DatabaseHandler.getBannedTimes(event.getUser().getId());
 
-        QueryResult guilds = DatabaseHandler.getGuildByThreshold(times, event.getJDA().getSelfUser().getId(), event.getGuild().getId());
+        QueryResult guilds = DatabaseHandler.getGuildByThreshold(times, event.getGuild().getId());
         if(guilds == null)
             return;
         
@@ -437,7 +505,6 @@ public class EventHandler extends ListenerAdapter {
             ban = ban.withStyle(ButtonStyle.PRIMARY);
             ignore = ignore.withStyle(ButtonStyle.SUCCESS);
             channel.sendMessageEmbeds(eb.build()).addActionRow(ignore, kick, ban).queue();
-            //channel.sendMessage("THIS PIECE OF SHIT DOGSHIT RANDOM " + theGuy.getName() + " HAS BEEN BANNED " + times + " TIMES").queue();
         }
         
     }
@@ -453,14 +520,47 @@ public class EventHandler extends ListenerAdapter {
      */
     public void onGuildMemberUpdateBoostTime(GuildMemberUpdateBoostTimeEvent event) {
         MessageChannel channel = null;
-        ResultRow alert = DatabaseHandler.getAlert(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
-        String notNullPls = alert.get("boost_channel");
-        if (notNullPls == null || !alert.getAsBoolean("boost_enabled"))
-            return;
-        channel = event.getGuild().getTextChannelById(notNullPls);
-        String message = alert.get("boost_message");
-        message = message.replace("#user", event.getUser().getAsMention());
-        channel.sendMessage(message).queue();
+        AlertData boost = gs.getServer(event.getGuild().getId()).getAlert(AlertType.BOOST);
+        if(boost != null && boost.isValid()) {
+            String channel_id = boost.getChannelId();
+            channel = event.getGuild().getTextChannelById(channel_id);
+            String message = boost.getMessage().replace("#user", event.getEntity().getAsMention());
+            channel.sendMessage(message).queue();
+        }
+    }
+
+    @Override
+    public void onChannelDelete(ChannelDeleteEvent event){
+        String alertChannel = event.getGuild().getDefaultChannel().getId();
+        GuildData g = gs.getServer(event.getGuild().getId());
+        if(!event.getChannelType().isAudio()){
+            String channelID = event.getChannel().getId();
+            if (!g.deleteChannelData(channelID)) {
+                return;
+            }
+            String alertMessage = "";
+            String content = "";
+            HashMap<AlertKey, AlertData> alerts = g.getAlerts();
+            BlacklistData bld = g.getBlacklistData();
+            if (alerts != null) {
+                for (AlertData data : alerts.values()) {
+                    if (data.getChannelId() != null && data.getChannelId().equals(channelID)) {
+                        data.setAlertChannel(null);
+                        content += data.getType().getDescription() + ", ";
+                    }
+                }
+            }
+            if (bld != null) {
+                if (bld.getBlackChannelId() != null && bld.getBlackChannelId().equals(channelID)) {
+                    bld.setBlackChannelId(null);
+                    content += "Blacklist";
+                }
+            }
+            if (!content.equals("")) {
+                alertMessage = "These alerts need to be modified as the channel has been canceled:\n" + content;
+                event.getJDA().getTextChannelById(alertChannel).sendMessage(alertMessage).queue();
+            }
+        }
     }
 
 

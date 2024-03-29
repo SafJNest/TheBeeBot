@@ -6,8 +6,6 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.Guild.GuildSettings;
-import com.safjnest.Utilities.Guild.Room;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
 
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -33,20 +31,13 @@ public class LevelUpModifierSlash extends SlashCommand{
     @Override
     protected void execute(SlashCommandEvent event) {
         String channelId = event.getOption("channel").getAsChannel().getId();
-        double modifier = event.getOption("value").getAsDouble();
+        double modifier = event.getOption("modifier").getAsDouble();
 
         String guildId = event.getGuild().getId();
 
-        if(!DatabaseHandler.updateExpValue(guildId, channelId, modifier)) {
+        if(!gs.getServer(guildId).getChannelData(channelId).setExpModifier(modifier)) {
             event.deferReply(true).addContent("Something went wrong.").queue();
             return;
-        }
-        if(gs.getServer(guildId).getRoom(Long.parseLong(channelId)) == null){
-            Room r = new Room(Long.parseLong(channelId),null, true, modifier, true);
-            gs.getServer(guildId).addRoom(r);
-        }
-        else{
-           gs.getServer(guildId).setExpValueRoom(Long.parseLong(channelId), modifier); 
         }
 
         event.deferReply(false).addContent("Exp gain set to " + modifier + " times the normal amount in " + event.getGuild().getTextChannelById(channelId).getAsMention()).queue();

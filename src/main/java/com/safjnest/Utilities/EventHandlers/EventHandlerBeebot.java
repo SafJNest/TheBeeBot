@@ -1,19 +1,19 @@
 package com.safjnest.Utilities.EventHandlers;
 
-import com.safjnest.Utilities.EXPSystem.ExpSystem;
+import com.safjnest.Utilities.ExperienceSystem;
 import com.safjnest.Utilities.Guild.GuildData;
 import com.safjnest.Utilities.Guild.GuildSettings;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
-import com.safjnest.Utilities.SQL.ResultRow;
+import com.safjnest.Utilities.Guild.UserData;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
+import com.safjnest.Utilities.Guild.Alert.RewardData;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.role.RoleDeleteEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 /**
@@ -27,18 +27,13 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
  * @since 2.1
  */
 public class EventHandlerBeebot extends ListenerAdapter {
-    /**
-     * The ExpSystem object that handles the exp system.
-     */
-    private ExpSystem farm;
-    
-    private GuildSettings settings;
+
+        private GuildSettings settings;
 
     /**
      * Constructor for the TheListenerBeebot class.
      */
-    public EventHandlerBeebot(GuildSettings settings, ExpSystem farm) {
-        this.farm = farm;
+    public EventHandlerBeebot(GuildSettings settings) {
         this.settings = settings;
     }
 
@@ -49,7 +44,10 @@ public class EventHandlerBeebot extends ListenerAdapter {
         
         GuildData guildData = settings.getServer(e.getGuild().getId());
         Guild guild = e.getGuild();
+        
         TextChannel channel = e.getChannel().asTextChannel();
+        
+        User newGuy = e.getAuthor();
 
         if (!guildData.isExpSystemEnabled())
             return;	
@@ -58,53 +56,66 @@ public class EventHandlerBeebot extends ListenerAdapter {
             return;
 
         double modifier = guildData.getExpValueRoom(channel.getIdLong());
-        int lvl = farm.receiveMessage(e.getAuthor().getId(), guild.getId(), modifier);
-        if(lvl == -1)
+        
+        UserData user = guildData.getUserData(newGuy.getIdLong());
+        if (!user.canReceiveExperience()) {
             return;
+        }
 
-        User newGuy = e.getAuthor();
+        int exp = user.getExperience();
+        int currentLevel = user.getLevel();
+        exp = ExperienceSystem.calculateExp(exp, modifier);
+        int lvl = ExperienceSystem.isLevelUp(exp, currentLevel);
 
-        ResultRow reward = DatabaseHandler.getReward(guild.getId(), lvl);
-        if(reward != null){
-            String message = reward.get("message_text");
-            Role role = guild.getRoleById(reward.get("role_id"));
+        if(lvl == ExperienceSystem.NOT_LEVELED_UP) {
+            user.setExpData(exp, currentLevel);
+            return;
+        }
+        user.setExpData(exp, lvl);
+
+
+        RewardData reward = guildData.getAlert(AlertType.REWARD, lvl);
+        if (reward != null && !reward.isValid()) {
+            String message = reward.getMessage();
+            String[] roles = reward.getRolesAsArray();
             message = message.replace("#user", newGuy.getAsMention());
             message = message.replace("#level", String.valueOf(lvl));
-            message = message.replace("#role", role.getName());
-            guild.addRoleToMember(UserSnowflake.fromId(newGuy.getId()), role).queue();
+            //message = message.replace("#role", role.getName());
+
             channel.sendMessage(message).queue();
+            for (String roleID : roles) {
+                Role role = guild.getRoleById(roleID);
+                if (role == null)
+                    continue;
+                guild.addRoleToMember(UserSnowflake.fromId(newGuy.getId()), role).queue();
+            }
+
+            RewardData toDelete = null;
+            if ((toDelete = guildData.getLowerReward(lvl)) != null && toDelete.isTemporary()) {
+                roles = toDelete.getRolesAsArray();
+                for (String roleID : roles) {
+                    Role role = guild.getRoleById(roleID);
+                    if (role == null)
+                        continue;
+                    guild.removeRoleFromMember(UserSnowflake.fromId(newGuy.getId()), role).queue();
+                }
+            }
             return;
         }
-        
-        ResultRow alert = DatabaseHandler.getAlert(guild.getId(), e.getJDA().getSelfUser().getId());
+            
 
-        if(alert.getAsBoolean("levelup_enabled"))
-            return;
-
-        if (alert.get("levelup_message") == null){
-            channel.sendMessage("Congratulations, you are now level: " + lvl).queue();
+        AlertData alert = guildData.getAlert(AlertType.LEVEL_UP);
+        if (alert != null && alert.isValid()) {
+            String message = alert.getMessage();
+            message = message.replace("#user", newGuy.getAsMention());
+            message = message.replace("#level", String.valueOf(lvl));
+            e.getChannel().asTextChannel().sendMessage(message).queue();
             return;
         }
 
-        String message = alert.get("levelup_message");
-        message = message.replace("#user", newGuy.getAsMention());
-        message = message.replace("#level", String.valueOf(lvl));
-        e.getChannel().asTextChannel().sendMessage(message).queue();
+
+        channel.sendMessage("Congratulations, you are now level: " + lvl).queue();
         return;
-        
     }
-
-    @Override
-    public void onRoleDelete(RoleDeleteEvent event){
-        DatabaseHandler.deleteReward(event.getRole().getId());
-    }
-
-    @Override
-    public void onChannelDelete(ChannelDeleteEvent event){
-        if(event.getChannelType().isAudio()){
-            DatabaseHandler.deleteRoom(event.getGuild().getId(), event.getChannel().getId());
-        }
-    }
-
 
 }

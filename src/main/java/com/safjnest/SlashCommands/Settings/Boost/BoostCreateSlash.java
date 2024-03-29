@@ -4,8 +4,11 @@ import java.util.Arrays;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
+import com.safjnest.Utilities.Guild.GuildData;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
 
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -40,18 +43,26 @@ public class BoostCreateSlash extends SlashCommand {
         }
 
         String guildId = event.getGuild().getId();
-        String botId = event.getJDA().getSelfUser().getId();
 
-        if(DatabaseHandler.hasBoost(guildId, botId)) {
+        GuildData gs = Bot.getGuildData(guildId);
+
+        AlertData boost = gs.getAlert(AlertType.BOOST);
+
+        if(boost != null) {
             event.deferReply(true).addContent("A boost message already exists.").queue();
             return;
         }
 
-        if(!DatabaseHandler.setBoost(guildId, botId, channelID, boostText)) {
+        AlertData newBoost = new AlertData(guildId, boostText, channelID, AlertType.BOOST);
+        
+        if(newBoost.getID() == 0) {
             event.deferReply(true).addContent("Something went wrong.").queue();
             return;
         }
 
-        event.deferReply(false).addContent("boost message created.").queue();
+        gs.getAlerts().put(newBoost.getKey(), newBoost);
+
+
+        event.deferReply(false).addContent("Boost message created.").queue();
     }
 }

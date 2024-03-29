@@ -1,12 +1,14 @@
 package com.safjnest.Utilities.SQL;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
 public class ResultRow {
-    Map<String, String> row;
+    private Map<String, String> row;
 
     public ResultRow(Map<String, String> row){
         this.row = row;
@@ -61,6 +63,20 @@ public class ResultRow {
             throw new IllegalArgumentException();
         }
     }
+    /**
+     * 2022-04-08 16:39:57:
+     * @param columnName
+     * @return
+     */
+    public long getAsEpochSecond(String columnName){
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime dateTime = LocalDateTime.parse(row.get(columnName), formatter);
+            return dateTime.toEpochSecond(java.time.ZoneOffset.UTC);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
 
     public int size() {
         return row.size();
@@ -97,5 +113,9 @@ public class ResultRow {
         for (Entry<String, String> col : row.entrySet())
             sb.append(col.getKey()).append(": ").append(col.getValue());
         return sb.toString();
+    }
+
+    public Map<String, String> getAsMap() {
+        return row;
     }
 }

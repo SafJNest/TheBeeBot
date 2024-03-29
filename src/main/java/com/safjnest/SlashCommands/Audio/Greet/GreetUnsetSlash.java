@@ -32,7 +32,7 @@ public class GreetUnsetSlash extends SlashCommand{
 	public void execute(SlashCommandEvent event) {
         String guildId = (event.getOption("global") != null && event.getOption("global").getAsBoolean()) ? "0" : event.getGuild().getId();
 
-        DatabaseHandler.deleteGreet(guildId, event.getUser().getId(), event.getJDA().getSelfUser().getId());
+        DatabaseHandler.deleteGreet(guildId, event.getUser().getId());
 
         event.deferReply(false).addContent("Greet has been unset").queue();
     }

@@ -3,7 +3,10 @@ package com.safjnest.SlashCommands.Audio;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.Audio.AudioHandler;
+import com.safjnest.Utilities.Audio.PlayerManager;
+
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 
 
 public class StopSlash extends SlashCommand {
@@ -19,8 +22,9 @@ public class StopSlash extends SlashCommand {
 
     @Override
     protected void execute(SlashCommandEvent event) {
-        AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
+        Guild guild = event.getGuild();
+        User self = event.getJDA().getSelfUser();
+        PlayerManager.get().getGuildMusicManager(guild, self).getTrackScheduler().stop();
         event.deferReply(false).addContent("Playing stopped").queue();
-        handler.stop();
     }
 }

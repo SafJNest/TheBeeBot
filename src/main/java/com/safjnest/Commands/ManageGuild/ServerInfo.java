@@ -1,6 +1,7 @@
 package com.safjnest.Commands.ManageGuild;
 
 import java.awt.Color;
+import java.util.HashMap;
 import java.util.List;
 
 import net.dv8tion.jda.api.entities.Guild;
@@ -8,9 +9,12 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertKey;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 import com.safjnest.Utilities.SQL.ResultRow;
 
@@ -24,7 +28,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 public class ServerInfo extends Command{
 
     public ServerInfo(){
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -45,22 +49,28 @@ public class ServerInfo extends Command{
             return;
         }
 
-        ResultRow alerts = DatabaseHandler.getAlert(guild.getId(), event.getJDA().getSelfUser().getId());
-        ResultRow settings = DatabaseHandler.getGuildData(event.getGuild().getId(), event.getJDA().getSelfUser().getId());
+        HashMap<AlertKey, AlertData> alerts = Bot.getGuildData(guild.getId()).getAlerts();
+        AlertData welcome = alerts.get(new AlertKey(AlertType.WELCOME));
+        AlertData leave = alerts.get(new AlertKey(AlertType.LEAVE));
+        AlertData lvlup = alerts.get(new AlertKey(AlertType.LEVEL_UP));
+
+        ResultRow settings = DatabaseHandler.getGuildData(event.getGuild().getId());
         
         String welcomeMessageString = null;
-        if(alerts.get("welcome_message") != null) {
-            welcomeMessageString = alerts.get("welcome_message")
-                + " [" + event.getJDA().getTextChannelById(alerts.get("welcome_channel")).getName() + "]"
-                + " [" + (alerts.getAsBoolean("welcome_enabled") ? "on" : "off") + "]"
+        if(welcome != null) {
+            String channelString = welcome.getChannelId() == null ? "No channel set" : event.getJDA().getTextChannelById(welcome.getChannelId()).getName();
+            welcomeMessageString = welcome.getMessage()
+                + " [" + channelString + "]"
+                + " [" + (welcome.isEnabled() ? "on" : "off") + "]"
             + "\n\n";
         }
         
         String leaveMessageString = null;
-        if(alerts.get("leave_message") != null) {
-            leaveMessageString = alerts.get("leave_message")
-                + " [" + event.getJDA().getChannelById(TextChannel.class, alerts.get("leave_channel")).getName() + "]"
-                + " [" + (alerts.getAsBoolean("leave_enabled") ? "on" : "off") + "]"
+        if(leave != null) {
+            String channelString = leave.getChannelId() == null ? "No channel set" : event.getJDA().getTextChannelById(leave.getChannelId()).getName();
+            leaveMessageString = leave.getMessage()
+                + " [" + channelString + "]"
+                + " [" + (leave.isEnabled() ? "on" : "off") + "]"
             + "\n\n";
         }
 
@@ -72,14 +82,19 @@ public class ServerInfo extends Command{
             + "\n\n";
         }
 
-        String lvlUpString = alerts.get("lvlup_message");
+        String lvlUpString = null;
+        if(lvlup != null) {
+            lvlUpString = lvlup.getMessage()
+                + " [" + (lvlup.isEnabled() ? "on" : "off") + "]"
+            + "\n\n";
+        }
 
         List<String> RoleNames = PermissionHandler.getMaxFieldableRoleNames(guild.getRoles());
 
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle(":desktop: **SERVER INFORMATION** :desktop:");
         eb.setThumbnail(guild.getIconUrl());
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
 
         eb.addField("Server name", "```" + guild.getName() + "```", true);
 

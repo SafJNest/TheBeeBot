@@ -23,6 +23,7 @@ import no.stelar7.api.r4j.pojo.lol.match.v5.LOLMatch;
 import no.stelar7.api.r4j.pojo.lol.match.v5.MatchParticipant;
 import no.stelar7.api.r4j.pojo.lol.match.v5.PerkSelection;
 import no.stelar7.api.r4j.pojo.lol.match.v5.PerkStyle;
+import no.stelar7.api.r4j.pojo.shared.RiotAccount;
 
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
@@ -33,7 +34,7 @@ public class Opgg extends Command {
      * Constructor
      */
     public Opgg() {
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -71,9 +72,19 @@ public class Opgg extends Command {
                 return;
             }
         }else{
-            s = RiotHandler.getSummonerByName(args);
+            String name = "";
+            String tag = "";
+            if (!args.contains("#")){
+                name = args;
+                tag = "EUW";
+            }
+            else {
+                name = args.split("#", 2)[0];
+                tag = args.split("#", 2)[1];
+            }
+            s = RiotHandler.getSummonerByName(name, tag);
             if(s == null){
-                event.reply("Couldn't find the specified summoner.");
+                event.reply("Couldn't find the specified summoner. Remember to use the tag!");
                 return;
             }
         }
@@ -93,11 +104,12 @@ public class Opgg extends Command {
     
     
     public static EmbedBuilder createEmbed(no.stelar7.api.r4j.pojo.lol.summoner.Summoner s , JDA jda){
+        RiotAccount account = RiotHandler.getRiotApi().getAccountAPI().getAccountByPUUID(RegionShard.EUROPE, s.getPUUID());
         EmbedBuilder eb = new EmbedBuilder();
         MatchParticipant me = null;
         LOLMatch match = null;
         R4J r4j = RiotHandler.getRiotApi();
-        eb.setAuthor(s.getName());
+        eb.setAuthor(account.getName() + "#" + account.getTag());
         
         for(int i = 0; i < 5; i++){
             try {
@@ -111,13 +123,14 @@ public class Opgg extends Command {
                 ArrayList<String> blue = new ArrayList<>();
                 ArrayList<String> red = new ArrayList<>();
                 for(MatchParticipant searchMe : match.getParticipants()){
+                    RiotAccount searchAccount = r4j.getAccountAPI().getAccountByPUUID(RegionShard.EUROPE, searchMe.getPuuid());
                     if(searchMe.getSummonerId().equals(s.getSummonerId()))
                         me = searchMe;
                     String supp = RiotHandler.getFormattedEmoji(jda, searchMe.getChampionName()) 
                                     + " " 
                                     + (searchMe.getSummonerName().equals(me.getSummonerName()) 
-                                        ? "**" + me.getSummonerName() + "**" 
-                                        : searchMe.getSummonerName());
+                                        ? "**" + searchAccount.getName()+ "#" + searchAccount.getTag() + "**" 
+                                        : searchAccount.getName()+ "#" + searchAccount.getTag());
     
                     if(searchMe.getTeam() == TeamType.BLUE)
                         blue.add(supp);
@@ -152,7 +165,10 @@ public class Opgg extends Command {
                         prova.put("teamminions", new ArrayList<>());
                         int cont = 0;
                         for(MatchParticipant mt : match.getParticipants()){
-                            String name = ((mt.getSummonerName().equals(s.getName())) ? "**" + mt.getSummonerName() + "**" : mt.getSummonerName());
+                            RiotAccount searchAccount = r4j.getAccountAPI().getAccountByPUUID(RegionShard.EUROPE, mt.getPuuid());
+
+                            String nameAccount = searchAccount.getName()+ "#" + searchAccount.getTag();
+                            String name = ((mt.getSummonerName().equals(s.getName())) ? "**" + nameAccount + "**" : nameAccount);
                             if(cont < 2){
                                 prova.get("teamscuttles").add(RiotHandler.getFormattedEmoji(jda, "teamscuttles") + " " + RiotHandler.getFormattedEmoji(jda, mt.getChampionName()) +name);
                             }

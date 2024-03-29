@@ -6,10 +6,10 @@ import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
+import com.safjnest.Utilities.ExperienceSystem;
 import com.safjnest.Utilities.PermissionHandler;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
-import com.safjnest.Utilities.EXPSystem.ExpSystem;
 import com.safjnest.Utilities.LOL.RiotHandler;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 import com.safjnest.Utilities.SQL.QueryResult;
@@ -27,7 +27,7 @@ import net.dv8tion.jda.api.entities.Member;
 public class MemberInfo extends Command{
 
     public MemberInfo() {
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -38,7 +38,7 @@ public class MemberInfo extends Command{
     @Override
     protected void execute(CommandEvent event) {
         Member mentionedMember;
-        if(event.getArgs() == null) {
+        if(event.getArgs().equals("")) {
             mentionedMember = event.getMember();
         }
         else {
@@ -60,7 +60,7 @@ public class MemberInfo extends Command{
         QueryResult lolAccounts = DatabaseHandler.getLolAccounts(id);
         String lolAccountsString = "";
         if(lolAccounts.isEmpty()) {
-            lolAccountsString = mentionedMember.getNickname() + " has not connected a riot account.";
+            lolAccountsString = mentionedMember.getEffectiveName() + " has not connected a riot account.";
         }
         else {
             for(ResultRow lolAccount : lolAccounts) {
@@ -76,15 +76,15 @@ public class MemberInfo extends Command{
             lvl = userExp.getAsInt("level");
             msg = userExp.getAsInt("messages");
         }
-        String lvlString = String.valueOf(ExpSystem.getExpToLvlUp(lvl, exp) + "/" + (ExpSystem.getExpToReachLvlFromZero(lvl + 1) - ExpSystem.getExpToReachLvlFromZero(lvl)));
+        String lvlString = String.valueOf(ExperienceSystem.getExpToLvlUp(lvl, exp) + "/" + (ExperienceSystem.getExpToReachLvlFromZero(lvl + 1) - ExperienceSystem.getExpToReachLvlFromZero(lvl)));
 
         List<String> activityNames = new ArrayList<String>();
         mentionedMember.getActivities().forEach(activity -> activityNames.add(activity.getName()));
         
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle(":busts_in_silhouette: **INFORMATION ABOUT " + name + "** :busts_in_silhouette:");
-        eb.setThumbnail(mentionedMember.getAvatarUrl());
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setThumbnail(mentionedMember.getEffectiveAvatarUrl());
+        eb.setColor(Color.decode(Bot.getColor()));
 
         eb.addField("Name", "```" + name + "```", true);
 
@@ -125,7 +125,7 @@ public class MemberInfo extends Command{
         + "```", false);
         
         eb.addField("League Of Legends Account [" + lolAccounts.size() + "]", "```" 
-            + lolAccounts 
+            + lolAccountsString 
         + "```", false);
         
         eb.addField("Level", "```" 

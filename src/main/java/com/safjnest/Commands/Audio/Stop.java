@@ -3,7 +3,10 @@ package com.safjnest.Commands.Audio;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.Audio.AudioHandler;
+import com.safjnest.Utilities.Audio.PlayerManager;
+
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
 
 /**
  * @author <a href="https://github.com/NeutronSun">NeutronSun</a>
@@ -14,7 +17,7 @@ import com.safjnest.Utilities.Audio.AudioHandler;
 public class Stop extends Command {
 
     public Stop(){
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -24,8 +27,9 @@ public class Stop extends Command {
 
     @Override
     protected void execute(CommandEvent event) {
-        AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
-        handler.stop();
+        Guild guild = event.getGuild();
+        User self = event.getSelfUser();
+        PlayerManager.get().getGuildMusicManager(guild, self).getTrackScheduler().stop();
         event.reply("Playing stopped");
     }
 }

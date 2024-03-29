@@ -2,8 +2,8 @@ package com.safjnest.Commands.ManageGuild;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
 
 import java.awt.Color;
 
@@ -20,7 +20,7 @@ import net.dv8tion.jda.api.entities.sticker.Sticker;
 public class EmojiInfo extends Command {
 
     public EmojiInfo(){
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -51,7 +51,7 @@ public class EmojiInfo extends Command {
 
         EmbedBuilder eb = new EmbedBuilder();
 
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
 
         if(isSticker) {
             eb.setTitle(":laughing: "+"**STICKER INFO**"+" :laughing:");

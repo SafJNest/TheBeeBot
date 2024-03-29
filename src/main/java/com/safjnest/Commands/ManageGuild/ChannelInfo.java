@@ -5,10 +5,10 @@ import java.util.List;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.PermissionHandler;
 import com.safjnest.Utilities.SafJNest;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.ForumChannel;
@@ -26,7 +26,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 public class ChannelInfo extends Command {
 
     public ChannelInfo(){
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -51,7 +51,7 @@ public class ChannelInfo extends Command {
         EmbedBuilder eb = new EmbedBuilder();
 
         eb.setTitle("**CHANNEL INFO**");
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
 
         eb.addField("Channel name", "```" + gc.getName() + "```", true);   
         eb.addField("Channel ID", "```" + gc.getId() + "```", true); 

@@ -27,7 +27,15 @@
         "alias" : ["y", "py", "yt"],
         "help"  : "Play a video from youtube.",
         "longhelp"  : "Play a video from youtube.",
-        "category" : "Audio",
+        "category" : "Audio Queue",
+        "arguments" : "[link/name video]"
+    },
+
+    "playyoutubeforce":{
+        "alias" : ["yf", "pyf", "ytf"],
+        "help"  : "Play a video from youtube ignoring the current queue.",
+        "longhelp"  : "Play a video from youtube.",
+        "category" : "Audio Queue",
         "arguments" : "[link/name video]"
     },
 
@@ -50,7 +58,7 @@
     "soundboard": {
         "alias" : [],
         "help"  : "Create, select and manage soundboards.",
-        "category" : "Settings",
+        "category" : "Audio",
         "arguments" : "[CommandName] (#channel)(@role) | [message]",
         "children": {
             "create": {
@@ -85,7 +93,7 @@
         "alias" : ["stp", "donteventhinkaboutit"],
         "help"  : "Stop the bot from playing.",
         "longhelp"  : "Stop the bot from playing.",
-        "category" : "Audio",
+        "category" : "Audio Queue",
         "arguments" : "[CommandName]"
     },
 
@@ -121,6 +129,46 @@
         "arguments" : "[CommandName]"
     },
 
+    "pause":{
+        "alias" : [],
+        "help"  : "Pause the playing audio.",
+        "longhelp": "Pause the playing audio.",
+        "category" : "Audio Queue",
+        "arguments" : "[CommandName]"
+    },
+
+    "resume":{
+        "alias" : [],
+        "help"  : "Resume the playing audio.",
+        "longhelp": "Resume the playing audio.",
+        "category" : "Audio Queue",
+        "arguments" : "[CommandName]"
+    },
+
+    "queue":{
+        "alias" : ["q"],
+        "help"  : "Show the current queue.",
+        "longhelp": "Show the current queue.",
+        "category" : "Audio Queue",
+        "arguments" : "[CommandName] [track]"
+    },
+
+    "skip":{
+        "alias" : ["s", "skipper"],
+        "help"  : "Skip the current track.",
+        "longhelp": "Skip the current track.",
+        "category" : "Audio Queue",
+        "arguments" : "[CommandName]"
+    },
+
+    "previous":{
+        "alias" : ["prev"],
+        "help"  : "Go back to the previous track.",
+        "longhelp": "Go back to the previous track.",
+        "category" : "Audio Queue",
+        "arguments" : "[CommandName]"
+    },
+
 
 
     "list": {
@@ -149,7 +197,7 @@
         "alias" : ["papyrus", "paper", "listoide"],
         "help"  : "Play a sound from the soundboard or a video from youtube.",
         "longhelp"  : "Play a sound from the soundboard or a video from youtube.",
-        "category" : "Audio",
+        "category" : "Audio Queue",
         "arguments" : "[CommandName]",
         "children": {
             "youtube": {
@@ -187,6 +235,14 @@
                 "arguments" : "[CommandName]"
             }
         }
+    },
+
+    "jumpto": {
+        "alias" : ["jump", "jt", "j"],
+        "help"  : "Jump to a specific track in the queue.",
+        "longhelp"  : "Jump to a specific track in the queue.",
+        "category" : "Audio Queue",
+        "arguments" : "[CommandName]"
     },
 
 
@@ -332,7 +388,12 @@
                 "help"  : "Preview the welcome message.",
                 "arguments" : "[CommandName]"
             },
-            "role": {
+            "addrole": {
+                "alias" : [],
+                "help"  : "Change the role users will get when they enter this guild.",
+                "arguments" : "[CommandName]"
+            },
+            "removerole": {
                 "alias" : [],
                 "help"  : "Change the role users will get when they enter this guild.",
                 "arguments" : "[CommandName]"
@@ -345,6 +406,50 @@
             "toggle": {
                 "alias" : [],
                 "help"  : "Toggle the welcome message on or off.",
+                "arguments" : "[CommandName]"
+            }
+        }
+    },
+
+    "reward": {
+        "alias" : [],
+        "help"  : "Allow to set a reward for the leveling up system. A message will be sent every time a user reach a certain level and one or more roles will be given.",
+        "category" : "Settings",
+        "arguments" : "",
+        "children": {
+            "create": {
+                "alias" : [],
+                "help"  : "Create a reward for this guild.",
+                "arguments" : "[CommandName]"
+            },
+            "delete": {
+                "alias" : [],
+                "help"  : "Delete the reward for this guild.",
+                "arguments" : "[CommandName]"
+            },
+            "preview": {
+                "alias" : [],
+                "help"  : "Show all the rewards",
+                "arguments" : "[CommandName]"
+            },
+            "addrole": {
+                "alias" : [],
+                "help"  : "Add a role to a specific reward.",
+                "arguments" : "[CommandName]"
+            },
+            "removerole": {
+                "alias" : [],
+                "help"  : "Remove a role from a specific reward.",
+                "arguments" : "[CommandName]"
+            },
+            "text": {
+                "alias" : [],
+                "help"  : "Change the reward message's text.",
+                "arguments" : "[CommandName]"
+            },
+            "toggle": {
+                "alias" : [],
+                "help"  : "Toggle the reward on or off.",
                 "arguments" : "[CommandName]"
             }
         }
@@ -418,6 +523,11 @@
             "toggle": {
                 "alias" : [],
                 "help"  : "Toggle the exp system on and off for the whole guild.",
+                "arguments" : "[CommandName]"
+            },
+            "updatetime": {
+                "alias" : [],
+                "help"  : "Change after how many second you will gain experience",
                 "arguments" : "[CommandName]"
             }
         }
@@ -634,7 +744,7 @@
         "arguments" : "[CommandName]"
     },
 
-    "bugsnotifier":{
+    "bug":{
         "alias" : ["baco", "bughi", "report", "rep", "bugs", "reptail96", "reptail", "rep066", "moonny", "moonnypunto", "repthebread", "repologameplay", "repologaming"],
         "help"  : "Report a bug to the developer.",
         "category" : "Miscellaneous",
@@ -668,6 +778,30 @@
         "help"  : "Send a private message to a user.",
         "category" : "Miscellaneous",
         "arguments" : "[msg] [@user/id] [message]"
+    },
+
+    "weather":{
+        "alias" : [],
+        "help"  : "Get the weather of a location.",
+        "longhelp" : "Get the weather of a location. The results are from weatherApi.com. You can write the location as coordinates, city name, US zip, UK postcode, Canada postal code, metar, iata and Ip address.",
+        "category" : "Miscellaneous",
+        "arguments" : "[weather] [place]"
+    },
+
+    "apod":{
+        "alias" : [],
+        "help"  : "Get the Astronomy Picture of the Day (NASA).",
+        "longhelp" : "Get the Astronomy Picture of the Day (NASA).",
+        "category" : "Miscellaneous",
+        "arguments" : "[apod]"
+    },
+
+    "specialchar":{
+        "alias" : [],
+        "help"  : "Show all special characters.",
+        "longhelp" : "Show all special characters.",
+        "category" : "Miscellaneous",
+        "arguments" : "[specialchar]"
     },
 
 
@@ -782,7 +916,7 @@
         "arguments" : "[CommandName]"
     },
 
-    "infoaugment":{
+    "augment":{
         "alias" : ["aug"],
         "help"  : "Show information about an augment.",
         "category" : "League Of Legends",
@@ -793,7 +927,24 @@
         "alias" : ["sum"],
         "help"  : "Show statistics for a summoner.",
         "category" : "League Of Legends",
-        "arguments" : "[CommandName] [summonerName]"
+        "arguments" : "[CommandName] [summonerName]",
+        "children": {
+            "info": {
+                "alias" : [],
+                "help"  : "Create a new soundboard.",
+                "arguments" : "[CommandName]"
+            }, 
+            "connect": {
+                "alias" : [],
+                "help"  : "Select and show an existing soundboard.",
+                "arguments" : "[CommandName]"
+            },
+            "disconnect": {
+                "alias" : [],
+                "help"  : "Add a sound to an existing soundboard.",
+                "arguments" : "[CommandName]"
+            }
+        }
     },
 
     "freechamp":{

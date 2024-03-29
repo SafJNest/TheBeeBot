@@ -36,7 +36,7 @@ public class GreetSetSlash extends SlashCommand {
 
         String guildId = (event.getOption("global") != null && event.getOption("global").getAsBoolean()) ? "0" : event.getGuild().getId();
 
-        DatabaseHandler.setGreet(event.getUser().getId(), guildId, event.getJDA().getSelfUser().getId(), sound);
+        DatabaseHandler.setGreet(event.getUser().getId(), guildId, sound);
 
         event.deferReply(false).addContent("Greet has been set").queue();
     }

@@ -2,9 +2,11 @@ package com.safjnest.SlashCommands.Settings.Welcome;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
-import com.safjnest.Utilities.SQL.ResultRow;
+import com.safjnest.Utilities.Guild.GuildData;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
 
 public class WelcomePreviewSlash extends SlashCommand{
 
@@ -18,23 +20,18 @@ public class WelcomePreviewSlash extends SlashCommand{
     @Override
     protected void execute(SlashCommandEvent event) {
         String guildId = event.getGuild().getId();
-        String botId = event.getJDA().getSelfUser().getId();
 
-        ResultRow welcome = DatabaseHandler.getWelcome(guildId, botId);
+        GuildData gs = Bot.getGuildData(guildId);
 
-        if(welcome.get("welcome_message") == null) {
+        AlertData welcome = gs.getAlert(AlertType.WELCOME);
+
+
+        if(welcome == null) {
             event.deferReply(true).addContent("This guild doesn't have a welcome message.").queue();
             return;
         }
 
-        String welcomeMessage = welcome.get("welcome_message").replace("#user", event.getUser().getAsMention());
-        welcomeMessage = welcomeMessage + "\nThis message would be sent to <#" + welcome.get("welcome_channel") + ">";
-
-        if(welcome.get("welcome_role") != null){
-            welcomeMessage += "\nRoles that would be given to the user:" + event.getGuild().getRoleById(welcome.get("welcome_role")).getName();
-        }
-
-        event.deferReply(false).addContent(welcomeMessage).queue();
+        event.deferReply(false).addEmbeds(welcome.getSampleEmbed(event.getGuild()).build()).queue();
     }
-    
+
 }

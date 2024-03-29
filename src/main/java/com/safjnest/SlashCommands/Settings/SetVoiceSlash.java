@@ -46,7 +46,7 @@ public class SetVoiceSlash extends SlashCommand {
             return;
         }
 
-        DatabaseHandler.updateVoiceGuild(event.getGuild().getId(), event.getJDA().getSelfUser().getId(), language, voice);
+        DatabaseHandler.updateVoiceGuild(event.getGuild().getId(), language, voice);
 
         event.deferReply(false).addContent("Voice set to " + voice + " (" + language + ")").queue();
     }

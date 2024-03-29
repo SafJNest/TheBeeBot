@@ -2,8 +2,8 @@ package com.safjnest.SlashCommands.ManageGuild;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.Bot.BotSettingsHandler;
 
 import java.awt.Color;
 import java.util.Arrays;
@@ -54,7 +54,7 @@ public class EmojiInfoSlash extends SlashCommand {
         }
         EmbedBuilder eb = new EmbedBuilder();
 
-        eb.setColor(Color.decode(BotSettingsHandler.map.get(event.getJDA().getSelfUser().getId()).color));
+        eb.setColor(Color.decode(Bot.getColor()));
 
         if(isSticker){
             eb.setTitle(":laughing: "+"**STICKER INFO**"+" :laughing:");

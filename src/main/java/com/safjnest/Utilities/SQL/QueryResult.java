@@ -3,6 +3,7 @@ package com.safjnest.Utilities.SQL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class QueryResult implements Iterable<ResultRow>{
 
@@ -31,6 +32,14 @@ public class QueryResult implements Iterable<ResultRow>{
 
     public boolean isEmpty(){
         return result.isEmpty();
+    }
+
+    public List<Map<String, String>> toList(){
+        List<Map<String, String>> list = new ArrayList<>();
+        for(ResultRow row : result){
+            list.add(row.getAsMap());
+        }
+        return list;
     }
     
 }

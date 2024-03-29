@@ -15,7 +15,7 @@ import com.safjnest.Utilities.CommandsLoader;
 public class Ping extends Command {
 
     public Ping(){
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.safjnest.App;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.SQL.DatabaseHandler;
 
@@ -27,14 +28,14 @@ public class LastMatches extends Command {
     /**
      * Constructor
      */
-    public LastMatches(R4J r){
-        this.name = this.getClass().getSimpleName();
+    public LastMatches(){
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
         this.category = new Category(new CommandsLoader().getString(this.name, "category"));
         this.arguments = new CommandsLoader().getString(this.name, "arguments");
-        this.r = r;
+        this.r = App.getRiotApi();
     }
 
     /**

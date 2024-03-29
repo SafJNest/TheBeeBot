@@ -10,10 +10,10 @@ import java.util.Map;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.App;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.LOL.RiotHandler;
 
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import no.stelar7.api.r4j.basic.constants.api.regions.LeagueShard;
@@ -31,7 +31,7 @@ public class LastMatchesSlash extends SlashCommand {
     /**
      * Constructor
      */
-    public LastMatchesSlash(R4J r){
+    public LastMatchesSlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
@@ -42,9 +42,10 @@ public class LastMatchesSlash extends SlashCommand {
             new OptionData(OptionType.INTEGER, "games", "Number of games to analyze", true)
                 .setMinValue(1)
                 .setMaxValue(20),
-            new OptionData(OptionType.STRING, "user", "Name of the summoner you want to get information on", false)
+            new OptionData(OptionType.STRING, "user", "Name of the summoner you want to get information on", false),
+            new OptionData(OptionType.STRING, "tag", "Tag of the summoner you want to get information on", false)
         );
-        this.r = r;
+        this.r = App.getRiotApi();
     }
 
     /**
@@ -57,29 +58,22 @@ public class LastMatchesSlash extends SlashCommand {
         int gamesToAnalyze = event.getOption("games").getAsInt();
         no.stelar7.api.r4j.pojo.lol.summoner.Summoner s = null;
 
-        User theGuy = null;
-         if(event.getOption("summoner") == null && event.getOption("user") == null){
+         if(event.getOption("user") == null){
             s = RiotHandler.getSummonerFromDB(event.getUser().getId());
-            theGuy = event.getUser();
             if(s == null){
                 event.getHook().editOriginal("You dont have a Riot account connected, check /help setUser (or write the name of a summoner).").queue();
                 return;
             }
-        }else if(event.getOption("user") != null){
-            theGuy = event.getOption("user").getAsUser();
-            s = RiotHandler.getSummonerFromDB(theGuy.getId());
-            if(s == null){
-                 event.getHook().editOriginal(theGuy.getEffectiveName() + " doesn't have a Riot account connected.").queue();
-                return;
-            }
         }else{
-            s = RiotHandler.getSummonerByName(event.getOption("summoner").getAsString());
+            String name = event.getOption("user").getAsString();
+            String tag = (event.getOption("user") != null) ? event.getOption("tag").getAsString() : "";
+            s = RiotHandler.getSummonerByName(name, tag);
             if(s == null){
-                event.getHook().editOriginal("Couldn't find the specified summoner.").queue();
+                event.reply("Couldn't find the specified summoner.");
                 return;
             }
-            
         }
+
         int gamesNumber = gamesToAnalyze;
         try {
             for(int i = 0; i < gamesToAnalyze; i++){

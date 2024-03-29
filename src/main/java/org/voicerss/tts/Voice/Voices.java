@@ -1,7 +1,7 @@
 package org.voicerss.tts.Voice;
 
 public class Voices {
-  public class English_UnitedStates {
+  public static class English_UnitedStates {
     public static final String id = "en-us";
 
     public static final String Linda = "Linda";
@@ -19,7 +19,7 @@ public class Voices {
     public static final String language = "English_UnitedStates";
   }
 
-  public class Russian {
+  public static class Russian {
     public static final String id = "ru-ru";
 
     public static final String Olga = "Olga";
@@ -33,7 +33,7 @@ public class Voices {
     public static final String language = "Russian";
   }
 
-  public class Danish {
+  public static class Danish {
     public static final String id = "da-dk";
 
     public static final String Freja = "Freja";
@@ -43,7 +43,7 @@ public class Voices {
     public static final String language = "Danish";
   }
   
-  public class German_Germany {
+  public static class German_Germany {
     public static final String id = "de-de";
 
     public static final String Hanna = "Hanna";
@@ -55,7 +55,7 @@ public class Voices {
     public static final String[] array = {"Hanna", "Lina", "Jonas"};
   }
 
-  public class German_Austria {
+  public static class German_Austria {
     public static final String id = "de-at";
 
     public static final String Lukas = "Lukas";
@@ -65,7 +65,7 @@ public class Voices {
 
   }
 
-  public class German_Switzerland {
+  public static class German_Switzerland {
     public static final String id = "de-ch";
 
     public static final String Tim = "Tim";
@@ -73,7 +73,7 @@ public class Voices {
     public static final String[] array = {"Tim"};
   }
 
-  public class English_Australia {
+  public static class English_Australia {
     public static final String id = "en-au";
 
     public static final String Zoe = "Zoe";
@@ -88,7 +88,7 @@ public class Voices {
   }
 
 
-  public class English_Canada {
+  public static class English_Canada {
     public static final String id = "en-ca";
     public static final String Rose = "Rose";
 
@@ -101,7 +101,7 @@ public class Voices {
     public static final String[] array = {"Evie", "Isla", "Jack", "Zoe"};
   }
 
-  public class English_GreatBritain {
+  public static class English_GreatBritain {
     public static final String id = "en-gb";
 
     public static final String Alice = "Alice";
@@ -115,7 +115,7 @@ public class Voices {
     public static final String[] array = {"Alice", "Nancy", "Lily", "Harry"};
   }
 
-  public class English_India {
+  public static class English_India {
     public static final String id = "en-in";
 
     public static final String Eka = "Eka";
@@ -127,7 +127,7 @@ public class Voices {
     public static final String[] array = {"Eka", "Jai", "Ajit"};
   }
 
-  public class Spanish_Spain {
+  public static class Spanish_Spain {
     public static final String id = "es-es";
 
     public static final String Camila = "Camila";
@@ -141,7 +141,7 @@ public class Voices {
     public static final String[] array = {"Camilla", "Sofía", "Luna", "Diego"};
   }
 
-  public class Spanish_Mexico {
+  public static class Spanish_Mexico {
     public static final String id = "es-mx";
 
     public static final String Juana = "Juana";
@@ -157,7 +157,7 @@ public class Voices {
 
   }
 
-  public class Finnish {
+  public static class Finnish {
     public static final String id = "fi-fi";
 
     public static final String Aada = "Aada";
@@ -165,7 +165,7 @@ public class Voices {
     public static final String[] array = {"Aada"};
   }
 
-  public class French_Canada {
+  public static class French_Canada {
     public static final String id = "fr-ca";
 
     public static final String Emile = "Emile";
@@ -180,7 +180,7 @@ public class Voices {
 
   }
 
-  public class French_France {
+  public static class French_France {
     public static final String id = "fr-fr";
 
     public static final String Bette = "Bette";
@@ -194,7 +194,7 @@ public class Voices {
     public static final String[] array = {"Axel", "Zola", "Iva", "Bette"};
   }
 
-  public class French_Switzerland {
+  public static class French_Switzerland {
     public static final String id = "fr-ch";
 
     public static final String Theo = "Theo";
@@ -203,7 +203,7 @@ public class Voices {
 
   }
 
-  public class Italian {
+  public static class Italian {
     public static final String id = "it-it";
 
     public static final String Bria = "Bria";
@@ -215,7 +215,7 @@ public class Voices {
     public static final String[] array = {"Mia", "Pietro", "Bria"};
   }
 
-  public class Japanese {
+  public static class Japanese {
     public static final String id = "ja-jp";
 
     public static final String Hina = "Hina";
@@ -229,7 +229,7 @@ public class Voices {
     public static final String[] array = {"Fumi", "Akira", "Airi"};
   }
 
-  public class Korean {
+  public static class Korean {
     public static final String id = "ko-kr";
 
     public static final String Nari = "Nari";
@@ -237,7 +237,7 @@ public class Voices {
     public static final String[] array = {"Nari"};
   }
 
-  public class Norwegian {
+  public static class Norwegian {
     public static final String id = "nb-no";
 
     public static final String Marte = "Marte";
@@ -247,7 +247,7 @@ public class Voices {
     public static final String[] array = {"Erik", "Marte"};
   }
 
-  public class Dutch_Netherlands {
+  public static class Dutch_Netherlands {
     public static final String id = "nl-nl";
 
     public static final String Lotte = "Lotte";
@@ -257,7 +257,7 @@ public class Voices {
     public static final String[] array = {"Bram", "Lotte"};
   }
 
-  public class Dutch_Belgium {
+  public static class Dutch_Belgium {
     public static final String id = "nl-be";
 
     public static final String Daan = "Daan";
@@ -266,7 +266,7 @@ public class Voices {
   }
 
 
-  public class Polish {
+  public static class Polish {
     public static final String id = "pl-pl";
 
     public static final String Julia = "Julia";
@@ -276,7 +276,7 @@ public class Voices {
     public static final String[] array = {"Jan", "Julia"};
   }
 
-  public class Portuguese_Brazil {
+  public static class Portuguese_Brazil {
     public static final String id = "pt-bn";
 
     public static final String Marcia = "Marcia";
@@ -290,7 +290,7 @@ public class Voices {
     public static final String[] array = {"Yara", "Dinis", "Ligia", "Marcia"};
   }
 
-  public class Portuguese_Portugal {
+  public static class Portuguese_Portugal {
     public static final String id = "pt-pt";
 
     public static final String Leonor = "Leonor";
@@ -298,7 +298,7 @@ public class Voices {
     public static final String[] array = {"Leonor"};
   }
 
-  public class Catalan {
+  public static class Catalan {
     public static final String id = "ca-es";
 
     public static final String Rut = "Rut";
@@ -307,7 +307,7 @@ public class Voices {
 
   }
 
-  public class Swedish {
+  public static class Swedish {
     public static final String id = "sv-se";
 
     public static final String Molly = "Molly";
@@ -318,7 +318,7 @@ public class Voices {
 
   }
 
-  public class Chinese_China {
+  public static class Chinese_China {
     public static final String id = "zh-cn";
 
     public static final String Luli = "Luli";
@@ -332,7 +332,7 @@ public class Voices {
     public static final String[] array = {"Shu", "Chow", "Wang", "Luli"};
   }
 
-  public class Chinese_HongKong {
+  public static class Chinese_HongKong {
     public static final String id = "zh-hk";
 
     public static final String Jia = "Jia";
@@ -344,7 +344,7 @@ public class Voices {
     public static final String[] array = {"Xia", "Chen", "Jia"};
   }
 
-  public class Chinese_Taiwan {
+  public static class Chinese_Taiwan {
     public static final String id = "zh-tw";
 
     public static final String Akemi = "Akemi";
@@ -356,7 +356,7 @@ public class Voices {
     public static final String[] array = {"Lin", "Lee", "Akemi"};
   }
 
-  public class English_Ireland {
+  public static class English_Ireland {
     public static final String id = "en-ie";
 
     public static final String Oran = "Oran";
@@ -364,7 +364,7 @@ public class Voices {
     public static final String[] array = {"Oran"};
   }
 
-  public class Tamil {
+  public static class Tamil {
     public static final String id = "ta-in";
 
     public static final String Sai = "Sai";
@@ -372,7 +372,7 @@ public class Voices {
     public static final String[] array = {"Sai"};
   }
 
-  public class Turkish {
+  public static class Turkish {
     public static final String id = "tr_TR";
 
     public static final String Omer = "Omer";
@@ -380,7 +380,7 @@ public class Voices {
     public static final String[] array = {"Omer"};
   }
 
-  public class Arabic_SaudiArabia {
+  public static class Arabic_SaudiArabia {
     public static final String id = "ar-sa";
 
     public static final String Salim = "Salim";
@@ -388,7 +388,7 @@ public class Voices {
     public static final String[] array = {"Salim"};
   }
 
-  public class Arabic_Egypt {
+  public static class Arabic_Egypt {
     public static final String id = "ar-eg";
 
     public static final String Oda = "Oda";
@@ -396,7 +396,7 @@ public class Voices {
     public static final String[] array = {"Oda"};
   }
 
-  public class Bulgarian {
+  public static class Bulgarian {
     public static final String id = "bg-bg";
 
     public static final String Dimo = "Dimo";
@@ -404,7 +404,7 @@ public class Voices {
     public static final String[] array = {"Dimo"};
   }
 
-  public class Croatian {
+  public static class Croatian {
     public static final String id = "hr-hr";
 
     public static final String Nikola = "Nikola";
@@ -412,7 +412,7 @@ public class Voices {
     public static final String[] array = {"Nikola"};
   }
 
-  public class Czech {
+  public static class Czech {
     public static final String id = "cs-cz";
 
     public static final String Josef = "Josef";
@@ -420,7 +420,7 @@ public class Voices {
     public static final String[] array = {"Josef"};
   }
 
-  public class Greek {
+  public static class Greek {
     public static final String id = "el-gr";
 
     public static final String Neo = "Neo";
@@ -428,7 +428,7 @@ public class Voices {
     public static final String[] array = {"Neo"};
   }
 
-  public class Hebrew {
+  public static class Hebrew {
     public static final String id = "he-il";
 
     public static final String Rami = "Rami";
@@ -436,7 +436,7 @@ public class Voices {
     public static final String[] array = {"Rami"};
   }
 
-  public class Hindi {
+  public static class Hindi {
     public static final String id = "hi-in";
 
     public static final String Puja = "Puja";
@@ -446,7 +446,7 @@ public class Voices {
     public static final String[] array = {"Kabir", "Puja"};
   }
 
-  public class Hungarian {
+  public static class Hungarian {
     public static final String id = "hu-hu";
 
     public static final String Mate = "Mate";
@@ -454,7 +454,7 @@ public class Voices {
     public static final String[] array = {"Mate"};
   }
 
-  public class Indonesian {
+  public static class Indonesian {
     public static final String id = "id-id";
 
     public static final String Intan = "Intan";
@@ -462,7 +462,7 @@ public class Voices {
     public static final String[] array = {"Intan"};
   }
 
-  public class Malay {
+  public static class Malay {
     public static final String id = "ms-my";
 
     public static final String Aqil = "Aqil";
@@ -470,7 +470,7 @@ public class Voices {
     public static final String[] array = {"Aqil"};
   }
 
-  public class Romanian {
+  public static class Romanian {
     public static final String id = "ro-ro";
 
     public static final String Doru = "Doru";
@@ -478,7 +478,7 @@ public class Voices {
     public static final String[] array = {"Doru"};
   }
 
-  public class Slovak {
+  public static class Slovak {
     public static final String id = "sk-sk";
 
     public static final String Beda = "Beda";
@@ -486,7 +486,7 @@ public class Voices {
     public static final String[] array = {"Beda"};
   }
 
-  public class Slovenian {
+  public static class Slovenian {
     public static final String id = "sl-si";
 
     public static final String Vid = "Vid";
@@ -494,7 +494,7 @@ public class Voices {
     public static final String[] array = {"Vid"};
   }
 
-  public class Thai {
+  public static class Thai {
     public static final String id = "th-th";
 
     public static final String Ukrit = "Ukrit";
@@ -502,7 +502,7 @@ public class Voices {
     public static final String[] array = {"Ukrit"};
   }
 
-  public class Vietnamese {
+  public static class Vietnamese {
     public static final String id = "vi-vn";
 
     public static final String Chi = "Chi";

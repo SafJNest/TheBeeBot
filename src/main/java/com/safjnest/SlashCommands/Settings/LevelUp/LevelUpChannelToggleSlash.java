@@ -6,8 +6,6 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.safjnest.Utilities.CommandsLoader;
 import com.safjnest.Utilities.Guild.GuildSettings;
-import com.safjnest.Utilities.Guild.Room;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
 
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -38,20 +36,11 @@ public class LevelUpChannelToggleSlash extends SlashCommand{
 
         String guildId = event.getGuild().getId();
 
-        if(!DatabaseHandler.toggleLevelUpChannel(guildId, channelId, toggle)) {
+        if(!gs.getServer(guildId).getChannelData(channelId).setExpEnabled(toggle)) {
             event.deferReply(true).addContent("Something went wrong.").queue();
             return;
         }
 
-        int expValue = DatabaseHandler.getRoomSettings(guildId, channelId).getAsInt("exp_value");
-
-        if(gs.getServer(event.getGuild().getId()).getRoom(Long.parseLong(channelId)) == null){
-            Room r = new Room(Long.parseLong(channelId),null, toggle, expValue, true);
-            gs.getServer(event.getGuild().getId()).addRoom(r);
-        }
-        else{
-           gs.getServer(event.getGuild().getId()).setExpSystemRoom(Long.parseLong(channelId), toggle); 
-        }
         if(!toggle){
             event.deferReply(false).addContent("This channel no longer gives exp.").queue();
             return;

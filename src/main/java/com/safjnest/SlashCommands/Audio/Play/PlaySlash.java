@@ -14,7 +14,7 @@ import com.safjnest.Utilities.CommandsLoader;
  */
 public class PlaySlash extends SlashCommand{
 
-    public PlaySlash(String youtubeApiKey){
+    public PlaySlash(){
         this.name = this.getClass().getSimpleName().replace("Slash", "").toLowerCase();
         String father = this.getClass().getSimpleName().replace("Slash", "");
 
@@ -23,7 +23,7 @@ public class PlaySlash extends SlashCommand{
         this.help = new CommandsLoader().getString(this.name, "help");
         
         ArrayList<SlashCommand> slashCommandsList = new ArrayList<SlashCommand>();
-        Collections.addAll(slashCommandsList, new PlaySoundSlash(father), new PlayYoutubeSlash(youtubeApiKey, father));
+        Collections.addAll(slashCommandsList, new PlaySoundSlash(father), new PlayYoutubeSlash(father));
         this.children = slashCommandsList.toArray(new SlashCommand[slashCommandsList.size()]);
     }
 

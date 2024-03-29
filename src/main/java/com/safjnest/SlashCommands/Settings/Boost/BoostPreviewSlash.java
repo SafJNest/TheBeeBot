@@ -2,9 +2,11 @@ package com.safjnest.SlashCommands.Settings.Boost;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
-import com.safjnest.Utilities.SQL.ResultRow;
+import com.safjnest.Utilities.Guild.GuildData;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
 
 public class BoostPreviewSlash extends SlashCommand{
 
@@ -18,18 +20,16 @@ public class BoostPreviewSlash extends SlashCommand{
     @Override
     protected void execute(SlashCommandEvent event) {
         String guildId = event.getGuild().getId();
-        String botId = event.getJDA().getSelfUser().getId();
 
-        ResultRow boost = DatabaseHandler.getBoost(guildId, botId);
+        GuildData gs = Bot.getGuildData(guildId);
 
-        if(boost.get("boost_message") == null) {
+        AlertData boost = gs.getAlert(AlertType.BOOST);
+
+        if(boost == null) {
             event.deferReply(true).addContent("This guild doesn't have a boost message.").queue();
             return;
         }
 
-        String boostMessage = boost.get("boost_message").replace("#user", event.getUser().getAsMention());
-        boostMessage = boostMessage + "\nThis message would be sent to <#" + boost.get("boost_channel") + ">";
-
-        event.deferReply(false).addContent(boostMessage).queue();
+        event.deferReply(false).addEmbeds(boost.getSampleEmbed(event.getGuild()).build()).queue();
     }
 }

@@ -19,7 +19,7 @@ public class WelcomeSlash extends SlashCommand{
         this.help = "json";
         
         ArrayList<SlashCommand> slashCommandsList = new ArrayList<SlashCommand>();
-        Collections.addAll(slashCommandsList, new WelcomeChannelSlash(father), new WelcomeCreateSlash(father), new WelcomeDeleteSlash(father), new WelcomePreviewSlash(father), new WelcomeTextSlash(father), new WelcomeToggleSlash(father), new WelcomeRoleSlash(father));
+        Collections.addAll(slashCommandsList, new WelcomeChannelSlash(father), new WelcomeCreateSlash(father), new WelcomeDeleteSlash(father), new WelcomePreviewSlash(father), new WelcomeTextSlash(father), new WelcomeToggleSlash(father), new WelcomeAddRole(father), new WelcomeRemoveRole(father));
         this.children = slashCommandsList.toArray(new SlashCommand[slashCommandsList.size()]);                                 
     }
 

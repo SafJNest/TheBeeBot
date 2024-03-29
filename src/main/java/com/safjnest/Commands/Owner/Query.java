@@ -22,7 +22,7 @@ public class Query extends Command{
      * Default constructor for the class.
      */
     public Query(){
-        this.name = this.getClass().getSimpleName();
+        this.name = this.getClass().getSimpleName().toLowerCase();
         this.aliases = new CommandsLoader().getArray(this.name, "alias");
         this.help = new CommandsLoader().getString(this.name, "help");
         this.cooldown = new CommandsLoader().getCooldown(this.name);
@@ -35,6 +35,11 @@ public class Query extends Command{
     @Override
     protected void execute(CommandEvent event) {
         String query = event.getArgs();
+
+        query = query.replace("#guild", event.getGuild().getId());
+        query = query.replace("#me", event.getAuthor().getId());
+        query = query.replace("#channel", event.getChannel().getId());
+        query = query.replace("#bot", event.getSelfMember().getId());
 
         QueryResult res = DatabaseHandler.safJQuery(query);
 

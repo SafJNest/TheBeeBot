@@ -1,11 +1,18 @@
 package com.safjnest.SlashCommands.Settings.LevelUp;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.safjnest.Bot;
 import com.safjnest.Utilities.CommandsLoader;
-import com.safjnest.Utilities.SQL.DatabaseHandler;
-import com.safjnest.Utilities.SQL.QueryResult;
-import com.safjnest.Utilities.SQL.ResultRow;
+import com.safjnest.Utilities.Guild.ChannelData;
+import com.safjnest.Utilities.Guild.GuildData;
+import com.safjnest.Utilities.Guild.Alert.AlertData;
+import com.safjnest.Utilities.Guild.Alert.AlertType;
+
+import net.dv8tion.jda.api.EmbedBuilder;
 
 public class LevelUpPreviewSlash extends SlashCommand{
 
@@ -19,42 +26,56 @@ public class LevelUpPreviewSlash extends SlashCommand{
     @Override
     protected void execute(SlashCommandEvent event) {
         String guildId = event.getGuild().getId();
-        String botId = event.getJDA().getSelfUser().getId();
 
-        if(!DatabaseHandler.isExpEnabled(guildId, botId)) {
+        GuildData gs = Bot.getGuildData(guildId);
+
+        AlertData level = gs.getAlert(AlertType.LEVEL_UP);
+
+        if(!gs.isExpSystemEnabled()) {
             event.deferReply(true).addContent("This guild doesn't have the exp system enabled.").queue();
             return;
         }
 
-        String levelupMessage = DatabaseHandler.getLevelUp(guildId, botId).get("levelup_message");
-
-        if(levelupMessage == null){
+        if(level == null){
             event.deferReply(true).addContent("No level up message found.").queue();
             return;
         }
-
-        levelupMessage = levelupMessage.replace("#user", event.getUser().getAsMention());
-        levelupMessage = levelupMessage.replace("#level", "117");
-
-        String message = "Level Up message:\n" + levelupMessage;
         
-        QueryResult rooms = DatabaseHandler.getRoomsSettingsWithExpModifier(guildId);
+        HashMap<Long, ChannelData> channels = gs.getChannels();
 
-        if(!rooms.isEmpty()) {
-            message += "\n\nChannel with exp Modifier:\n";
-            for(ResultRow room : rooms) {
-                message += event.getGuild().getTextChannelById(room.get("room_id")).getAsMention() + " exp: " + room.get("exp_value") + "\n";
+        ArrayList<String> expChannels = new ArrayList<>();
+        ArrayList<String> noExpChannels = new ArrayList<>();
+
+        for (ChannelData channel : channels.values()) {
+            if (!channel.isExpSystemEnabled()) {
+                noExpChannels.add(String.valueOf(channel.getRoomId()));
+            }
+            if (channel.getExpValue() != 1.0) {
+                expChannels.add(String.valueOf(channel.getRoomId()));
             }
         }
 
-        rooms = DatabaseHandler.getRoomsSettingsWithoutExp(guildId);
-        if(!rooms.isEmpty()){
-            message += "\n\nChannel with exp system disabled:\n";
-            for(ResultRow room : rooms){
-                message += event.getGuild().getTextChannelById(room.get("room_id")).getAsMention() + "\n";
+        EmbedBuilder eb = level.getSampleEmbed(event.getGuild());
+        eb.addBlankField(true);
+        if(!expChannels.isEmpty()) {
+            String modifiedChannels= "";
+
+            for(String channel_id : expChannels) {
+                modifiedChannels += event.getGuild().getTextChannelById(channel_id).getName() + ": " + channels.get(Long.parseLong(channel_id)).getExpValue() + " exp\n";
             }
+            eb.addField("Modified Exp Channels", "```" + modifiedChannels + "```", true);
         }
 
-        event.deferReply(false).addContent(message).queue();
+        if(!noExpChannels.isEmpty()){
+            String disabledChannels = "";
+
+            for(String channel_id : noExpChannels){
+                disabledChannels += event.getGuild().getTextChannelById(channel_id).getName() + " \n";
+            }
+
+            eb.addField("Disabled Exp Channels", "```" + disabledChannels + "```", true);
+        }
+
+        event.deferReply(false).addEmbeds(eb.build()).queue();
     }
 }
